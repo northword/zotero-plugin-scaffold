@@ -4,6 +4,7 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
+    "dev": "tsc --watch",
     "build": "tsc",
     "prettier": "prettier --write . ",
     "lint": "eslint . --ext .ts --fix",
@@ -30,6 +31,7 @@
     "web-ext": "^7.10.0"
   },
   "devDependencies": {
+    "@trivago/prettier-plugin-sort-imports": "^4.3.0",
     "@types/node": "^20.11.0",
     "@typescript-eslint/eslint-plugin": "^6.18.1",
     "@typescript-eslint/parser": "^6.18.1",
