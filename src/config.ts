@@ -1,8 +1,9 @@
 import { cosmiconfig, cosmiconfigSync } from "cosmiconfig";
+import * as dotenv from "dotenv";
 import { BuildOptions } from "esbuild";
 import path from "path";
 
-export interface Config {
+export interface ConfigBase {
   addon: {
     addonName: string;
     addonDescription: string;
@@ -10,6 +11,7 @@ export interface Config {
     addonRef: string;
     addonInstance: string;
     prefsPrefix: string;
+    updateJSON: string;
   };
   /**
    * source code dir
@@ -66,7 +68,7 @@ export interface Config {
    * };
    * ```
    */
-  esbuild?: BuildOptions[];
+  esbuildOptions?: BuildOptions[];
   makeManifest?: { enable?: boolean; templatePath?: string };
   makeBootstrap?: boolean;
   makeUpdateJson?: {
@@ -77,44 +79,71 @@ export interface Config {
   addonLint?: {
     //
   };
+  cmdPath?: string;
 }
 
-export const ZoteroPluginDev = (options: Config): Config => {
-  const cwd = process.cwd();
+export interface Config extends Required<ConfigBase> {
+  cmd: {
+    zoteroBinPath: string;
+    profilePath: string;
+    dataDir: string;
+  };
+}
+
+export const defineConfig = (options: ConfigBase): Config => {
+  const dotenvResult = dotenv.config({
+    path: path.resolve(process.cwd(), options.cmdPath ?? "scripts/.env"),
+  }).parsed;
+  if (!dotenvResult) throw new Error(".env error");
 
   return {
     addon: options.addon,
-    source: path.join(process.cwd(), options.source ?? "src"),
-    dist: path.join(process.cwd(), options.dist ?? "build"),
+    source: options.source ?? "src",
+    dist: options.dist ?? "build",
     assets: options.assets ?? ["addon/**/*"],
     stringsToReplace: options.stringsToReplace ?? {},
+    fluent: {
+      prefixFluentMessages: true,
+      prefixLocaleFiles: true,
+    },
+    esbuildOptions: options.esbuildOptions ?? [
+      {
+        entryPoints: ["src/index.ts"],
+        define: {
+          __env__: `"${process.env.NODE_ENV}"`,
+        },
+        bundle: true,
+        target: "firefox102",
+        outfile: path.join(
+          process.cwd(),
+          options.dist ?? "build",
+          `addon/${options.addon.addonRef}.js`,
+        ),
+        // Don't turn minify on
+        minify: process.env.NODE_ENV === "production",
+      },
+    ],
+    makeBootstrap: options.makeBootstrap ?? true,
+    makeManifest: options.makeManifest ?? {
+      enable: true,
+      // templatePath: "",
+    },
+    makeUpdateJson: options.makeUpdateJson ?? { enable: true },
+    addonLint: options.addonLint ?? "",
+    cmdPath: "",
+    cmd: {
+      zoteroBinPath: dotenvResult["zoteroBinPath"],
+      profilePath: dotenvResult["profilePath"],
+      dataDir: dotenvResult["dataDir"],
+    },
   };
 };
 
-function getConfig() {
-  const explorer = cosmiconfig("zotero-plugin");
-
-  // Search for a configuration by walking up directories.
-  // See documentation for search, below.
-  explorer
-    .search()
-    .then((result) => {
-      // result.config is the parsed configuration object.
-      // result.filepath is the path to the config file that was found.
-      // result.isEmpty is true if there was nothing to parse in the config file.
-    })
-    .catch((error) => {
-      // Do something constructive.
-    });
-
-  // // Load a configuration directly when you know where it should be.
-  // // The result object is the same as for search.
-  // // See documentation for load, below.
-  // explorer.load(pathToConfig).then(/* ... */);
-
-  // // You can also search and load synchronously.
-  // const explorerSync = cosmiconfigSync(moduleName);
-
-  // // const searchedFor = explorerSync.search();
-  // // const loaded = explorerSync.load(pathToConfig);
+export function loadConfig() {
+  const explorerSync = cosmiconfigSync("zotero-plugin");
+  const result = explorerSync.search();
+  if (result) {
+    return result.config as Config;
+  }
+  throw new Error("Config not work");
 }

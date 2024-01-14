@@ -1,3 +1,9 @@
-import { ZoteroPluginDev } from "./config";
+import { Build } from "./build";
+import { defineConfig, loadConfig } from "./config";
 
-export { ZoteroPluginDev };
+const Config = {
+  defineConfig,
+  loadConfig,
+};
+
+export { defineConfig, Config, Build };

@@ -10,7 +10,7 @@ import {
 } from "fs";
 import path from "path";
 
-export function copyFileSync(source, target) {
+export function copyFileSync(source: string, target: string) {
   let targetFile = target;
 
   // If target is a directory, a new file with the same name will be created
@@ -23,7 +23,7 @@ export function copyFileSync(source, target) {
   writeFileSync(targetFile, readFileSync(source));
 }
 
-export function copyFolderRecursiveSync(source, target) {
+export function copyFolderRecursiveSync(source: string, target: string) {
   let files: string[] = [];
 
   // Check if folder needs to be created or integrated
@@ -46,7 +46,7 @@ export function copyFolderRecursiveSync(source, target) {
   }
 }
 
-export function clearFolder(target) {
+export function clearFolder(target: string) {
   if (existsSync(target)) {
     rmSync(target, { recursive: true, force: true });
   }
@@ -54,9 +54,9 @@ export function clearFolder(target) {
   mkdirSync(target, { recursive: true });
 }
 
-export function dateFormat(fmt, date) {
+export function dateFormat(fmt: string, date: Date) {
   let ret;
-  const opt = {
+  const opt: { [key: string]: string } = {
     "Y+": date.getFullYear().toString(),
     "m+": (date.getMonth() + 1).toString(),
     "d+": date.getDate().toString(),
@@ -76,7 +76,7 @@ export function dateFormat(fmt, date) {
   return fmt;
 }
 
-export function isRunning(query, cb) {
+export function isRunning(query: string, cb: (status: boolean) => void) {
   const platform = process.platform;
   let cmd = "";
   switch (platform) {
