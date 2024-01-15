@@ -18,24 +18,27 @@ This repository serves only as a proof-of-concept for the above.
 
 ```bash
 # clone this repo
-git clone 
+git clone https://github.com/northword/zotero-plugin-dev-tool zotero-plugin-dev-tool/
+cd zotero-plugin-dev-tool/
+
+# build
+npm install
+npm build
 
 # npm link
 cd your-plugin-work-dir/
 pnpm link ../zotero-plugin-dev-tool
-
 ```
 
 ### 02. Creat a config file
 
 ```bash
-.zotero-pluginrc
 zotero-plugin.config.ts
-# also avaliable in *.js  *.mjs  *.cjs  *.ts  *.yaml  *.json
+# also avaliable in *.js  *.mjs  *.cjs  *.ts
 ```
 
 ```ts
-import { defineConfig } from "zotero-plugin-dev-tool/";
+import { defineConfig } from "zotero-plugin-dev-tool";
 
 export default defineConfig({
   placeholders: {
@@ -49,7 +52,7 @@ export default defineConfig({
 });
 ```
 
-Full config refrence [src/config.ts](./src/config.ts).
+Full config please refrence in [src/config.ts](./src/config.ts).
 
 ### 03. Creat a env file
 
@@ -78,9 +81,21 @@ dataDir =
 # GITHUB_TOKEN = 
 ```
 
-### 04. Run
+### 04. Add scripts to package.json
+
+```json
+scripts: {
+  start: ＂zotero-plugin server",
+  build: "zotero-plugin build"
+}
+```
+
+### 05. Run
 
 ```bash
+pnpm run build
+
+# Or, run cmd in terminal
 pnpm exec zotero-plugin build
 ```
 
