@@ -1,18 +1,9 @@
-import { cosmiconfig, cosmiconfigSync } from "cosmiconfig";
+import { cosmiconfigSync } from "cosmiconfig";
 import * as dotenv from "dotenv";
 import { BuildOptions } from "esbuild";
 import path from "path";
 
 export interface ConfigBase {
-  addon: {
-    addonName: string;
-    addonDescription: string;
-    addonID: string;
-    addonRef: string;
-    addonInstance: string;
-    prefsPrefix: string;
-    updateJSON: string;
-  };
   /**
    * source code dir
    *
@@ -37,9 +28,21 @@ export interface ConfigBase {
    * @default *`["addon/**\/*"]`
    */
   assets?: string[];
-
-  stringsToReplace?: {
+  /**
+   * placeholders to replace in static assets
+   *
+   * 静态资源文本占位符，在构建时将 `__key__` 会被替换为 `value`
+   *
+   */
+  placeholders: {
     [key: string]: any;
+    addonName: string;
+    addonDescription: string;
+    addonID: string;
+    addonRef: string;
+    addonInstance: string;
+    prefsPrefix: string;
+    updateJSON: string;
   };
   fluent?: {
     prefixLocaleFiles?: boolean;
@@ -97,11 +100,10 @@ export const defineConfig = (options: ConfigBase): Config => {
   if (!dotenvResult) throw new Error(".env error");
 
   return {
-    addon: options.addon,
     source: options.source ?? "src",
     dist: options.dist ?? "build",
     assets: options.assets ?? ["addon/**/*"],
-    stringsToReplace: options.stringsToReplace ?? {},
+    placeholders: options.placeholders,
     fluent: {
       prefixFluentMessages: true,
       prefixLocaleFiles: true,
@@ -117,7 +119,7 @@ export const defineConfig = (options: ConfigBase): Config => {
         outfile: path.join(
           process.cwd(),
           options.dist ?? "build",
-          `addon/${options.addon.addonRef}.js`,
+          `addon/${options.placeholders.addonRef ?? "index"}.js`,
         ),
         // Don't turn minify on
         minify: process.env.NODE_ENV === "production",

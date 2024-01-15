@@ -41,6 +41,7 @@
     "**/node_modules/**",
     "scripts/**",
     "dist/**",
+    "bin/**",
     "**/**/*.js",
     "**/*.bak",
     "!.vuepress/**",

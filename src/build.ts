@@ -1,20 +1,16 @@
-import { Config } from "./config";
-import {
-  clearFolder,
-  copyFileSync,
-  copyFolderRecursiveSync,
-  dateFormat,
-} from "./utils/io";
-import { Logger } from "./utils/logger";
+import { Config } from "./config.js";
+import { Logger, dateFormat } from "./utils.js";
 import { zip } from "compressing";
-import { build } from "esbuild";
-import { existsSync, readFileSync, readdirSync, renameSync } from "fs";
+import { buildSync } from "esbuild";
+import * as fs from "fs-extra";
+import { globSync } from "glob";
 import path from "path";
 import replaceInFile from "replace-in-file";
+import webext from "web-ext";
 
 const { replaceInFileSync } = replaceInFile;
 
-export class Build {
+export default class Build {
   private config: Config;
   private buildTime: string;
   private mode: "production" | "development";
@@ -22,22 +18,21 @@ export class Build {
   private isPreRelease: boolean;
   constructor(config: Config, mode: "production" | "development") {
     this.config = config;
-    this.buildTime = dateFormat("YYYY-mm-dd HH:MM:SS", new Date());
+    this.buildTime = "";
     this.mode = mode;
     this.pkg = this.getPkg();
     this.isPreRelease = this.version.includes("-");
   }
 
-  async build() {
+  run() {
     const t = new Date();
     this.buildTime = dateFormat("YYYY-mm-dd HH:MM:SS", t);
-
     Logger.info(
       `[Build] BUILD_DIR=${this.config.dist}, VERSION=${this.pkg.version}, BUILD_TIME=${this.buildTime}, MODE=${this.mode}`,
     );
 
-    clearFolder(this.config.dist);
-    copyFolderRecursiveSync("addon", this.config.dist);
+    fs.emptyDirSync(this.config.dist);
+    this.copyAssets();
 
     Logger.debug("[Build] Replacing");
     this.replaceString();
@@ -46,26 +41,27 @@ export class Build {
     this.prepareLocaleFiles();
 
     Logger.debug("[Build] Running esbuild");
-    await this.esbuild();
+    this.esbuild();
 
     Logger.debug("[Build] Addon prepare OK");
 
-    if (process.env.NODE_ENV === "production") {
+    if (this.mode === "production") {
       Logger.debug("[Build] Packing Addon");
-      await zip.compressDir(
-        path.join(this.config.dist, "addon"),
-        path.join(this.config.dist, `${name}.xpi`),
-        {
-          ignoreBase: true,
-        },
-      );
+      this.pack();
 
-      //   prepareUpdateJson();
+      this.prepareUpdateJson();
 
       Logger.debug(
         `[Build] Finished in ${(new Date().getTime() - t.getTime()) / 1000} s.`,
       );
     }
+  }
+
+  copyAssets() {
+    const files = globSync(this.config.assets, {});
+    files.forEach((file) => {
+      fs.copySync(file, `${this.config.dist}/${file}`);
+    });
   }
 
   replaceString() {
@@ -84,32 +80,22 @@ export class Build {
       this.buildTime,
     ];
 
-    this.config.addon.updateJSON = this.isPreRelease
-      ? this.config.addon.updateJSON.replace("update.json", "update-beta.json")
-      : this.config.addon.updateJSON;
+    this.config.placeholders.updateJSON = this.isPreRelease
+      ? this.config.placeholders.updateJSON.replace(
+          "update.json",
+          "update-beta.json",
+        )
+      : this.config.placeholders.updateJSON;
 
     replaceFrom.push(
-      ...Object.keys(this.config.addon).map((k) => new RegExp(`__${k}__`, "g")),
-    );
-    replaceTo.push(...Object.values(this.config.addon));
-
-    replaceFrom.push(
-      ...Object.keys(this.config.stringsToReplace).map(
+      ...Object.keys(this.config.placeholders).map(
         (k) => new RegExp(`__${k}__`, "g"),
       ),
     );
-    replaceTo.push(...Object.values(this.config.stringsToReplace));
+    replaceTo.push(...Object.values(this.config.placeholders));
 
     const replaceResult = replaceInFileSync({
-      files: [
-        `${this.config.dist}/addon/**/*.xhtml`,
-        `${this.config.dist}/addon/**/*.html`,
-        `${this.config.dist}/addon/**/*.css`,
-        `${this.config.dist}/addon/**/*.json`,
-        `${this.config.dist}/addon/prefs.js`,
-        `${this.config.dist}/addon/manifest.json`,
-        `${this.config.dist}/addon/bootstrap.js`,
-      ],
+      files: this.config.assets.map((asset) => `${this.config.dist}/${asset}`),
       from: replaceFrom,
       to: replaceTo,
       countMatches: true,
@@ -132,13 +118,14 @@ export class Build {
         `${this.config.dist}/addon/**/*.html`,
       ],
       // @ts-expect-error ReplaceInFileConfig has processor
-
       processor: (input) => {
         const matchs = [...input.matchAll(/(data-l10n-id)="(\S*)"/g)];
         matchs.map((match) => {
           input = input.replace(
             match[0],
-            `${match[1]}="${this.config.addon.addonRef}-${match[2]}"`,
+            this.config.fluent.prefixFluentMessages == true
+              ? `${match[1]}="${this.config.placeholders.addonRef}-${match[2]}"`
+              : match[0],
           );
           MessagesInHTML.add(match[2]);
         });
@@ -147,33 +134,28 @@ export class Build {
     });
 
     // Walk the sub folders of `build/addon/locale`
-    const localesPath = path.join(this.config.dist, "addon/locale"),
-      localeNames = readdirSync(localesPath, { withFileTypes: true })
-        .filter((dirent) => dirent.isDirectory())
-        .map((dirent) => dirent.name);
+    const localeNames = globSync(`${this.config.dist}/addon/locale/*/`, {}).map(
+      (locale) => path.basename(locale),
+    );
 
     for (const localeName of localeNames) {
-      const localePath = path.join(localesPath, localeName);
-      const ftlFiles = readdirSync(localePath, {
-        withFileTypes: true,
-      })
-        .filter((dirent) => dirent.isFile())
-        .map((dirent) => dirent.name);
-
       // rename *.ftl to addonRef-*.ftl
-      for (const ftlFile of ftlFiles) {
-        if (ftlFile.endsWith(".ftl")) {
-          renameSync(
-            path.join(localePath, ftlFile),
-            path.join(localePath, `${this.config.addon.addonRef}-${ftlFile}`),
+      if (this.config.fluent.prefixLocaleFiles == true) {
+        globSync(
+          `${this.config.dist}/addon/locale/${localeName}/**/*.ftl`,
+          {},
+        ).forEach((f) => {
+          fs.moveSync(
+            f,
+            `${path.dirname(f)}/${this.config.placeholders.addonRef}-${path.basename(f)}`,
           );
-        }
+        });
       }
 
       // Prefix Fluent messages in each ftl
       const MessageInThisLang = new Set();
       replaceInFileSync({
-        files: [`${this.config.dist}/addon/locale/${localeName}/*.ftl`],
+        files: [`${this.config.dist}/addon/locale/${localeName}/**/*.ftl`],
         // @ts-expect-error ReplaceInFileConfig has processor
         processor: (fltContent) => {
           const lines = fltContent.split("\n");
@@ -184,7 +166,9 @@ export class Build {
             );
             if (match && match.groups) {
               MessageInThisLang.add(match.groups.message);
-              return `${this.config.addon.addonRef}-${line}`;
+              return this.config.fluent.prefixFluentMessages
+                ? `${this.config.placeholders.addonRef}-${line}`
+                : line;
             } else {
               return line;
             }
@@ -202,22 +186,22 @@ export class Build {
     }
   }
 
-  async esbuild() {
+  esbuild() {
     this.config.esbuildOptions.forEach(async (esbuildOption) => {
-      await build(esbuildOption);
+      buildSync(esbuildOption);
     });
   }
 
   prepareUpdateJson() {
     // If it is a pre-release, use update-beta.json
     if (!this.isPreRelease) {
-      copyFileSync("scripts/update-template.json", "update.json");
+      fs.copySync("scripts/update-template.json", "update.json");
     }
-    if (existsSync("update-beta.json") || this.isPreRelease) {
-      copyFileSync("scripts/update-template.json", "update-beta.json");
+    if (fs.existsSync("update-beta.json") || this.isPreRelease) {
+      fs.copySync("scripts/update-template.json", "update-beta.json");
     }
 
-    const updateLink = `https://github.com/${this.repo}/release/download/v${this.version}/${name}.xpi`;
+    const updateLink = `https://github.com/${this.repo}/release/download/v${this.version}/${this.pkg.name}.xpi`;
 
     const replaceResult = replaceInFileSync({
       files: [
@@ -232,10 +216,10 @@ export class Build {
         /__updateURL__/g,
       ],
       to: [
-        this.config.addon.addonID,
+        this.config.placeholders.addonID,
         this.version,
         updateLink,
-        this.config.addon.updateJSON,
+        this.config.placeholders.updateJSON,
       ],
       countMatches: true,
     });
@@ -252,8 +236,23 @@ export class Build {
     );
   }
 
+  async pack() {
+    await zip.compressDir(
+      path.join(this.config.dist, "addon"),
+      path.join(this.config.dist, `${this.pkg.name}.xpi`),
+      {
+        ignoreBase: true,
+      },
+    );
+    // await webext.cmd.build({
+    //   sourceDir: `${this.config.dist}/addon`,
+    //   artifactsDir: this.config.dist,
+    //   filename: `${this.pkg.name ?? "name"}.xpi`,
+    // });
+  }
+
   private getPkg() {
-    const pkg = readFileSync(path.join(process.cwd(), "package.json"), {
+    const pkg = fs.readFileSync(path.join(process.cwd(), "package.json"), {
       encoding: "utf-8",
     });
     return JSON.parse(pkg);

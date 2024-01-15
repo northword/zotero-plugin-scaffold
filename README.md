@@ -8,7 +8,13 @@ This repository serves only as a proof-of-concept for the above.
 
 ## Usage
 
-### Install
+### 01. Install
+
+#### From NPM
+
+> WIP
+
+#### From GitHub
 
 ```bash
 # clone this repo
@@ -20,16 +26,19 @@ pnpm link ../zotero-plugin-dev-tool
 
 ```
 
-### Config
+### 02. Creat a config file
 
-creat a config
+```bash
+.zotero-pluginrc
+zotero-plugin.config.ts
+# also avaliable in *.js  *.mjs  *.cjs  *.ts  *.yaml  *.json
+```
 
 ```ts
-// zotero-plugin.config.ts
-import { ZoteroPluginDev } from "zotero-plugin-dev-tool/";
+import { defineConfig } from "zotero-plugin-dev-tool/";
 
-export default ZoteroPluginDev({
-  addon: {
+export default defineConfig({
+  placeholders: {
     addonName: "Test Addon for Zotero",
     addonDescription: "Test desc for Zotero",
     addonID: "",
@@ -38,4 +47,34 @@ export default ZoteroPluginDev({
     prefsPrefix: "",
   },
 });
+```
+
+### 03. Creat a env file
+
+```bash
+.env
+scripts/.env
+```
+
+```ini
+zoteroBinPath = /path/to/zotero.exe
+profilePath = /path/to/profile
+dataDir = 
+```
+
+### 04. Run
+
+```bash
+pnpm exec zotero-plugin build
+```
+
+## Using in NodeJS code
+
+```ts
+import { Config, Build } from "zotero-plugin-dev-tool";
+
+const config = Config.loadConfig();
+
+const Builder = new Build(config, "production");
+Builder.run();
 ```
