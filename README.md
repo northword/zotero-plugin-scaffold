@@ -49,6 +49,8 @@ export default defineConfig({
 });
 ```
 
+Full config refrence [src/config.ts](./src/config.ts).
+
 ### 03. Creat a env file
 
 ```bash
@@ -57,9 +59,23 @@ scripts/.env
 ```
 
 ```ini
+# Please input the path of the Zotero binary file in `zoteroBinPath`.
+# The path delimiter should be escaped as `\\` for win32. The path is `*/Zotero.app/Contents/MacOS/zotero` for MacOS.
 zoteroBinPath = /path/to/zotero.exe
+
+# Please input the path of the profile used for development in `profilePath`.
+# Start the profile manager by `/path/to/zotero.exe -p` to create a profile for development
+# https://www.zotero.org/support/kb/profile_directory
 profilePath = /path/to/profile
+
+# Please input the directory where the database is located in dataDir
+# If this field is kept empty, Zotero will start with the default data.
+# https://www.zotero.org/support/zotero_data
 dataDir = 
+
+# GitHub Token
+# For release-it
+# GITHUB_TOKEN = 
 ```
 
 ### 04. Run
