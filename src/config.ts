@@ -1,6 +1,7 @@
-import { cosmiconfigSync } from "cosmiconfig";
+import { cosmiconfig, cosmiconfigSync } from "cosmiconfig";
 import * as dotenv from "dotenv";
 import { BuildOptions } from "esbuild";
+import _ from "lodash";
 import path from "path";
 
 export interface ConfigBase {
@@ -9,9 +10,9 @@ export interface ConfigBase {
    *
    * 源码目录
    *
-   * @default "src"
+   * @default ["src"]
    */
-  source?: string;
+  source?: string[];
   /**
    * build dir
    *
@@ -34,15 +35,15 @@ export interface ConfigBase {
    * 静态资源文本占位符，在构建时将 `__key__` 会被替换为 `value`
    *
    */
-  placeholders: {
+  placeholders?: {
     [key: string]: any;
-    addonName: string;
-    addonDescription: string;
-    addonID: string;
-    addonRef: string;
-    addonInstance: string;
-    prefsPrefix: string;
-    updateJSON: string;
+    addonName?: string;
+    addonDescription?: string;
+    addonID?: string;
+    addonRef?: string;
+    addonInstance?: string;
+    prefsPrefix?: string;
+    updateJSON?: string;
   };
   fluent?: {
     prefixLocaleFiles?: boolean;
@@ -64,7 +65,7 @@ export interface ConfigBase {
    *   bundle: true,
    *   target: "firefox102",
    *   outfile: path.join(
-   *     buildDir,
+   *     Config.dist,
    *     `addon/${config.addonRef}.js`,
    *   ),
    *   minify: env.NODE_ENV === "production",
@@ -93,22 +94,22 @@ export interface Config extends Required<ConfigBase> {
   };
 }
 
-export const defineConfig = (options: ConfigBase): Config => {
+export const defineConfig = (userConfig: ConfigBase): Config => {
   const dotenvResult = dotenv.config({
-    path: path.resolve(process.cwd(), options.cmdPath ?? "scripts/.env"),
+    path: path.resolve(process.cwd(), userConfig.cmdPath ?? "scripts/.env"),
   }).parsed;
   if (!dotenvResult) throw new Error(".env error");
 
   return {
-    source: options.source ?? "src",
-    dist: options.dist ?? "build",
-    assets: options.assets ?? ["addon/**/*"],
-    placeholders: options.placeholders,
+    source: userConfig.source ?? ["src"],
+    dist: userConfig.dist ?? "build",
+    assets: userConfig.assets ?? ["addon/**/*"],
+    placeholders: userConfig.placeholders ?? {},
     fluent: {
       prefixFluentMessages: true,
       prefixLocaleFiles: true,
     },
-    esbuildOptions: options.esbuildOptions ?? [
+    esbuildOptions: userConfig.esbuildOptions ?? [
       {
         entryPoints: ["src/index.ts"],
         define: {
@@ -118,20 +119,20 @@ export const defineConfig = (options: ConfigBase): Config => {
         target: "firefox102",
         outfile: path.join(
           process.cwd(),
-          options.dist ?? "build",
-          `addon/${options.placeholders.addonRef ?? "index"}.js`,
+          userConfig.dist ?? "build",
+          `addon/${userConfig.placeholders?.addonRef ?? "index"}.js`,
         ),
         // Don't turn minify on
         minify: process.env.NODE_ENV === "production",
       },
     ],
-    makeBootstrap: options.makeBootstrap ?? true,
-    makeManifest: options.makeManifest ?? {
+    makeBootstrap: userConfig.makeBootstrap ?? true,
+    makeManifest: userConfig.makeManifest ?? {
       enable: true,
       // templatePath: "",
     },
-    makeUpdateJson: options.makeUpdateJson ?? { enable: true },
-    addonLint: options.addonLint ?? "",
+    makeUpdateJson: userConfig.makeUpdateJson ?? { enable: true },
+    addonLint: userConfig.addonLint ?? "",
     cmdPath: "",
     cmd: {
       zoteroBinPath: dotenvResult["zoteroBinPath"],
@@ -141,11 +142,12 @@ export const defineConfig = (options: ConfigBase): Config => {
   };
 };
 
-export function loadConfig() {
-  const explorerSync = cosmiconfigSync("zotero-plugin");
-  const result = explorerSync.search();
+export async function loadConfig(file?: string) {
+  const explorer = cosmiconfig("zotero-plugin");
+  const result = await explorer.search(file);
   if (result) {
     return result.config as Config;
   }
-  throw new Error("Config not work");
+  return defineConfig({});
+  throw new Error("Config file not found.");
 }

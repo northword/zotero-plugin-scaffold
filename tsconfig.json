@@ -2,14 +2,14 @@
   "compilerOptions": {
     "target": "ESNext",
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "Node",
     "esModuleInterop": true,
     "strict": true,
     "resolveJsonModule": true,
     "declaration": true,
     "outDir": "dist",
     "skipLibCheck": true,
-    "rootDir": "src"
+    "rootDir": "src",
   },
-  "include": ["src/*", "types/*", "bin/*"]
+  "include": ["src/*", "types/*", "bin/*"],
 }

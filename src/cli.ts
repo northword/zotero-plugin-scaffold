@@ -1,52 +1,78 @@
-import pkg from "../package.json" assert { type: "json" };
+// import pkg from "../package.json" assert { type: "json" };
 // import beforeCli from "./beforeCli.mjs";
-import { Build, Config } from "./index.js";
+import { ConfigBase } from "./config.js";
+import { Build, Config, Server } from "./index.js";
 import { Logger } from "./utils.js";
 import { Command } from "commander";
+import { default as fs } from "fs-extra";
+import _ from "lodash";
+import path from "path";
+import updateNotifier from "update-notifier";
+import { fileURLToPath } from "url";
 
-function cli() {
+export default async function main() {
+  const pkg = fs.readJsonSync(
+    path.join(path.dirname(fileURLToPath(import.meta.url)), "../package.json"),
+    {
+      encoding: "utf-8",
+    },
+  );
+  updateNotifier({ pkg: pkg }).notify();
+
+  // Env variables are initialized to dev, but can be overridden by each command
+  // For example, "zotero-plugin build" overrides them to "production"
+  process.env.NODE_ENV ??= "development";
+
   const cli = new Command();
   cli.version(pkg.version).usage("<command> [options]");
 
   cli
     .command("build")
-    .description("Build plugin.")
+    .description("Build the plugin.")
+    .option("--dev", "Builds the plugin in dev mode.")
     .option(
-      "--dev",
-      "Builds the website in dev mode, including full React error messages.",
-    )
-    .option(
-      "--bundle-analyzer",
-      "visualize size of webpack output files with an interactive zoomable tree map (default: false)",
-    )
-    .option(
-      "--out-dir <dir>",
+      "--dist <dir>",
       "the full path for the new output directory, relative to the current workspace (default: build)",
     )
     .option(
       "--config <config>",
-      "path to docusaurus config file (default: `[siteDir]/docusaurus.config.js`)",
+      "path to zotero-plugin config file (default: `zotero-plugin.config.ts`)",
     )
-    .option(
-      "-l, --locale <locale>",
-      "build the site in a specified locale. Build all known locales otherwise",
-    )
-    .option(
-      "--no-minify",
-      "build website without minimizing JS bundles (default: false)",
-    )
-    // @ts-expect-error: Promise<string> is not assignable to Promise<void>... but
-    // good enough here.
-    .action(Build);
+    .action(async (options: any) => {
+      const configFile = await Config.loadConfig(options.config);
+      const configCli: ConfigBase = {
+        dist: options.dist,
+      };
+      const configMerged = _.merge(configFile, configCli);
+      new Build(configMerged, options.dev ? "development" : "production").run();
+    });
 
   cli
     .command("server")
     .description("Start development server.")
-    .option(
-      "--skip-build",
-      "skip building website before deploy it (default: false)",
-    )
-    .action(() => console.log("server"));
+    // .option(
+    //   "--skip-build",
+    //   "skip building website before deploy it (default: false)",
+    // )
+    // .option(
+    //   "--only-start",
+    //   "skip building website before deploy it (default: false)",
+    // )
+    .action(async (options: any) => {
+      const configFile = await Config.loadConfig(options.config);
+      const configCli: ConfigBase = {
+        //
+      };
+      const configMerged = _.merge(configFile, configCli);
+      new Server(configMerged).run();
+    });
+
+  cli
+    .command("create")
+    .description("Create the plugin template.")
+    .action((options: any) => {
+      console.log("The Create not yet implemented");
+    });
 
   cli.arguments("<command>").action((cmd) => {
     cli.outputHelp();
@@ -54,13 +80,4 @@ function cli() {
   });
 
   cli.parse(process.argv);
-}
-
-export default function main() {
-  // Env variables are initialized to dev, but can be overridden by each command
-  // For example, "zotero-plugin build" overrides them to "production"
-  const config = Config.loadConfig();
-  process.env.NODE_ENV ??= "development";
-  // await beforeCli();
-  cli();
 }

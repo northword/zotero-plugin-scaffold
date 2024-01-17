@@ -14,7 +14,7 @@ This repository serves only as a proof-of-concept for the above.
 
 > WIP
 
-#### From GitHub
+#### From GitHub source code
 
 ```bash
 # clone this repo
@@ -30,7 +30,7 @@ cd your-plugin-work-dir/
 pnpm link ../zotero-plugin-dev-tool
 ```
 
-### 02. Creat a config file
+### 02. Create a config file
 
 ```bash
 zotero-plugin.config.ts
@@ -54,7 +54,7 @@ export default defineConfig({
 
 Full config please refrence in [src/config.ts](./src/config.ts).
 
-### 03. Creat a env file
+### 03. Create a env file
 
 ```bash
 .env
@@ -74,11 +74,11 @@ profilePath = /path/to/profile
 # Please input the directory where the database is located in dataDir
 # If this field is kept empty, Zotero will start with the default data.
 # https://www.zotero.org/support/zotero_data
-dataDir = 
+dataDir =
 
 # GitHub Token
 # For release-it
-# GITHUB_TOKEN = 
+# GITHUB_TOKEN =
 ```
 
 ### 04. Add scripts to package.json
@@ -102,7 +102,7 @@ pnpm exec zotero-plugin build
 ## Using in NodeJS code
 
 ```ts
-import { Config, Build } from "zotero-plugin-dev-tool";
+import { Build, Config } from "zotero-plugin-dev-tool";
 
 const config = Config.loadConfig();
 

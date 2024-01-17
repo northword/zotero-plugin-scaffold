@@ -2,7 +2,7 @@ import { Config } from "./config.js";
 import { Logger, dateFormat } from "./utils.js";
 import { zip } from "compressing";
 import { buildSync } from "esbuild";
-import * as fs from "fs-extra";
+import { default as fs } from "fs-extra";
 import { globSync } from "glob";
 import path from "path";
 import replaceInFile from "replace-in-file";
@@ -19,16 +19,19 @@ export default class Build {
   constructor(config: Config, mode: "production" | "development") {
     this.config = config;
     this.buildTime = "";
-    this.mode = mode;
+    this.mode = process.env.NODE_ENV = mode;
     this.pkg = this.getPkg();
     this.isPreRelease = this.version.includes("-");
   }
 
+  /**
+   * Default build runner
+   */
   run() {
     const t = new Date();
     this.buildTime = dateFormat("YYYY-mm-dd HH:MM:SS", t);
     Logger.info(
-      `[Build] BUILD_DIR=${this.config.dist}, VERSION=${this.pkg.version}, BUILD_TIME=${this.buildTime}, MODE=${this.mode}`,
+      `[Build] BUILD_DIR=${this.config.dist}, VERSION=${this.pkg.version}, BUILD_TIME=${this.buildTime}, MODE=${process.env.NODE_ENV}`,
     );
 
     fs.emptyDirSync(this.config.dist);
@@ -57,6 +60,9 @@ export default class Build {
     }
   }
 
+  /**
+   * Copys files in `Config.assets` to `Config.dist`
+   */
   copyAssets() {
     const files = globSync(this.config.assets, {});
     files.forEach((file) => {
@@ -64,6 +70,9 @@ export default class Build {
     });
   }
 
+  /**
+   * Replace all `placeholder.key` to `placeholder.value` for all files in `Config.assets`
+   */
   replaceString() {
     const replaceFrom = [
       /__author__/g,
@@ -81,7 +90,7 @@ export default class Build {
     ];
 
     this.config.placeholders.updateJSON = this.isPreRelease
-      ? this.config.placeholders.updateJSON.replace(
+      ? this.config.placeholders.updateJSON?.replace(
           "update.json",
           "update-beta.json",
         )
@@ -251,13 +260,20 @@ export default class Build {
     // });
   }
 
+  /**
+   * Get plugin's package.json
+   * @returns object of package.json
+   */
   private getPkg() {
-    const pkg = fs.readFileSync(path.join(process.cwd(), "package.json"), {
+    return fs.readJsonSync(path.join(process.cwd(), "package.json"), {
       encoding: "utf-8",
     });
-    return JSON.parse(pkg);
   }
 
+  /**
+   * Get plugin's version defined in package.json
+   * @returns plugin's current version
+   */
   private get version() {
     return this.pkg.version ?? "";
   }
