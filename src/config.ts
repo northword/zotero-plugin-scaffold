@@ -104,7 +104,7 @@ export interface Config extends Required<ConfigBase> {
 
 export const defineConfig = (userConfig: ConfigBase): Config => {
   const dotenvResult = dotenv.config({
-    path: path.resolve(process.cwd(), userConfig.cmdPath ?? "scripts/.env"),
+    path: path.resolve(process.cwd(), userConfig.cmdPath ?? ".env"),
   }).parsed;
   if (!dotenvResult) throw new Error(".env error");
 
