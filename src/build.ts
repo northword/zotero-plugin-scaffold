@@ -64,9 +64,18 @@ export default class Build {
    * Copys files in `Config.assets` to `Config.dist`
    */
   copyAssets() {
-    const files = globSync(this.config.assets, {});
+    const files = globSync(this.config.assets, {
+      ignore: this.config.assetsIgnore,
+    });
     files.forEach((file) => {
-      fs.copySync(file, `${this.config.dist}/${file}`);
+      console.log(
+        file,
+        `${this.config.dist}/addon/${file.replace(new RegExp(this.config.source.join("|")), "")}`,
+      );
+      const distPath = fs.copySync(
+        file,
+        `${this.config.dist}/addon/${file.replace(new RegExp(this.config.source.join("|")), "")}`,
+      );
     });
   }
 

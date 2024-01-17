@@ -26,9 +26,17 @@ export interface ConfigBase {
    *
    * 静态资源目录，包括图标、ftl 文件、第三方 js 文件、css、xhtml 等
    *
-   * @default *`["addon/**\/*"]`
+   * @default * `["src/** /*.*"]`
    */
   assets?: string[];
+  /**
+   * glob list of static assets
+   *
+   * 静态资源目录，包括图标、ftl 文件、第三方 js 文件、css、xhtml 等
+   *
+   * @default * `["src/** /*.ts"]`
+   */
+  assetsIgnore?: string[];
   /**
    * placeholders to replace in static assets
    *
@@ -103,7 +111,8 @@ export const defineConfig = (userConfig: ConfigBase): Config => {
   return {
     source: userConfig.source ?? ["src"],
     dist: userConfig.dist ?? "build",
-    assets: userConfig.assets ?? ["addon/**/*"],
+    assets: userConfig.assets ?? ["src/**/*.*"],
+    assetsIgnore: userConfig.assetsIgnore ?? ["src/**/*.ts"],
     placeholders: userConfig.placeholders ?? {},
     fluent: {
       prefixFluentMessages: true,
