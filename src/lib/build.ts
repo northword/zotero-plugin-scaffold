@@ -47,18 +47,21 @@ export default class Build {
     Logger.debug("[Build] Running esbuild");
     this.esbuild();
 
+    this.config.onBuildResolved(this.config);
+
     Logger.debug("[Build] Addon prepare OK");
+
+    /**======== build resolved ===========*/
 
     if (this.mode === "production") {
       Logger.debug("[Build] Packing Addon");
       this.pack();
-
       this.prepareUpdateJson();
-
-      Logger.debug(
-        `[Build] Finished in ${(new Date().getTime() - t.getTime()) / 1000} s.`,
-      );
     }
+
+    Logger.debug(
+      `[Build] Finished in ${(new Date().getTime() - t.getTime()) / 1000} s.`,
+    );
   }
 
   /**

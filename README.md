@@ -14,7 +14,7 @@ This repository serves only as a proof-of-concept for the above.
 
 > WIP
 
-#### From GitHub source code
+#### From source code
 
 ```bash
 # clone this repo
@@ -30,7 +30,9 @@ cd your-plugin-work-dir/
 pnpm link ../zotero-plugin-dev-tool
 ```
 
-### 02. Create a config file
+### 02. Create a config file (optional)
+
+The configuration file needs to be stored in the following location. If not found, the default configuration will be used.
 
 ```bash
 zotero-plugin.config.ts
@@ -52,9 +54,13 @@ export default defineConfig({
 });
 ```
 
-Full config please refrence in [src/config.ts](./src/config.ts).
+Full config please refrence in [src/config.ts](./src/types.ts).
 
 ### 03. Create a env file
+
+This file defines Zotero's runtime configuration such as binary paths, profile paths, and environment variables required for Node scripts to run.
+
+NOTE: Do not check-in this file to the repository!
 
 ```bash
 .env
@@ -84,9 +90,11 @@ dataDir =
 ### 04. Add scripts to package.json
 
 ```json
-scripts: {
-  start: ＂zotero-plugin server",
-  build: "zotero-plugin build"
+{
+  "scripts": {
+    "start": "zotero-plugin server",
+    "build": "zotero-plugin build"
+  }
 }
 ```
 

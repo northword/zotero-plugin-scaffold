@@ -4,24 +4,36 @@ import * as dotenv from "dotenv";
 import _ from "lodash";
 import path from "path";
 
+/**
+ * Define the configuration.
+ *
+ * Defines the configuration in the parameters of this function to provide type checking for user configurations.
+ * @param [userConfig]
+ * @returns Config with userDefined.
+ */
 export const defineConfig = (userConfig: ConfigBase): ConfigBase => {
   return userConfig;
 };
 
+/**
+ * Loads config
+ * @param [file="zotero-plugin.config.{ts,js,mjs,cjs}"] The path of config file.
+ * @returns Config with userDefined and defaultConfig merged.
+ */
 export async function loadConfig(file?: string): Promise<Config> {
   // load user defined config file
-  // Do not use the sync method, as the sync method only supports compiling configuration files into cjs modules
-  const explorer = cosmiconfig("zotero-plugin");
-  const result = await explorer.search(file);
+  // Do not use the sync method, as the sync method only supports compiling configuration files into cjs modules.
+  const explorer = cosmiconfig("zotero-plugin"),
+    result = await explorer.search(file);
   const userConfig: ConfigBase = result?.config ?? {};
 
-  // load .env file
+  // load `.env` file.
   const dotenvResult = dotenv.config({
     path: path.resolve(process.cwd(), userConfig.cmdPath ?? ".env"),
   }).parsed;
   if (!dotenvResult) throw new Error(".env file not found");
 
-  // define default config
+  // define default config.
   const defaultConfig: Config = {
     source: ["src"],
     dist: "build",
@@ -54,6 +66,7 @@ export async function loadConfig(file?: string): Promise<Config> {
       // templatePath: "",
     },
     makeUpdateJson: { enable: true },
+    onBuildResolved: () => {},
     addonLint: {},
     cmdPath: "",
     cmd: {
