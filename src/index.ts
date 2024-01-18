@@ -1,6 +1,6 @@
-import Build from "./build.js";
-import { defineConfig, loadConfig } from "./config.js";
-import Server from "./server.js";
+import Build from "./lib/build.js";
+import { defineConfig, loadConfig } from "./lib/config.js";
+import Server from "./lib/server.js";
 
 const Config = {
   defineConfig,

@@ -1,5 +1,6 @@
-import { Config } from "./config.js";
-import { Logger, dateFormat } from "./utils.js";
+import { Config } from "../types.js";
+import { Logger } from "../utils/logger.js";
+import { dateFormat } from "../utils/string.js";
 import { zip } from "compressing";
 import { buildSync } from "esbuild";
 import { default as fs } from "fs-extra";
@@ -68,11 +69,7 @@ export default class Build {
       ignore: this.config.assetsIgnore,
     });
     files.forEach((file) => {
-      console.log(
-        file,
-        `${this.config.dist}/addon/${file.replace(new RegExp(this.config.source.join("|")), "")}`,
-      );
-      const distPath = fs.copySync(
+      fs.copySync(
         file,
         `${this.config.dist}/addon/${file.replace(new RegExp(this.config.source.join("|")), "")}`,
       );
@@ -97,6 +94,11 @@ export default class Build {
       this.pkg.version,
       this.buildTime,
     ];
+
+    replaceFrom.push(
+      ...Object.keys(this.pkg.config).map((k) => new RegExp(`__${k}__`, "g")),
+    );
+    replaceTo.push(...Object.values(this.pkg.config));
 
     this.config.placeholders.updateJSON = this.isPreRelease
       ? this.config.placeholders.updateJSON?.replace(

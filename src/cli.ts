@@ -1,8 +1,8 @@
 // import pkg from "../package.json" assert { type: "json" };
 // import beforeCli from "./beforeCli.mjs";
-import { ConfigBase } from "./config.js";
 import { Build, Config, Server } from "./index.js";
-import { Logger } from "./utils.js";
+import { ConfigBase } from "./types.js";
+import { Logger } from "./utils/logger.js";
 import { Command } from "commander";
 import { default as fs } from "fs-extra";
 import _ from "lodash";
@@ -11,6 +11,7 @@ import updateNotifier from "update-notifier";
 import { fileURLToPath } from "url";
 
 export default async function main() {
+  // Use readFileSync instead of import json to avoid loging warning
   const pkg = fs.readJsonSync(
     path.join(path.dirname(fileURLToPath(import.meta.url)), "../package.json"),
     {

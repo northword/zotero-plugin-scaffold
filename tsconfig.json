@@ -11,5 +11,5 @@
     "skipLibCheck": true,
     "rootDir": "src",
   },
-  "include": ["src/*", "types/*", "bin/*"],
+  "include": ["src", "types", "bin"],
 }

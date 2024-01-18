@@ -1,6 +1,6 @@
+import { Config } from "../types.js";
+import { Logger } from "../utils/logger.js";
 import Build from "./build.js";
-import { Config } from "./config";
-import { Logger } from "./utils.js";
 import chokidar from "chokidar";
 import _ from "lodash";
 import path from "path";
