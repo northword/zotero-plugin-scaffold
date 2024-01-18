@@ -118,7 +118,7 @@ export interface ConfigBase {
    * 通常是一些额外的构建流程.
    * 所有的配置将作为参数传入此函数.
    */
-  onBuildResolved?: (options: Config) => any;
+  onBuildResolved?: (options: Config) => any | Promise<any>;
   addonLint?: object;
   cmdPath?: string;
 }

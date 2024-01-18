@@ -28,7 +28,7 @@ export default class Build {
   /**
    * Default build runner
    */
-  run() {
+  async run() {
     const t = new Date();
     this.buildTime = dateFormat("YYYY-mm-dd HH:MM:SS", t);
     Logger.info(
@@ -47,7 +47,7 @@ export default class Build {
     Logger.debug("[Build] Running esbuild");
     this.esbuild();
 
-    this.config.onBuildResolved(this.config);
+    await this.config.onBuildResolved(this.config);
 
     Logger.debug("[Build] Addon prepare OK");
 
