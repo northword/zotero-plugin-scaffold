@@ -18,12 +18,12 @@ This repository serves only as a proof-of-concept for the above.
 
 ```bash
 # clone this repo
-git clone https://github.com/northword/zotero-plugin-dev-tool zotero-plugin-dev-tool/
+git clone https://github.com/northword/zotero-plugin-dev-tool.git zotero-plugin-dev-tool/
 cd zotero-plugin-dev-tool/
 
 # build
-npm install
-npm build
+pnpm install
+pnpm run build
 
 # npm link
 cd your-plugin-work-dir/
@@ -117,3 +117,29 @@ const config = Config.loadConfig();
 const Builder = new Build(config, "production");
 Builder.run();
 ```
+
+## Contributing
+
+```bash
+# Git Clone
+git clone https://github.com/northword/zotero-plugin-dev-tool.git zotero-plugin-dev-tool
+cd zotero-plugin-dev-tool/
+
+# Install deps
+pnpm install
+
+# Watch
+pnpm run dev
+
+# Build
+pnpm run build
+
+# Lint and Prettier
+pnpm run lint:fix
+```
+
+## Acknowledgements
+
+This project references the design and code of the [Zotero Plugin Template](https://github.com/windingwind/zotero-plugin-template).
+
+This project would not be possible without the support of the [open source community](https://github.com/northword/zotero-plugin-dev-tool/network/dependencies).
