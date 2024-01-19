@@ -3,8 +3,9 @@ import { Logger } from "../utils/logger.js";
 import { dateFormat } from "../utils/string.js";
 import { zip } from "compressing";
 import { buildSync } from "esbuild";
+import { default as glob } from "fast-glob";
 import { default as fs } from "fs-extra";
-import { globSync } from "glob";
+import _ from "lodash";
 import path from "path";
 import replaceInFile from "replace-in-file";
 import webext from "web-ext";
@@ -68,9 +69,7 @@ export default class Build {
    * Copys files in `Config.assets` to `Config.dist`
    */
   copyAssets() {
-    const files = globSync(this.config.assets, {
-      ignore: this.config.assetsIgnore,
-    });
+    const files = glob.sync(this.config.assets);
     files.forEach((file) => {
       fs.copySync(
         file,
@@ -83,33 +82,10 @@ export default class Build {
    * Replace all `placeholder.key` to `placeholder.value` for all files in `Config.assets`
    */
   replaceString() {
-    const replaceFrom = [
-      /__author__/g,
-      /__description__/g,
-      /__homepage__/g,
-      /__buildVersion__/g,
-      /__buildTime__/g,
-    ];
-    const replaceTo = [
-      this.pkg.author,
-      this.pkg.description,
-      this.pkg.homepage,
-      this.pkg.version,
-      this.buildTime,
-    ];
+    const replaceFrom: Array<RegExp | string> = [],
+      replaceTo: Array<string | any> = [];
 
-    replaceFrom.push(
-      ...Object.keys(this.pkg.config).map((k) => new RegExp(`__${k}__`, "g")),
-    );
-    replaceTo.push(...Object.values(this.pkg.config));
-
-    this.config.placeholders.updateJSON = this.isPreRelease
-      ? this.config.placeholders.updateJSON?.replace(
-          "update.json",
-          "update-beta.json",
-        )
-      : this.config.placeholders.updateJSON;
-
+    // Config.placeholders has the highest priority
     replaceFrom.push(
       ...Object.keys(this.config.placeholders).map(
         (k) => new RegExp(`__${k}__`, "g"),
@@ -117,10 +93,41 @@ export default class Build {
     );
     replaceTo.push(...Object.values(this.config.placeholders));
 
+    // Then is property `config` of package.json
+    replaceFrom.push(
+      ...Object.keys(this.pkg.config).map((k) => new RegExp(`__${k}__`, "g")),
+    );
+    replaceTo.push(...Object.values(this.pkg.config));
+
+    // Last is the `author`, `desription`, `homepage`, `version` of package.json
+    // And `buildTime`
+    replaceFrom.push(
+      /__author__/g,
+      /__description__/g,
+      /__homepage__/g,
+      /__buildVersion__/g,
+      /__buildTime__/g,
+    );
+    replaceTo.push(
+      this.pkg.author,
+      this.pkg.description,
+      this.pkg.homepage,
+      this.pkg.version,
+      this.buildTime,
+    );
+
+    // // updateJSON uri
+    // this.config.placeholders.updateJSON = this.isPreRelease
+    //   ? this.config.placeholders.updateJSON?.replace(
+    //       "update.json",
+    //       "update-beta.json",
+    //     )
+    //   : this.config.placeholders.updateJSON;
+
     const replaceResult = replaceInFileSync({
       files: this.config.assets.map((asset) => `${this.config.dist}/${asset}`),
-      from: replaceFrom,
-      to: replaceTo,
+      from: _.uniq(replaceFrom),
+      to: _.uniq(replaceTo),
       countMatches: true,
     });
 
@@ -157,22 +164,21 @@ export default class Build {
     });
 
     // Walk the sub folders of `build/addon/locale`
-    const localeNames = globSync(`${this.config.dist}/addon/locale/*/`, {}).map(
-      (locale) => path.basename(locale),
-    );
+    const localeNames = glob
+      .sync(`${this.config.dist}/addon/locale/*/`, {})
+      .map((locale) => path.basename(locale));
 
     for (const localeName of localeNames) {
       // rename *.ftl to addonRef-*.ftl
       if (this.config.fluent.prefixLocaleFiles == true) {
-        globSync(
-          `${this.config.dist}/addon/locale/${localeName}/**/*.ftl`,
-          {},
-        ).forEach((f) => {
-          fs.moveSync(
-            f,
-            `${path.dirname(f)}/${this.config.placeholders.addonRef}-${path.basename(f)}`,
-          );
-        });
+        glob
+          .sync(`${this.config.dist}/addon/locale/${localeName}/**/*.ftl`, {})
+          .forEach((f) => {
+            fs.moveSync(
+              f,
+              `${path.dirname(f)}/${this.config.placeholders.addonRef}-${path.basename(f)}`,
+            );
+          });
       }
 
       // Prefix Fluent messages in each ftl

@@ -34,11 +34,10 @@ export async function loadConfig(file?: string): Promise<Config> {
   if (!dotenvResult) throw new Error(".env file not found");
 
   // define default config.
-  const defaultConfig: Config = {
+  const defaultConfig = {
     source: ["src"],
     dist: "build",
-    assets: ["src/**/*.*"],
-    assetsIgnore: ["src/**/*.ts"],
+    assets: ["src/**/*.*", "!src/**/*.ts"],
     placeholders: {},
     fluent: {
       prefixFluentMessages: true,
@@ -55,7 +54,9 @@ export async function loadConfig(file?: string): Promise<Config> {
         outfile: path.join(
           process.cwd(),
           userConfig.dist ?? "build",
-          `addon/${userConfig.placeholders?.addonRef ?? "index"}.js`,
+          // 没想好这里怎么兼容 Zotero Plugin Template 的脚本将这里存为 addonRef.js
+          // `addon/${userConfig.placeholders?.addonRef ?? "index"}.js`,
+          `addon/index.js`,
         ),
         minify: process.env.NODE_ENV === "production",
       },
@@ -74,7 +75,7 @@ export async function loadConfig(file?: string): Promise<Config> {
       profilePath: dotenvResult["profilePath"],
       dataDir: dotenvResult["dataDir"],
     },
-  };
+  } satisfies Config;
 
   // merge config
   const config = _.defaultsDeep(userConfig, defaultConfig);

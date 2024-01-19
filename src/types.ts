@@ -33,22 +33,14 @@ export interface ConfigBase {
    * 静态资源文件。
    *
    * - 通常包括图标、ftl 文件、第三方 JavaScript 文件、CSS 文件、XHTML 文件等。
-   * - 是一个 `glob` 列表，在 `assetsIgnore` 中定义此列表的排除项。
+   * - 是一个 `glob` 模式数组，支持否定模式。
    * - 除非一个目录没有需要排除的文件，否则不要添加整个目录。
    *
-   * @default * `["src/**\/*.*"]`
+   * @see {@link https://github.com/mrmlnc/fast-glob?tab=readme-ov-file#pattern-syntax | Pattern syntax | 语法说明 }
+   *
+   * @default `["src/**\/*.*", "!src/**\/*.ts"]` (no `\`)
    */
   assets?: string[];
-  /**
-   * glob list of static assets
-   *
-   * 静态资源排除目录。
-   *
-   * 通常是需要经过其他构建或打包的源文件。
-   *
-   * @default * `["src/**\/*.ts"]`
-   */
-  assetsIgnore?: string[];
   /**
    * placeholders to replace in static assets
    *
@@ -58,19 +50,10 @@ export interface ConfigBase {
    *   - `package.json` 中定义的 `name`, `description`, `version`, `homepage` 将始终作为占位符。
    *   - `package.json` 中 `config` 属性的所有属性也将作为占位符。
    *   - 内置 `__buildTime__` 占位符，值为 `build.run` 调用时间。
-   *   - 以上占位符可在此处重新定义以覆盖。
+   *   - 以上占位符可在此处重新定义以覆盖，优先级：`config.placeholders` > `packageJson.config` > `package.json`
    * - 替换发生在 `dist/addon` 下的所有文件。
    */
-  placeholders?: {
-    [key: string]: any;
-    addonName?: string;
-    addonDescription?: string;
-    addonID?: string;
-    addonRef?: string;
-    addonInstance?: string;
-    prefsPrefix?: string;
-    updateJSON?: string;
-  };
+  placeholders?: Record<string, string>;
   fluent?: {
     prefixLocaleFiles?: boolean;
     prefixFluentMessages?: boolean;
