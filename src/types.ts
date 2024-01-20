@@ -1,3 +1,4 @@
+import { type VersionBumpOptions } from "bumpp";
 import { BuildOptions } from "esbuild";
 
 export interface ConfigBase {
@@ -47,13 +48,27 @@ export interface ConfigBase {
    * 静态资源文本占位符。
    *
    * - 在构建时，脚手架使用占位符的 key 建立正则模式 `/__${key}__/g`，并将匹配到的内容替换为 `value`。
-   *   - `package.json` 中定义的 `name`, `description`, `version`, `homepage` 将始终作为占位符。
-   *   - `package.json` 中 `config` 属性的所有属性也将作为占位符。
-   *   - 内置 `__buildTime__` 占位符，值为 `build.run` 调用时间。
-   *   - 以上占位符可在此处重新定义以覆盖，优先级：`config.placeholders` > `packageJson.config` > `package.json`
+   * - 以下是一些预置的占位符，你可以在这里覆盖它们：
+   *   - `name`, `description`, `version`, `homepage`, `author` 从 `package.json` 读取。
+   *   - `__buildTime__` 为 `build.run` 调用时间。
+   *   - `addonName`, `addonID`, `addonRef`, `addonInstense`, `prefsPrefix`, `updateJSON`, `releasePage`。
    * - 替换发生在 `dist/addon` 下的所有文件。
    */
-  placeholders?: Record<string, string>;
+  placeholders: {
+    [key: string]: string | unknown;
+    name?: string;
+    description?: string;
+    homepage?: string;
+    version?: string;
+    author?: string;
+    addonName: string;
+    addonID: string;
+    addonRef: string;
+    addonInstence?: string;
+    prefsPrefix?: string;
+    updateJSON: string;
+    releasePage: string;
+  };
   fluent?: {
     prefixLocaleFiles?: boolean;
     prefixFluentMessages?: boolean;
@@ -71,24 +86,64 @@ export interface ConfigBase {
    *
    * ```js
    * {
-   *   entryPoints: ["src/index.ts"],
+   *   entryPoints: [`${source}/index.ts`],
    *   define: {
    *     __env__: `"${env.NODE_ENV}"`,
    *   },
    *   bundle: true,
    *   target: "firefox102",
-   *   outfile: `build/addon/${config.addonRef}.js`,
+   *   outfile: `build/addon/${addonRef}.js`,
    *   minify: env.NODE_ENV === "production",
    * };
    * ```
    */
   esbuildOptions?: BuildOptions[];
-  makeManifest?: { enable?: boolean; templatePath?: string };
+  /**
+   * Make manifest.json
+   *
+   */
+  makeManifest?: {
+    enable?: boolean;
+    /**
+     * template of manifest
+     *
+     * @default
+     *
+     * ```json
+     * {
+     *   manifest_version: 2,
+     *   name: "__addonName__",
+     *   version: "__buildVersion__",
+     *   description: "__description__",
+     *   homepage_url: "__homepage__",
+     *   author: "__author__",
+     *   icons: {
+     *     "48": "content/icons/favicon@0.5x.png",
+     *     "96": "content/icons/favicon.png",
+     *   },
+     *   applications: {
+     *     zotero: {
+     *       id: "__addonID__",
+     *       update_url: "__updateURL__",
+     *       strict_min_version: "6.999",
+     *       strict_max_version: "7.0.*",
+     *     },
+     *     gecko: {
+     *       id: "__addonID__",
+     *       update_url: "__updateURL__",
+     *       strict_min_version: "102",
+     *     };
+     *   };
+     * };
+     * ```
+     */
+    template?: Partial<Manifest>;
+  };
   makeBootstrap?: boolean;
   makeUpdateJson?: {
     enable?: boolean | "only-production";
-    templatePath?: string;
-    distPath?: string;
+    // updateURL?: string;
+    template?: UpdateJSON;
   };
   /**
    * The function called when build-in build resolved.
@@ -104,12 +159,58 @@ export interface ConfigBase {
   onBuildResolved?: (options: Config) => any | Promise<any>;
   addonLint?: object;
   cmdPath?: string;
+  release?: {
+    // releaseIt?: object;
+    bumpp: VersionBumpOptions;
+  };
 }
+
+export interface ConfigOptional extends Partial<ConfigBase> {}
 
 export interface Config extends Required<ConfigBase> {
   cmd: {
     zoteroBinPath: string;
     profilePath: string;
     dataDir: string;
+  };
+}
+
+interface Manifest {
+  [key: string]: any;
+  manifest_version: number;
+  name: string;
+  version: string;
+  description?: string;
+  homepage_url?: string;
+  author?: string;
+  icons?: Record<string, string>;
+  applications: {
+    zotero: {
+      id: string;
+      update_url: string;
+      strict_min_version: string;
+      strict_max_version?: string;
+    };
+    gecko: {
+      id: string;
+      update_url: string;
+      strict_min_version: string;
+    };
+  };
+}
+
+interface UpdateJSON {
+  addons: {
+    [addonID: string]: {
+      updates: Array<{
+        version: string;
+        update_link: string;
+        applications: {
+          [zotero: string]: {
+            strict_min_version: string;
+          };
+        };
+      }>;
+    };
   };
 }

@@ -1,7 +1,5 @@
-// import pkg from "../package.json" assert { type: "json" };
-// import beforeCli from "./beforeCli.mjs";
-import { Build, Config, Server } from "./index.js";
-import { ConfigBase } from "./types.js";
+import { Build, Config, Create, Release, Server } from "./index.js";
+import { ConfigOptional } from "./types.js";
 import { Logger } from "./utils/logger.js";
 import { Command } from "commander";
 import { default as fs } from "fs-extra";
@@ -41,7 +39,7 @@ export default async function main() {
     )
     .action(async (options: any) => {
       const configFile = await Config.loadConfig(options.config);
-      const configCli: ConfigBase = {
+      const configCli: ConfigOptional = {
         dist: options.dist,
       };
       const configMerged = _.merge(configFile, configCli);
@@ -61,7 +59,7 @@ export default async function main() {
     // )
     .action(async (options: any) => {
       const configFile = await Config.loadConfig(options.config);
-      const configCli: ConfigBase = {
+      const configCli: ConfigOptional = {
         //
       };
       const configMerged = _.merge(configFile, configCli);
@@ -72,7 +70,20 @@ export default async function main() {
     .command("create")
     .description("Create the plugin template.")
     .action((options: any) => {
-      console.log("The Create not yet implemented");
+      console.log("The rreate not yet implemented");
+      new Create().run();
+    });
+
+  cli
+    .command("release")
+    .description("Release.")
+    .action(async (options: any) => {
+      const configFile = await Config.loadConfig(options.config);
+      const configCli: ConfigOptional = {
+        //
+      };
+      const configMerged = _.merge(configFile, configCli);
+      new Release(configMerged).run();
     });
 
   cli.arguments("<command>").action((cmd) => {

@@ -39,14 +39,17 @@ export default class Build {
     fs.emptyDirSync(this.config.dist);
     this.copyAssets();
 
-    Logger.debug("[Build] Replacing");
-    this.replaceString();
+    Logger.debug("[Build] Preparing Manifest");
+    this.makeManifest();
 
     Logger.debug("[Build] Preparing locale files");
     this.prepareLocaleFiles();
 
     Logger.debug("[Build] Running esbuild");
     this.esbuild();
+
+    Logger.debug("[Build] Replacing");
+    this.replaceString();
 
     await this.config.onBuildResolved(this.config);
 
@@ -57,7 +60,7 @@ export default class Build {
     if (this.mode === "production") {
       Logger.debug("[Build] Packing Addon");
       this.pack();
-      this.prepareUpdateJson();
+      this.markUpdateJson();
     }
 
     Logger.debug(
@@ -78,8 +81,17 @@ export default class Build {
     });
   }
 
+  makeManifest() {
+    if (!this.config.makeManifest.enable) return;
+    fs.outputJSONSync(
+      `${this.config.dist}/addon/manifest.json`,
+      this.config.makeManifest.template,
+      { spaces: 2 },
+    );
+  }
+
   /**
-   * Replace all `placeholder.key` to `placeholder.value` for all files in `Config.assets`
+   * Replace all `placeholder.key` to `placeholder.value` for all files in `dist`
    */
   replaceString() {
     const replaceFrom: Array<RegExp | string> = [],
@@ -93,28 +105,8 @@ export default class Build {
     );
     replaceTo.push(...Object.values(this.config.placeholders));
 
-    // Then is property `config` of package.json
-    replaceFrom.push(
-      ...Object.keys(this.pkg.config).map((k) => new RegExp(`__${k}__`, "g")),
-    );
-    replaceTo.push(...Object.values(this.pkg.config));
-
-    // Last is the `author`, `desription`, `homepage`, `version` of package.json
-    // And `buildTime`
-    replaceFrom.push(
-      /__author__/g,
-      /__description__/g,
-      /__homepage__/g,
-      /__buildVersion__/g,
-      /__buildTime__/g,
-    );
-    replaceTo.push(
-      this.pkg.author,
-      this.pkg.description,
-      this.pkg.homepage,
-      this.pkg.version,
-      this.buildTime,
-    );
+    replaceFrom.push(/__buildTime__/g);
+    replaceTo.push(this.buildTime);
 
     // // updateJSON uri
     // this.config.placeholders.updateJSON = this.isPreRelease
@@ -221,16 +213,21 @@ export default class Build {
     });
   }
 
-  prepareUpdateJson() {
+  markUpdateJson() {
     // If it is a pre-release, use update-beta.json
-    if (!this.isPreRelease) {
-      fs.copySync("scripts/update-template.json", "update.json");
+    if (this.isPreRelease || fs.existsSync("update-beta.json")) {
+      // fs.copySync("scripts/update-template.json", "update-beta.json");
+      fs.writeJsonSync(
+        "update-beta.json",
+        this.config.makeUpdateJson.template,
+        { spaces: 2 },
+      );
     }
-    if (fs.existsSync("update-beta.json") || this.isPreRelease) {
-      fs.copySync("scripts/update-template.json", "update-beta.json");
-    }
+    fs.writeJsonSync("update.json", this.config.makeUpdateJson.template, {
+      spaces: 2,
+    });
 
-    const updateLink = `https://github.com/${this.repo}/release/download/v${this.version}/${this.pkg.name}.xpi`;
+    const updateLink = `${this.config.placeholders.releasePage}/release/download/v${this.version}/${this.pkg.name}.xpi`;
 
     const replaceResult = replaceInFileSync({
       files: [
@@ -300,6 +297,6 @@ export default class Build {
 
   private get repo() {
     const repo = this.pkg.repo ?? "";
-    return "";
+    return repo.replace(".git", "");
   }
 }

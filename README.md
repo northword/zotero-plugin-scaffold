@@ -1,4 +1,4 @@
-# Zotero Plugin Development Tools
+# Zotero Plugin Development Scaffold
 
 Working in progress.
 
@@ -14,12 +14,20 @@ This repository serves only as a proof-of-concept for the above.
 
 > WIP
 
+```bash
+npm install -D zotero-plugin-scaffold
+
+yarn add -D zotero-plugin-scaffold
+
+pnpm add -D zotero-plugin-scaffold
+```
+
 #### From source code
 
 ```bash
 # clone this repo
-git clone https://github.com/northword/zotero-plugin-dev-tool.git zotero-plugin-dev-tool/
-cd zotero-plugin-dev-tool/
+git clone https://github.com/northword/zotero-plugin-scaffold.git zotero-plugin-scaffold/
+cd zotero-plugin-scaffold/
 
 # build
 pnpm install
@@ -27,34 +35,38 @@ pnpm run build
 
 # npm link
 cd your-plugin-work-dir/
-pnpm link ../zotero-plugin-dev-tool
+pnpm link ../zotero-plugin-scaffold
 ```
 
-### 02. Create a config file (optional)
+### 02. Create a config file
 
-The configuration file needs to be stored in the following location. If not found, the default configuration will be used.
+The configuration file needs to be stored in the following location. If the configuration file is not found, an error will be thrown.
 
 ```bash
 zotero-plugin.config.ts
 # also avaliable in *.js  *.mjs  *.cjs  *.ts
+# Or The `zotero-plugin`` property in `package.json`
+# see https://github.com/cosmiconfig/cosmiconfig?tab=readme-ov-file#usage-for-end-users
 ```
 
+You can import `defineConfig` in js module to get type hints. If no value is specified for an optional property, the default value will be used.
+
 ```ts
-import { defineConfig } from "zotero-plugin-dev-tool";
+import { defineConfig } from "zotero-plugin-scaffold";
 
 export default defineConfig({
   placeholders: {
     addonName: "Test Addon for Zotero",
-    addonDescription: "Test desc for Zotero",
     addonID: "",
-    addonInstance: "",
     addonRef: "",
-    prefsPrefix: "",
+    addonInstance: "",
+    updateJSON: "",
+    releasePage: ""
   },
 });
 ```
 
-Full config please refrence in [src/config.ts](./src/types.ts).
+Full config please refrence in [src/types.ts](./src/types.ts).
 
 ### 03. Create a env file
 
@@ -64,7 +76,6 @@ NOTE: Do not check-in this file to the repository!
 
 ```bash
 .env
-scripts/.env
 ```
 
 ```ini
@@ -82,8 +93,7 @@ profilePath = /path/to/profile
 # https://www.zotero.org/support/zotero_data
 dataDir =
 
-# GitHub Token
-# For release-it
+# Other environment variables (optional)
 # GITHUB_TOKEN =
 ```
 
@@ -93,7 +103,8 @@ dataDir =
 {
   "scripts": {
     "start": "zotero-plugin server",
-    "build": "zotero-plugin build"
+    "build": "zotero-plugin build",
+    "release": "zotero-plugin release"
   }
 }
 ```
@@ -101,6 +112,7 @@ dataDir =
 ### 05. Run
 
 ```bash
+pnpm run start
 pnpm run build
 
 # Or, run cmd in terminal
@@ -110,20 +122,20 @@ pnpm exec zotero-plugin build
 ## Using in NodeJS code
 
 ```ts
-import { Build, Config } from "zotero-plugin-dev-tool";
+import { Build, Config } from "zotero-plugin-scaffold";
 
-const config = Config.loadConfig();
+const config = await Config.loadConfig();
 
 const Builder = new Build(config, "production");
-Builder.run();
+await Builder.run();
 ```
 
 ## Contributing
 
 ```bash
 # Git Clone
-git clone https://github.com/northword/zotero-plugin-dev-tool.git zotero-plugin-dev-tool
-cd zotero-plugin-dev-tool/
+git clone https://github.com/northword/zotero-plugin-scaffold.git zotero-plugin-scaffold
+cd zotero-plugin-scaffold/
 
 # Install deps
 pnpm install
@@ -142,4 +154,4 @@ pnpm run lint:fix
 
 This project references the design and code of the [Zotero Plugin Template](https://github.com/windingwind/zotero-plugin-template).
 
-This project would not be possible without the support of the [open source community](https://github.com/northword/zotero-plugin-dev-tool/network/dependencies).
+This project would not be possible without the support of the [open source community](https://github.com/northword/zotero-plugin-scaffold/network/dependencies).
