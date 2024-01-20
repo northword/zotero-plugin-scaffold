@@ -6,7 +6,18 @@ Create a standalone npm package for scripts in the zotero-plugin-template reposi
 
 This repository serves only as a proof-of-concept for the above.
 
-## Usage
+## Using in a blank project
+
+> WIP
+
+```bash
+# npm
+npx zotero-plugin create
+# pnpm
+pnpm dlx zotero-plugin create
+```
+
+## Using in an existing project
 
 ### 01. Install
 
