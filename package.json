@@ -40,7 +40,8 @@
     "bin/**/*",
     "dist/**/*.d.ts",
     "dist/**/*.js",
-    "docs/**/*"
+    "docs/**/*",
+    "types/**/*.d.ts"
   ],
   "directories": {
     "lib": "dist",

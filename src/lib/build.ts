@@ -51,7 +51,7 @@ export default class Build {
     Logger.debug("[Build] Replacing");
     this.replaceString();
 
-    await this.config.onBuildResolved(this.config);
+    await this.config.extraBuilder(this.config);
 
     Logger.debug("[Build] Addon prepare OK");
 

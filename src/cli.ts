@@ -1,4 +1,4 @@
-import { Build, Config, Create, Release, Server } from "./index.js";
+import { Build, Config, Create, Release, Serve } from "./index.js";
 import { ConfigOptional } from "./types.js";
 import { Logger } from "./utils/logger.js";
 import { Command } from "commander";
@@ -47,7 +47,7 @@ export default async function main() {
     });
 
   cli
-    .command("server")
+    .command("serve")
     .description("Start development server.")
     // .option(
     //   "--skip-build",
@@ -63,7 +63,7 @@ export default async function main() {
         //
       };
       const configMerged = _.merge(configFile, configCli);
-      new Server(configMerged).run();
+      new Serve(configMerged).run();
     });
 
   cli

@@ -146,6 +146,11 @@ export interface ConfigBase {
     template?: UpdateJSON;
   };
   /**
+   * The function called after Zotero started, before build-in watcher ready.
+
+   */
+  extraServer?: (options: Config) => any | Promise<any>;
+  /**
    * The function called when build-in build resolved.
    *
    * Usually some extra build process.
@@ -156,12 +161,12 @@ export interface ConfigBase {
    * 通常是一些额外的构建流程.
    * 所有的配置将作为参数传入此函数.
    */
-  onBuildResolved?: (options: Config) => any | Promise<any>;
+  extraBuilder?: (options: Config) => any | Promise<any>;
   addonLint?: object;
   cmdPath?: string;
   release?: {
-    // releaseIt?: object;
-    bumpp: VersionBumpOptions;
+    releaseIt?: Partial<ReleaseItConfig>;
+    bumpp?: VersionBumpOptions;
   };
 }
 
@@ -199,15 +204,30 @@ interface Manifest {
   };
 }
 
+/**
+ * Update json
+ * @see https://extensionworkshop.com/documentation/manage/updating-your-extension/
+ */
 interface UpdateJSON {
   addons: {
     [addonID: string]: {
       updates: Array<{
         version: string;
-        update_link: string;
+        update_link?: string;
+        /**
+         * A cryptographic hash of the file pointed to by `update_link`.
+         * This must be provided if `update_link` is not a secure URL.
+         * If present, this must be a string beginning with either `sha256:` or `sha512:`,
+         * followed by the hexadecimal-encoded hash of the matching type.
+         */
+        update_hash?: string;
         applications: {
-          [zotero: string]: {
+          zotero: {
             strict_min_version: string;
+          };
+          [application: string]: {
+            strict_min_version?: string;
+            strict_max_version?: string;
           };
         };
       }>;

@@ -6,7 +6,7 @@ import _ from "lodash";
 import path from "path";
 import webext from "web-ext";
 
-export default class Server {
+export default class Serve {
   private config: Config;
   private builder: Build;
   constructor(config: Config) {
@@ -23,6 +23,7 @@ export default class Server {
     // this.startZoteroWebExt();
 
     // watch
+    await this.config.extraServer(this.config);
     await this.watch();
   }
 

@@ -127,7 +127,8 @@ export async function loadConfig(file?: string): Promise<Config> {
         },
       },
     },
-    onBuildResolved: () => {},
+    extraServer: () => {},
+    extraBuilder: () => {},
     addonLint: {},
     cmdPath: "",
     cmd: {
@@ -136,10 +137,19 @@ export async function loadConfig(file?: string): Promise<Config> {
       dataDir: dotenvResult["dataDir"],
     },
     release: {
+      releaseIt: {
+        preReleaseId: "beta",
+        git: {
+          requireCleanWorkingDir: false,
+        },
+        npm: {
+          publish: false,
+        },
+      },
       bumpp: {
         release: "prompt",
         preid: "beta",
-        execute: "npm run build",
+        // execute: "npm run build",
         all: true,
         commit: "Release v%s",
         tag: "v%s",
