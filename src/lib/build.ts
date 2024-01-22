@@ -1,10 +1,12 @@
 import { Config } from "../types.js";
-import { Logger } from "../utils/logger.js";
+import { generateHashSync } from "../utils/crypto.js";
+import { LibBase } from "../utils/libBase.js";
 import { dateFormat } from "../utils/string.js";
+import chalk from "chalk";
 import { zip } from "compressing";
 import { buildSync } from "esbuild";
-import { default as glob } from "fast-glob";
-import { default as fs } from "fs-extra";
+import glob from "fast-glob";
+import fs from "fs-extra";
 import _ from "lodash";
 import path from "path";
 import replaceInFile from "replace-in-file";
@@ -12,17 +14,12 @@ import webext from "web-ext";
 
 const { replaceInFileSync } = replaceInFile;
 
-export default class Build {
-  private config: Config;
+export default class Build extends LibBase {
   private buildTime: string;
-  private mode: "production" | "development";
-  private pkg: any;
   private isPreRelease: boolean;
-  constructor(config: Config, mode: "production" | "development") {
-    this.config = config;
+  constructor(config: Config) {
+    super(config);
     this.buildTime = "";
-    this.mode = process.env.NODE_ENV = mode;
-    this.pkg = this.getPkg();
     this.isPreRelease = this.version.includes("-");
   }
 
@@ -32,39 +29,44 @@ export default class Build {
   async run() {
     const t = new Date();
     this.buildTime = dateFormat("YYYY-mm-dd HH:MM:SS", t);
-    Logger.info(
-      `[Build] BUILD_DIR=${this.config.dist}, VERSION=${this.pkg.version}, BUILD_TIME=${this.buildTime}, MODE=${process.env.NODE_ENV}`,
+    this.logger.info(
+      `Building version ${chalk.blue(this.version)} to ${chalk.blue(this.config.dist)} at ${chalk.blue(this.buildTime)} in ${chalk.blue(process.env.NODE_ENV)} mode.`,
     );
 
     fs.emptyDirSync(this.config.dist);
     this.copyAssets();
 
-    Logger.debug("[Build] Preparing Manifest");
+    this.logger.debug("Preparing manifest...");
     this.makeManifest();
 
-    Logger.debug("[Build] Preparing locale files");
+    this.logger.debug("Preparing locale files...");
     this.prepareLocaleFiles();
 
-    Logger.debug("[Build] Running esbuild");
+    this.logger.debug("Running esbuild...");
     this.esbuild();
 
-    Logger.debug("[Build] Replacing");
+    this.logger.debug("Replacing...");
     this.replaceString();
 
+    this.logger.debug("Running extra builder...");
     await this.config.extraBuilder(this.config);
 
-    Logger.debug("[Build] Addon prepare OK");
+    this.checkPlaceholders();
+
+    this.logger.debug("Addon prepare OK.");
 
     /**======== build resolved ===========*/
 
-    if (this.mode === "production") {
-      Logger.debug("[Build] Packing Addon");
-      this.pack();
-      this.markUpdateJson();
+    if (process.env.NODE_ENV === "production") {
+      this.logger.debug("Packing Addon...");
+      await this.pack();
+
+      this.logger.debug("Preparing update.json...");
+      this.makeUpdateJson();
     }
 
-    Logger.debug(
-      `[Build] Finished in ${(new Date().getTime() - t.getTime()) / 1000} s.`,
+    this.logger.info(
+      `Build finished in ${(new Date().getTime() - t.getTime()) / 1000} s.`,
     );
   }
 
@@ -74,10 +76,9 @@ export default class Build {
   copyAssets() {
     const files = glob.sync(this.config.assets);
     files.forEach((file) => {
-      fs.copySync(
-        file,
-        `${this.config.dist}/addon/${file.replace(new RegExp(this.config.source.join("|")), "")}`,
-      );
+      const newPath = `${this.config.dist}/addon/${file.replace(new RegExp(this.config.source.join("|")), "")}`;
+      this.logger.trace(`Copy ${file} to ${newPath}`);
+      fs.copySync(file, newPath);
     });
   }
 
@@ -105,16 +106,10 @@ export default class Build {
     );
     replaceTo.push(...Object.values(this.config.placeholders));
 
-    replaceFrom.push(/__buildTime__/g);
-    replaceTo.push(this.buildTime);
+    const updateURL = `${this.config.placeholders.releasePage}/download/${this.config.makeUpdateJson.tagName}/${this.isPreRelease ? "update-beta" : "update"}.json`;
 
-    // // updateJSON uri
-    // this.config.placeholders.updateJSON = this.isPreRelease
-    //   ? this.config.placeholders.updateJSON?.replace(
-    //       "update.json",
-    //       "update-beta.json",
-    //     )
-    //   : this.config.placeholders.updateJSON;
+    replaceFrom.push(/__buildTime__/g, /__updateURL__/g);
+    replaceTo.push(this.buildTime, updateURL);
 
     const replaceResult = replaceInFileSync({
       files: this.config.assets.map((asset) => `${this.config.dist}/${asset}`),
@@ -123,12 +118,25 @@ export default class Build {
       countMatches: true,
     });
 
-    Logger.debug(
-      "[Build] Run replace in ",
+    this.logger.debug(
+      "Run replace in ",
       replaceResult
         .filter((f) => f.hasChanged)
         .map((f) => `${f.file} : ${f.numReplacements} / ${f.numMatches}`),
     );
+  }
+
+  checkPlaceholders() {
+    replaceInFileSync({
+      files: [`${this.config.dist}/**/*`],
+      ignore: `${this.config.dist}/**/*.js`,
+      from: /__[^_]*__/g,
+      to: (match, file) => {
+        this.logger.warn(`Found invalid placeholders: ${match} in ${file}`);
+        return match;
+      },
+      dry: true,
+    });
   }
 
   prepareLocaleFiles() {
@@ -201,7 +209,7 @@ export default class Build {
       // If a message in xhtml but not in ftl of current language, log it
       MessagesInHTML.forEach((message) => {
         if (!MessageInThisLang.has(message)) {
-          Logger.error(`[Build] ${message} don't exist in ${localeName}`);
+          this.logger.error(`${message} don't exist in ${localeName}`);
         }
       });
     }
@@ -213,45 +221,46 @@ export default class Build {
     });
   }
 
-  markUpdateJson() {
-    // If it is a pre-release, use update-beta.json
-    if (this.isPreRelease || fs.existsSync("update-beta.json")) {
-      // fs.copySync("scripts/update-template.json", "update-beta.json");
-      fs.writeJsonSync(
-        "update-beta.json",
-        this.config.makeUpdateJson.template,
-        { spaces: 2 },
-      );
-    }
-    fs.writeJsonSync("update.json", this.config.makeUpdateJson.template, {
-      spaces: 2,
-    });
+  makeUpdateJson() {
+    fs.writeJsonSync(
+      `${this.config.dist}/update-beta.json`,
+      this.config.makeUpdateJson.template,
+      { spaces: 2 },
+    );
+    fs.writeJsonSync(
+      `${this.config.dist}/update.json`,
+      this.config.makeUpdateJson.template,
+      { spaces: 2 },
+    );
 
-    const updateLink = `${this.config.placeholders.releasePage}/release/download/v${this.version}/${this.pkg.name}.xpi`;
+    const updateLink = `${this.config.placeholders.releasePage}/release/download/v${this.version}/${this.pkg.name}.xpi`,
+      updateHash = generateHashSync(
+        path.join(this.config.dist, `${this.pkg.name}.xpi`),
+        "sha512",
+      );
 
     const replaceResult = replaceInFileSync({
       files: [
-        "update-beta.json",
-        this.isPreRelease ? "pass" : "update.json",
-        `${this.config.dist}/addon/manifest.json`,
+        `${this.config.dist}/update-beta.json`,
+        `${this.config.dist}/${this.isPreRelease ? "pass" : "update.json"}`,
       ],
       from: [
         /__addonID__/g,
-        /__buildVersion__/g,
+        /__version__/g,
         /__updateLink__/g,
-        /__updateURL__/g,
+        /__updateHash__/g,
       ],
       to: [
         this.config.placeholders.addonID,
         this.version,
         updateLink,
-        this.config.placeholders.updateJSON,
+        updateHash,
       ],
       countMatches: true,
     });
 
-    Logger.debug(
-      `[Build] Prepare Update.json for ${
+    this.logger.debug(
+      `Prepare Update.json for ${
         this.isPreRelease
           ? "\u001b[31m Prerelease \u001b[0m"
           : "\u001b[32m Release \u001b[0m"
@@ -281,10 +290,8 @@ export default class Build {
    * Get plugin's package.json
    * @returns object of package.json
    */
-  private getPkg() {
-    return fs.readJsonSync(path.join(process.cwd(), "package.json"), {
-      encoding: "utf-8",
-    });
+  private get pkg() {
+    return this.config.pkg;
   }
 
   /**
@@ -293,10 +300,5 @@ export default class Build {
    */
   private get version() {
     return this.pkg.version ?? "";
-  }
-
-  private get repo() {
-    const repo = this.pkg.repo ?? "";
-    return repo.replace(".git", "");
   }
 }

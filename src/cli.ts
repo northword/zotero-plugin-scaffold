@@ -1,6 +1,6 @@
 import { Build, Config, Create, Release, Serve } from "./index.js";
 import { ConfigOptional } from "./types.js";
-import { Logger } from "./utils/logger.js";
+import Log from "./utils/log.js";
 import { Command } from "commander";
 import { default as fs } from "fs-extra";
 import _ from "lodash";
@@ -9,6 +9,7 @@ import updateNotifier from "update-notifier";
 import { fileURLToPath } from "url";
 
 export default async function main() {
+  const Logger = new Log();
   // Use readFileSync instead of import json to avoid loging warning
   const pkg = fs.readJsonSync(
     path.join(path.dirname(fileURLToPath(import.meta.url)), "../package.json"),
@@ -38,17 +39,22 @@ export default async function main() {
       "path to zotero-plugin config file (default: `zotero-plugin.config.ts`)",
     )
     .action(async (options: any) => {
+      process.env.NODE_ENV = options.dev ? "development" : "production";
       const configFile = await Config.loadConfig(options.config);
       const configCli: ConfigOptional = {
         dist: options.dist,
       };
       const configMerged = _.merge(configFile, configCli);
-      new Build(configMerged, options.dev ? "development" : "production").run();
+      new Build(configMerged).run();
     });
 
   cli
     .command("serve")
     .description("Start development server.")
+    .option(
+      "--config <config>",
+      "path to zotero-plugin config file (default: `zotero-plugin.config.ts`)",
+    )
     // .option(
     //   "--skip-build",
     //   "skip building website before deploy it (default: false)",
@@ -70,14 +76,19 @@ export default async function main() {
     .command("create")
     .description("Create the plugin template.")
     .action((options: any) => {
-      console.log("The rreate not yet implemented");
+      console.log("The create not yet implemented");
       new Create().run();
     });
 
   cli
     .command("release")
     .description("Release.")
+    .option(
+      "--config <config>",
+      "path to zotero-plugin config file (default: `zotero-plugin.config.ts`)",
+    )
     .action(async (options: any) => {
+      process.env.NODE_ENV = "production";
       const configFile = await Config.loadConfig(options.config);
       const configCli: ConfigOptional = {
         //

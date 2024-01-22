@@ -51,7 +51,7 @@ export interface ConfigBase {
    * - 以下是一些预置的占位符，你可以在这里覆盖它们：
    *   - `name`, `description`, `version`, `homepage`, `author` 从 `package.json` 读取。
    *   - `__buildTime__` 为 `build.run` 调用时间。
-   *   - `addonName`, `addonID`, `addonRef`, `addonInstense`, `prefsPrefix`, `updateJSON`, `releasePage`。
+   *   - `addonName`, `addonID`, `addonRef`, `addonInstense`, `prefsPrefix`, `releasePage`。
    * - 替换发生在 `dist/addon` 下的所有文件。
    */
   placeholders: {
@@ -59,15 +59,19 @@ export interface ConfigBase {
     name?: string;
     description?: string;
     homepage?: string;
-    version?: string;
+    buildVersion?: string;
     author?: string;
     addonName: string;
     addonID: string;
     addonRef: string;
     addonInstence?: string;
     prefsPrefix?: string;
-    updateJSON: string;
-    releasePage: string;
+    /**
+     * 脚手架使用此项生成 update.json 链接和 xpi 链接
+     *
+     * @default `https://github.com/${owner}/${repo}/release`
+     */
+    releasePage?: string;
   };
   fluent?: {
     prefixLocaleFiles?: boolean;
@@ -103,6 +107,10 @@ export interface ConfigBase {
    *
    */
   makeManifest?: {
+    /**
+     * 是否使用内置的模板 manifest.json。
+     * 如果此项为 false，则开发者应自行准备 update.json
+     */
     enable?: boolean;
     /**
      * template of manifest
@@ -144,12 +152,8 @@ export interface ConfigBase {
     enable?: boolean | "only-production";
     // updateURL?: string;
     template?: UpdateJSON;
+    tagName?: "release" | "updater" | string;
   };
-  /**
-   * The function called after Zotero started, before build-in watcher ready.
-
-   */
-  extraServer?: (options: Config) => any | Promise<any>;
   /**
    * The function called when build-in build resolved.
    *
@@ -162,12 +166,17 @@ export interface ConfigBase {
    * 所有的配置将作为参数传入此函数.
    */
   extraBuilder?: (options: Config) => any | Promise<any>;
+  /**
+   * The function called after Zotero started, before build-in watcher ready.
+   */
+  extraServer?: (options: Config) => any | Promise<any>;
   addonLint?: object;
-  cmdPath?: string;
+  dotEnvPath?: string;
   release?: {
     releaseIt?: Partial<ReleaseItConfig>;
     bumpp?: VersionBumpOptions;
   };
+  logLevel?: "trace" | "debug" | "info" | "warn" | "error";
 }
 
 export interface ConfigOptional extends Partial<ConfigBase> {}
@@ -178,6 +187,7 @@ export interface Config extends Required<ConfigBase> {
     profilePath: string;
     dataDir: string;
   };
+  pkg: any;
 }
 
 interface Manifest {

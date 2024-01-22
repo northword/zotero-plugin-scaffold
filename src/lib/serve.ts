@@ -1,17 +1,16 @@
 import { Config } from "../types.js";
-import { Logger } from "../utils/logger.js";
+import { LibBase } from "../utils/libBase.js";
 import Build from "./build.js";
 import chokidar from "chokidar";
 import _ from "lodash";
 import path from "path";
 import webext from "web-ext";
 
-export default class Serve {
-  private config: Config;
+export default class Serve extends LibBase {
   private builder: Build;
   constructor(config: Config) {
-    this.config = config;
-    this.builder = new Build(config, "development");
+    super(config);
+    this.builder = new Build(config);
   }
 
   async run() {
@@ -47,7 +46,7 @@ export default class Serve {
         } catch (err) {
           // Do not abort the watcher when errors occur
           // in builds triggered by the watcher.
-          Logger.error(err);
+          this.logger.error(err);
         }
       },
       5000,
@@ -56,10 +55,13 @@ export default class Serve {
 
     watcher
       .on("ready", () => {
-        Logger.info("Server Ready! \n");
+        this.logger.log("");
+        this.logger.info("Server Ready! \n");
       })
       .on("change", async (path) => {
-        Logger.info(`${path} changed at ${new Date().toLocaleTimeString()}`);
+        this.logger.info(
+          `${path} changed at ${new Date().toLocaleTimeString()}`,
+        );
 
         onChange.cancel();
         onChange(path);
@@ -67,7 +69,7 @@ export default class Serve {
         this.reload();
       })
       .on("error", (err) => {
-        Logger.error("Server start failed!", err);
+        this.logger.error("Server start failed!", err);
       });
   }
 
@@ -99,7 +101,7 @@ export default class Serve {
   }
 
   reload() {
-    Logger.debug("Reloading...");
+    this.logger.debug("Reloading...");
     // const url = `zotero://ztoolkit-debug/?run=${encodeURIComponent(
     //   reloadScript,
     // )}`;

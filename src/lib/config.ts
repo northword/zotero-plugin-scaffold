@@ -30,7 +30,7 @@ export async function loadConfig(file?: string): Promise<Config> {
 
   // load `.env` file.
   const dotenvResult = dotenv.config({
-    path: path.resolve(process.cwd(), userConfig.cmdPath ?? ".env"),
+    path: path.resolve(process.cwd(), userConfig.dotEnvPath ?? ".env"),
   }).parsed;
   if (!dotenvResult) throw new Error(".env file not found");
 
@@ -38,6 +38,22 @@ export async function loadConfig(file?: string): Promise<Config> {
   const pkg = fs.readJsonSync(path.join("package.json"), {
     encoding: "utf-8",
   });
+
+  // Check package.json
+  if (
+    !(pkg.name || userConfig.placeholders.name) ||
+    !(pkg.description || userConfig.placeholders.description) ||
+    !(pkg.author || userConfig.placeholders.author) ||
+    !(pkg.homepage || userConfig.placeholders.homepage) ||
+    !(pkg.repository?.url || userConfig.placeholders.releasePage)
+  )
+    throw new Error(
+      "Some build-in placeholders invalid. May be caused by incomplete package.json property.",
+    );
+
+  const [, owner, repo] = (pkg.repository?.url ?? "").match(
+    /:\/\/github.com\/([^/]+)\/([^.]+)\.git$/,
+  );
 
   // define default config.
   const defaultConfig = {
@@ -48,15 +64,14 @@ export async function loadConfig(file?: string): Promise<Config> {
       name: pkg.name,
       description: pkg.description,
       homepage: pkg.homepage,
-      version: pkg.version,
+      buildVersion: pkg.version,
       author: pkg.author,
       addonName: "Example Plugin for Zotero",
       addonID: "examplePluginID@northword.cn",
       addonRef: "exampleplugin",
       addonInstence: "ExamplePlugin",
       prefsPrefix: "extensions.exampleplugin.",
-      updateJSON: "https://github.com/northword/zotero-plugin-scaffold/",
-      releasePage: "https://github.com/northword/zotero-plugin-scaffold/",
+      releasePage: `https://github.com/${owner}/${repo}/release`,
     },
     fluent: {
       prefixFluentMessages: true,
@@ -109,13 +124,15 @@ export async function loadConfig(file?: string): Promise<Config> {
     },
     makeUpdateJson: {
       enable: true,
+      tagName: "release",
       template: {
         addons: {
           __addonID__: {
             updates: [
               {
-                version: "__buildVersion__",
+                version: "__version__",
                 update_link: "__updateLink__",
+                update_hash: "__updateHash__",
                 applications: {
                   zotero: {
                     strict_min_version: "6.999",
@@ -130,12 +147,13 @@ export async function loadConfig(file?: string): Promise<Config> {
     extraServer: () => {},
     extraBuilder: () => {},
     addonLint: {},
-    cmdPath: "",
+    dotEnvPath: ".env",
     cmd: {
       zoteroBinPath: dotenvResult["zoteroBinPath"],
       profilePath: dotenvResult["profilePath"],
       dataDir: dotenvResult["dataDir"],
     },
+    pkg: pkg,
     release: {
       releaseIt: {
         preReleaseId: "beta",
@@ -160,6 +178,7 @@ export async function loadConfig(file?: string): Promise<Config> {
         push: true,
       },
     },
+    logLevel: "info",
   } satisfies Config;
 
   // merge config

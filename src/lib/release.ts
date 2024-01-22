@@ -1,16 +1,15 @@
 import { Config } from "../types.js";
-import { Logger } from "../utils/logger.js";
+import { LibBase } from "../utils/libBase.js";
 import versionBump from "bumpp";
 import ci from "ci-info";
 import { default as glob } from "fast-glob";
 import _ from "lodash";
 import releaseIt from "release-it";
 
-export default class Release {
-  config: Config;
+export default class Release extends LibBase {
   isCI: boolean;
   constructor(config: Config) {
-    this.config = config;
+    super(config);
     this.isCI = ci.isCI;
   }
 
@@ -26,7 +25,9 @@ export default class Release {
       this.bump();
     } else {
       if (glob.globSync(`${this.config.dist}/*.xpi`).length == 0) {
-        Logger.error("No xpi file found, are you sure you have run the build?");
+        this.logger.error(
+          "No xpi file found, are you sure you have run the build?",
+        );
       }
       this.uploadXPI();
       this.createRelease();
