@@ -1,8 +1,8 @@
-// release: bump version, run build, git add, git commit, git tag, git push
 import { Config } from "../types.js";
 import { Logger } from "../utils/logger.js";
-import Build from "./build.js";
 import versionBump from "bumpp";
+import ci from "ci-info";
+import { default as glob } from "fast-glob";
 import _ from "lodash";
 import releaseIt from "release-it";
 
@@ -11,7 +11,7 @@ export default class Release {
   isCI: boolean;
   constructor(config: Config) {
     this.config = config;
-    this.isCI = false;
+    this.isCI = ci.isCI;
   }
 
   /**
@@ -22,20 +22,24 @@ export default class Release {
    *    then, create or update release (tag is "release"), update `update.json`.
    */
   async run() {
-    Logger.log("");
-
     if (!this.isCI) {
       this.bump();
     } else {
+      if (glob.globSync(`${this.config.dist}/*.xpi`).length == 0) {
+        Logger.error("No xpi file found, are you sure you have run the build?");
+      }
       this.uploadXPI();
       this.createRelease();
       this.uploadAssets();
     }
   }
 
+  /**
+   * Bumps release
+   *
+   * release: bump version, run build, git add, git commit, git tag, git push
+   */
   bump() {
-    // this.config.release.bumpp.release = (await versionBump()).newVersion;
-    // new Build(this.config, "production").run();
     // versionBump(this.config.release.bumpp);
     const releaseItConfig: ReleaseItConfig = {
       "only-version": true,
@@ -43,6 +47,9 @@ export default class Release {
     releaseIt(_.defaultsDeep(releaseItConfig, this.config.release.releaseIt));
   }
 
+  /**
+   * Create new release and upload XPI to asset
+   */
   uploadXPI() {
     const releaseItConfig: ReleaseItConfig = {
       increment: false,
@@ -60,6 +67,7 @@ export default class Release {
 
     releaseIt(_.defaultsDeep(releaseItConfig, this.config.release.releaseIt));
   }
+
   createRelease() {
     //
   }

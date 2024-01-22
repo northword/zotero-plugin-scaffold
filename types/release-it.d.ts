@@ -34,8 +34,8 @@ interface ReleaseItConfigBase {
     commitArgs?: [];
     tag?: boolean;
     tagExclude?: null;
-    tagName?: null;
-    tagMatch?: null;
+    tagName?: string;
+    tagMatch?: string;
     getLatestTagFromAllRefs?: boolean;
     tagAnnotation?: string;
     tagArgs?: string[];

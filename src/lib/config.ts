@@ -140,10 +140,14 @@ export async function loadConfig(file?: string): Promise<Config> {
       releaseIt: {
         preReleaseId: "beta",
         git: {
+          tagName: "v${version}",
           requireCleanWorkingDir: false,
         },
         npm: {
           publish: false,
+        },
+        github: {
+          assets: [`${userConfig.dist}/*.xpi`],
         },
       },
       bumpp: {
