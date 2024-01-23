@@ -1,5 +1,5 @@
 import { Build, Config, Create, Release, Serve } from "./index.js";
-import { ConfigOptional } from "./types.js";
+import { UserConfig } from "./types.js";
 import Log from "./utils/log.js";
 import { Command } from "commander";
 import { default as fs } from "fs-extra";
@@ -41,7 +41,7 @@ export default async function main() {
     .action(async (options: any) => {
       process.env.NODE_ENV = options.dev ? "development" : "production";
       const configFile = await Config.loadConfig(options.config);
-      const configCli: ConfigOptional = {
+      const configCli: UserConfig = {
         dist: options.dist,
       };
       const configMerged = _.merge(configFile, configCli);
@@ -65,7 +65,7 @@ export default async function main() {
     // )
     .action(async (options: any) => {
       const configFile = await Config.loadConfig(options.config);
-      const configCli: ConfigOptional = {
+      const configCli: UserConfig = {
         //
       };
       const configMerged = _.merge(configFile, configCli);
@@ -90,7 +90,7 @@ export default async function main() {
     .action(async (options: any) => {
       process.env.NODE_ENV = "production";
       const configFile = await Config.loadConfig(options.config);
-      const configCli: ConfigOptional = {
+      const configCli: UserConfig = {
         //
       };
       const configMerged = _.merge(configFile, configCli);

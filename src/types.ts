@@ -1,6 +1,12 @@
 import { type VersionBumpOptions } from "bumpp";
 import { BuildOptions } from "esbuild";
 
+type RecursivePartial<T> = {
+  [P in keyof T]?: T[P] extends object ? RecursivePartial<T[P]> : T[P];
+};
+
+export interface UserConfig extends RecursivePartial<ConfigBase> {}
+
 export interface ConfigBase {
   /**
    * The source code directories.
@@ -13,7 +19,7 @@ export interface ConfigBase {
    *
    * @default ["src"]
    */
-  source?: string[];
+  source: string[];
   /**
    * The build directories.
    *
@@ -27,7 +33,7 @@ export interface ConfigBase {
    *
    * @default "build"
    */
-  dist?: string;
+  dist: string;
   /**
    * glob list of static assets
    *
@@ -41,7 +47,7 @@ export interface ConfigBase {
    *
    * @default `["src/**\/*.*", "!src/**\/*.ts"]` (no `\`)
    */
-  assets?: string[];
+  assets: string[];
   /**
    * placeholders to replace in static assets
    *
@@ -51,31 +57,101 @@ export interface ConfigBase {
    * - 以下是一些预置的占位符，你可以在这里覆盖它们：
    *   - `name`, `description`, `version`, `homepage`, `author` 从 `package.json` 读取。
    *   - `__buildTime__` 为 `build.run` 调用时间。
-   *   - `addonName`, `addonID`, `addonRef`, `addonInstense`, `prefsPrefix`, `releasePage`。
-   * - 替换发生在 `dist/addon` 下的所有文件。
+   *   - 出于兼容性考虑，`addonName`, `addonID`, `addonRef`, `addonInstense`, `prefsPrefix`, `releasePage` 也可以在 `package.json` 中的 `config` 属性中读取。
+   *   - 优先级：此处 > package.json > default
+   * - 替换发生在 `assets` 下的所有文件。
    */
-  placeholders: {
+  define: {
     [key: string]: string | unknown;
-    name?: string;
-    description?: string;
-    homepage?: string;
-    buildVersion?: string;
-    author?: string;
-    addonName: string;
-    addonID: string;
-    addonRef: string;
-    addonInstence?: string;
-    prefsPrefix?: string;
+    // general
     /**
-     * 脚手架使用此项生成 update.json 链接和 xpi 链接
+     * The name of plugin
+     *
+     * 插件名
+     *
+     * @default _.startCase(pkg.name)
+     */
+    addonName: string;
+    /**
+     * 插件 ID
+     */
+    addonID: string;
+    author: string;
+    description: string;
+    homepage: string;
+
+    // code
+    /**
+     * namespace of plugin
+     *
+     * 插件命名空间
+     *
+     * @default _.kebabCase(addonName)
+     */
+    addonRef: string;
+    /**
+     * 插件注册在 Zotero 下的实例
+     *
+     * @default _.camelCase(addonName)
+     */
+    addonInstance: string;
+    /**
+     * 插件首选项前缀
+     *
+     * @default `extensions.zotero.${addonRef}`
+     */
+    prefsPrefix: string;
+    /**
+     * @default pkg.version
+     */
+    buildVersion: string;
+
+    // release
+    /**
+     * 打包 XPI 的文件名，不需要加后缀名
+     *
+     * @default pkg.name || _.kebabCase(addonName)
+     */
+    xpiName: string;
+    /**
+     * 插件发布页面
+     *
+     * 脚手架根据这个地址生成 update.json 地址和 xpi 地址
      *
      * @default `https://github.com/${owner}/${repo}/release`
      */
-    releasePage?: string;
+    releasePage: string;
+    /**
+     * XPI 文件的地址
+     *
+     * @default `${releasePage}/download/v${pkg.version}/${xpiName}.xpi`
+     */
+    updateLink: string;
+    /**
+     * update.json 文件的地址
+     *
+     * @default `${releasePage}/download/release/update.json`
+     */
+    updateURL: string;
   };
-  fluent?: {
-    prefixLocaleFiles?: boolean;
-    prefixFluentMessages?: boolean;
+
+  fluent: {
+    /**
+     * 为所有 FTL 文件添加插件前缀以避免冲突
+     *
+     * 默认前缀为 `${addonRef}-`
+     *
+     * @default true
+     */
+    prefixLocaleFiles: boolean;
+    /**
+     * 为所有 FTL message 添加插件前缀以避免冲突
+     *
+     * 默认前缀为 `${addonRef}-`
+     *
+     * @default true
+     */
+    prefixFluentMessages: boolean;
   };
   /**
    * The config of esbuild
@@ -101,17 +177,19 @@ export interface ConfigBase {
    * };
    * ```
    */
-  esbuildOptions?: BuildOptions[];
+  esbuildOptions: BuildOptions[];
   /**
    * Make manifest.json
    *
    */
-  makeManifest?: {
+  makeManifest: {
     /**
      * 是否使用内置的模板 manifest.json。
-     * 如果此项为 false，则开发者应自行准备 update.json
+     * 如果此项为 false，则开发者应自行准备 manifest.json
+     *
+     * @default true
      */
-    enable?: boolean;
+    enable: boolean;
     /**
      * template of manifest
      *
@@ -145,14 +223,25 @@ export interface ConfigBase {
      * };
      * ```
      */
-    template?: Partial<Manifest>;
+    template: Manifest;
   };
-  makeBootstrap?: boolean;
-  makeUpdateJson?: {
-    enable?: boolean | "only-production";
-    // updateURL?: string;
-    template?: UpdateJSON;
-    tagName?: "release" | "updater" | string;
+  /**
+   * 是否使用内置的模板 bootstrap。
+   * 如果此项为 false，则开发者应自行准备 bootstrap.js。
+   *
+   * @default true
+   */
+  makeBootstrap: boolean;
+  /**
+   * 是否使用内置的模板 update.json。
+   * 如果此项为 false，则开发者应自行准备 update.json。
+   *
+   * @default true
+   */
+  makeUpdateJson: {
+    enable: boolean | "only-production";
+    template: UpdateJSON;
+    tagName: "release" | "updater" | string;
   };
   /**
    * The function called when build-in build resolved.
@@ -164,30 +253,49 @@ export interface ConfigBase {
    *
    * 通常是一些额外的构建流程.
    * 所有的配置将作为参数传入此函数.
+   *
+   * @default ()=>{}
    */
-  extraBuilder?: (options: Config) => any | Promise<any>;
+  extraBuilder: (options: Config) => any | Promise<any>;
   /**
    * The function called after Zotero started, before build-in watcher ready.
+   *
+   * @default ()=>{}
    */
-  extraServer?: (options: Config) => any | Promise<any>;
-  addonLint?: object;
-  dotEnvPath?: string;
-  release?: {
-    releaseIt?: Partial<ReleaseItConfig>;
-    bumpp?: VersionBumpOptions;
+  extraServer: (options: Config) => any | Promise<any>;
+  /**
+   * TODO: 使用 addonLint 检查 XPI
+   */
+  addonLint: object;
+  /**
+   * .dotenv 文件路径
+   *
+   * @default `.env`
+   */
+  dotEnvPath: string;
+  /**
+   * 发布相关配置
+   */
+  release: {
+    releaseIt: Partial<ReleaseItConfig>;
+    bumpp: VersionBumpOptions;
   };
-  logLevel?: "trace" | "debug" | "info" | "warn" | "error";
+  /**
+   * 日志级别
+   *
+   * @default "info"
+   */
+  logLevel: "trace" | "debug" | "info" | "warn" | "error";
 }
 
-export interface ConfigOptional extends Partial<ConfigBase> {}
-
-export interface Config extends Required<ConfigBase> {
+export interface Config extends ConfigBase {
   cmd: {
     zoteroBinPath: string;
     profilePath: string;
     dataDir: string;
   };
-  pkg: any;
+  pkgUser: any;
+  pkgAbsolute: string;
 }
 
 interface Manifest {

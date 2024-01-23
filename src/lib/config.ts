@@ -1,9 +1,10 @@
-import { Config, ConfigBase } from "../types";
+import { Config, UserConfig } from "../types";
 import { cosmiconfig } from "cosmiconfig";
 import * as dotenv from "dotenv";
 import { default as fs } from "fs-extra";
 import _ from "lodash";
 import path from "path";
+import { fileURLToPath } from "url";
 
 /**
  * Define the configuration.
@@ -12,7 +13,7 @@ import path from "path";
  * @param [userConfig]
  * @returns Config with userDefined.
  */
-export const defineConfig = (userConfig: ConfigBase): ConfigBase => {
+export const defineConfig = (userConfig: UserConfig): UserConfig => {
   return userConfig;
 };
 
@@ -26,7 +27,7 @@ export async function loadConfig(file?: string): Promise<Config> {
   // Do not use the sync method, as the sync method only supports compiling configuration files into cjs modules.
   const explorer = cosmiconfig("zotero-plugin"),
     result = await explorer.search(file);
-  const userConfig: ConfigBase = result?.config ?? {};
+  const userConfig: UserConfig = result?.config ?? {};
 
   // load `.env` file.
   const dotenvResult = dotenv.config({
@@ -39,40 +40,46 @@ export async function loadConfig(file?: string): Promise<Config> {
     encoding: "utf-8",
   });
 
-  // Check package.json
-  if (
-    !(pkg.name || userConfig.placeholders.name) ||
-    !(pkg.description || userConfig.placeholders.description) ||
-    !(pkg.author || userConfig.placeholders.author) ||
-    !(pkg.homepage || userConfig.placeholders.homepage) ||
-    !(pkg.repository?.url || userConfig.placeholders.releasePage)
-  )
-    throw new Error(
-      "Some build-in placeholders invalid. May be caused by incomplete package.json property.",
-    );
-
-  const [, owner, repo] = (pkg.repository?.url ?? "").match(
-    /:\/\/github.com\/([^/]+)\/([^.]+)\.git$/,
-  );
+  // define addon config 防呆
+  const addonName =
+      userConfig.define?.addonName ||
+      pkg.config?.addonName ||
+      _.startCase(pkg.name) ||
+      "",
+    addonRef =
+      userConfig.define?.addonRef ||
+      pkg.config?.addonRef ||
+      _.kebabCase(addonName),
+    xpiName = userConfig.define?.xpiName || pkg.name || _.kebabCase(addonName),
+    [, owner, repo] = (pkg.repository?.url ?? "").match(
+      /:\/\/github.com\/([^/]+)\/([^.]+)\.git$/,
+    ),
+    releasePage =
+      userConfig.define?.releasePage ||
+      (owner && repo ? `https://github.com/${owner}/${repo}/release` : ""),
+    isPreRelease = pkg.version.includes("-");
 
   // define default config.
   const defaultConfig = {
     source: ["src"],
     dist: "build",
     assets: ["src/**/*.*", "!src/**/*.ts"],
-    placeholders: {
-      name: pkg.name,
-      description: pkg.description,
+    define: {
+      addonName: addonName,
+      addonID: pkg.config?.addonID || "",
+      description: pkg.description || "",
       homepage: pkg.homepage,
-      buildVersion: pkg.version,
       author: pkg.author,
-      addonName: "Example Plugin for Zotero",
-      addonID: "examplePluginID@northword.cn",
-      addonRef: "exampleplugin",
-      addonInstence: "ExamplePlugin",
-      prefsPrefix: "extensions.exampleplugin.",
-      releasePage: `https://github.com/${owner}/${repo}/release`,
+      addonRef: pkg.config?.addonRef || _.kebabCase(addonName),
+      addonInstance: pkg.config?.addonInstence || _.camelCase(addonName),
+      prefsPrefix: `extensions.zotero.${addonRef}`,
+      xpiName: xpiName,
+      releasePage: releasePage,
+      updateURL: `${releasePage}/download/${userConfig.makeUpdateJson?.tagName || "release"}/${isPreRelease ? "update-beta" : "update"}.json`,
+      updateLink: `${releasePage}/download/v${pkg.version}/${xpiName}.xpi`,
+      buildVersion: pkg.version,
     },
+
     fluent: {
       prefixFluentMessages: true,
       prefixLocaleFiles: true,
@@ -87,8 +94,8 @@ export async function loadConfig(file?: string): Promise<Config> {
         target: "firefox102",
         outfile: path.join(
           process.cwd(),
-          userConfig.dist ?? "build",
-          `addon/${userConfig.placeholders.addonRef ?? "index"}.js`,
+          userConfig.dist || "build",
+          `addon/${addonRef || "index"}.js`,
         ),
         minify: process.env.NODE_ENV === "production",
       },
@@ -147,13 +154,6 @@ export async function loadConfig(file?: string): Promise<Config> {
     extraServer: () => {},
     extraBuilder: () => {},
     addonLint: {},
-    dotEnvPath: ".env",
-    cmd: {
-      zoteroBinPath: dotenvResult["zoteroBinPath"],
-      profilePath: dotenvResult["profilePath"],
-      dataDir: dotenvResult["dataDir"],
-    },
-    pkg: pkg,
     release: {
       releaseIt: {
         preReleaseId: "beta",
@@ -179,6 +179,17 @@ export async function loadConfig(file?: string): Promise<Config> {
       },
     },
     logLevel: "info",
+    dotEnvPath: ".env",
+    cmd: {
+      zoteroBinPath: dotenvResult["zoteroBinPath"],
+      profilePath: dotenvResult["profilePath"],
+      dataDir: dotenvResult["dataDir"],
+    },
+    pkgUser: pkg,
+    pkgAbsolute: path.join(
+      path.dirname(fileURLToPath(import.meta.url)),
+      "../..",
+    ),
   } satisfies Config;
 
   // merge config

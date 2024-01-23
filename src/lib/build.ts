@@ -38,20 +38,19 @@ export default class Build extends LibBase {
 
     this.logger.debug("Preparing manifest...");
     this.makeManifest();
+    this.makebootstrap();
 
     this.logger.debug("Preparing locale files...");
     this.prepareLocaleFiles();
 
-    this.logger.debug("Running esbuild...");
-    this.esbuild();
-
     this.logger.debug("Replacing...");
     this.replaceString();
 
+    this.logger.debug("Running esbuild...");
+    this.esbuild();
+
     this.logger.debug("Running extra builder...");
     await this.config.extraBuilder(this.config);
-
-    this.checkPlaceholders();
 
     this.logger.debug("Addon prepare OK.");
 
@@ -91,6 +90,14 @@ export default class Build extends LibBase {
     );
   }
 
+  makebootstrap() {
+    if (!this.config.makeBootstrap) return;
+    fs.copySync(
+      path.join(this.config.pkgAbsolute, "template/default/bootstrap.js"),
+      `${this.config.dist}/addon/bootstrap.js`,
+    );
+  }
+
   /**
    * Replace all `placeholder.key` to `placeholder.value` for all files in `dist`
    */
@@ -100,16 +107,14 @@ export default class Build extends LibBase {
 
     // Config.placeholders has the highest priority
     replaceFrom.push(
-      ...Object.keys(this.config.placeholders).map(
+      ...Object.keys(this.config.define).map(
         (k) => new RegExp(`__${k}__`, "g"),
       ),
     );
-    replaceTo.push(...Object.values(this.config.placeholders));
+    replaceTo.push(...Object.values(this.config.define));
 
-    const updateURL = `${this.config.placeholders.releasePage}/download/${this.config.makeUpdateJson.tagName}/${this.isPreRelease ? "update-beta" : "update"}.json`;
-
-    replaceFrom.push(/__buildTime__/g, /__updateURL__/g);
-    replaceTo.push(this.buildTime, updateURL);
+    replaceFrom.push(/__buildTime__/g);
+    replaceTo.push(this.buildTime);
 
     const replaceResult = replaceInFileSync({
       files: this.config.assets.map((asset) => `${this.config.dist}/${asset}`),
@@ -124,19 +129,6 @@ export default class Build extends LibBase {
         .filter((f) => f.hasChanged)
         .map((f) => `${f.file} : ${f.numReplacements} / ${f.numMatches}`),
     );
-  }
-
-  checkPlaceholders() {
-    replaceInFileSync({
-      files: [`${this.config.dist}/**/*`],
-      ignore: `${this.config.dist}/**/*.js`,
-      from: /__[^_]*__/g,
-      to: (match, file) => {
-        this.logger.warn(`Found invalid placeholders: ${match} in ${file}`);
-        return match;
-      },
-      dry: true,
-    });
   }
 
   prepareLocaleFiles() {
@@ -154,7 +146,7 @@ export default class Build extends LibBase {
           input = input.replace(
             match[0],
             this.config.fluent.prefixFluentMessages == true
-              ? `${match[1]}="${this.config.placeholders.addonRef}-${match[2]}"`
+              ? `${match[1]}="${this.addonRef}-${match[2]}"`
               : match[0],
           );
           MessagesInHTML.add(match[2]);
@@ -176,7 +168,7 @@ export default class Build extends LibBase {
           .forEach((f) => {
             fs.moveSync(
               f,
-              `${path.dirname(f)}/${this.config.placeholders.addonRef}-${path.basename(f)}`,
+              `${path.dirname(f)}/${this.addonRef}-${path.basename(f)}`,
             );
           });
       }
@@ -196,7 +188,7 @@ export default class Build extends LibBase {
             if (match && match.groups) {
               MessageInThisLang.add(match.groups.message);
               return this.config.fluent.prefixFluentMessages
-                ? `${this.config.placeholders.addonRef}-${line}`
+                ? `${this.addonRef}-${line}`
                 : line;
             } else {
               return line;
@@ -233,11 +225,10 @@ export default class Build extends LibBase {
       { spaces: 2 },
     );
 
-    const updateLink = `${this.config.placeholders.releasePage}/release/download/v${this.version}/${this.pkg.name}.xpi`,
-      updateHash = generateHashSync(
-        path.join(this.config.dist, `${this.pkg.name}.xpi`),
-        "sha512",
-      );
+    const updateHash = generateHashSync(
+      path.join(this.config.dist, `${this.xpiName}.xpi`),
+      "sha512",
+    );
 
     const replaceResult = replaceInFileSync({
       files: [
@@ -250,12 +241,7 @@ export default class Build extends LibBase {
         /__updateLink__/g,
         /__updateHash__/g,
       ],
-      to: [
-        this.config.placeholders.addonID,
-        this.version,
-        updateLink,
-        updateHash,
-      ],
+      to: [this.addonID, this.version, this.updateLink, updateHash],
       countMatches: true,
     });
 
@@ -274,7 +260,7 @@ export default class Build extends LibBase {
   async pack() {
     await zip.compressDir(
       path.join(this.config.dist, "addon"),
-      path.join(this.config.dist, `${this.pkg.name}.xpi`),
+      path.join(this.config.dist, `${this.xpiName}.xpi`),
       {
         ignoreBase: true,
       },
@@ -286,19 +272,28 @@ export default class Build extends LibBase {
     // });
   }
 
-  /**
-   * Get plugin's package.json
-   * @returns object of package.json
-   */
-  private get pkg() {
-    return this.config.pkg;
-  }
-
-  /**
-   * Get plugin's version defined in package.json
-   * @returns plugin's current version
-   */
   private get version() {
-    return this.pkg.version ?? "";
+    return this.config.define.buildVersion;
+  }
+  private get addonName() {
+    return this.config.define.addonName;
+  }
+  private get addonID() {
+    return this.config.define.addonID;
+  }
+  private get addonRef() {
+    return this.config.define.addonRef;
+  }
+  private get addonInstence() {
+    return this.config.define.addonInstance;
+  }
+  private get updateLink() {
+    return this.config.define.updateLink;
+  }
+  private get updateURL() {
+    return this.config.define.updateURL;
+  }
+  private get xpiName() {
+    return this.config.define.xpiName;
   }
 }

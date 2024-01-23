@@ -1,9 +1,12 @@
 import { Config } from "../types.js";
 import { LibBase } from "../utils/libBase.js";
 import Build from "./build.js";
+import { execSync, spawn } from "child_process";
 import chokidar from "chokidar";
+import fs from "fs-extra";
 import _ from "lodash";
 import path from "path";
+import { exit } from "process";
 import webext from "web-ext";
 
 export default class Serve extends LibBase {
@@ -18,7 +21,7 @@ export default class Serve extends LibBase {
     this.builder.run();
 
     // start Zotero
-    // this.startZotero();
+    this.startZotero();
     // this.startZoteroWebExt();
 
     // watch
@@ -49,7 +52,7 @@ export default class Serve extends LibBase {
           this.logger.error(err);
         }
       },
-      5000,
+      500,
       // { maxWait: 1000 },
     );
 
@@ -67,6 +70,7 @@ export default class Serve extends LibBase {
         onChange(path);
 
         this.reload();
+        this.logger.info("Reloaded done.");
       })
       .on("error", (err) => {
         this.logger.error("Server start failed!", err);
@@ -74,7 +78,31 @@ export default class Serve extends LibBase {
   }
 
   startZotero() {
-    //
+    if (!fs.existsSync(this.zoteroBinPath)) {
+      throw new Error("Zotero binary does not exist.");
+    }
+
+    if (!fs.existsSync(this.profilePath)) {
+      throw new Error("The given Zotero profile does not exist.");
+    }
+
+    const zoteroProcess = spawn(this.zoteroBinPath, [
+      "--debugger",
+      "--purgecaches",
+      "-profile",
+      this.profilePath,
+    ]);
+
+    zoteroProcess.on("close", (code) => {
+      this.logger.info(`Zotero terminated with code ${code}.`);
+      exit(0);
+    });
+
+    process.on("SIGINT", () => {
+      // Handle interrupt signal (Ctrl+C) to gracefully terminate Zotero process
+      zoteroProcess.kill();
+      exit();
+    });
   }
 
   /**
@@ -100,21 +128,160 @@ export default class Serve extends LibBase {
     );
   }
 
+  prepareDevEnv() {
+    const addonProxyFilePath = path.join(
+      this.profilePath,
+      `extensions/${this.addonID}`,
+    );
+    const buildPath = path.resolve("build/addon");
+    if (
+      !fs.existsSync(addonProxyFilePath) ||
+      fs.readFileSync(addonProxyFilePath, "utf-8") !== buildPath
+    ) {
+      fs.writeFileSync(addonProxyFilePath, buildPath);
+      this.logger.debug(
+        `Addon proxy file has been updated. 
+          File path: ${addonProxyFilePath} 
+          Addon path: ${buildPath} `,
+      );
+    }
+
+    const addonXpiFilePath = path.join(
+      this.profilePath,
+      `extensions/${this.addonID}.xpi`,
+    );
+    if (fs.existsSync(addonXpiFilePath)) {
+      fs.rmSync(addonXpiFilePath);
+    }
+
+    const prefsPath = path.join(this.profilePath, "prefs.js");
+    if (fs.existsSync(prefsPath)) {
+      const PrefsLines = fs.readFileSync(prefsPath, "utf-8").split("\n");
+      const filteredLines = PrefsLines.map((line: string) => {
+        if (
+          line.includes("extensions.lastAppBuildId") ||
+          line.includes("extensions.lastAppVersion")
+        ) {
+          return;
+        }
+        if (line.includes("extensions.zotero.dataDir") && this.dataDir !== "") {
+          return `user_pref("extensions.zotero.dataDir", "${this.dataDir}");`;
+        }
+        return line;
+      });
+      const updatedPrefs = filteredLines.join("\n");
+      fs.writeFileSync(prefsPath, updatedPrefs, "utf-8");
+      this.logger.debug("The <profile>/prefs.js has been modified.");
+    }
+  }
+
   reload() {
     this.logger.debug("Reloading...");
-    // const url = `zotero://ztoolkit-debug/?run=${encodeURIComponent(
-    //   reloadScript,
-    // )}`;
-    // const command = `${startZoteroCmd} -url "${url}"`;
-    // execSync(command);
+    const reloadScript = `
+    (async () => {
+    Services.obs.notifyObservers(null, "startupcache-invalidate", null);
+    const { AddonManager } = ChromeUtils.import("resource://gre/modules/AddonManager.jsm");
+    const addon = await AddonManager.getAddonByID("${this.addonID}");
+    await addon.reload();
+    const progressWindow = new Zotero.ProgressWindow({ closeOnClick: true });
+    progressWindow.changeHeadline("${this.addonName} Hot Reload");
+    progressWindow.progress = new progressWindow.ItemProgress(
+        "chrome://zotero/skin/tick.png",
+        "VERSION=${this.version}, BUILD=${new Date().toLocaleString()}. By zotero-plugin-toolkit"
+    );
+    progressWindow.progress.setProgress(100);
+    progressWindow.show();
+    progressWindow.startCloseTimer(5000);
+    })()`;
+    const url = `zotero://ztoolkit-debug/?run=${encodeURIComponent(
+      reloadScript,
+    )}`;
+    const startZoteroCmd = `"${this.zoteroBinPath}" --debugger --purgecaches -profile "${this.profilePath}"`;
+    const command = `${startZoteroCmd} -url "${url}"`;
+    execSync(command);
   }
 
   openDevTool() {
-    // Logger.debug("Open dev tools...");
-    // const url = `zotero://ztoolkit-debug/?run=${encodeURIComponent(
-    //   openDevToolScript,
-    // )}`;
-    // const command = `${startZoteroCmd} -url "${url}"`;
-    // execSync(command);
+    this.logger.debug("Open dev tools...");
+    const openDevToolScript = `
+    (async () => {
+    
+    // const { BrowserToolboxLauncher } = ChromeUtils.import(
+    //   "resource://devtools/client/framework/browser-toolbox/Launcher.jsm",
+    // );
+    // BrowserToolboxLauncher.init();
+    // TODO: Use the above code to open the devtool after https://github.com/zotero/zotero/pull/3387
+    
+    Zotero.Prefs.set("devtools.debugger.remote-enabled", true, true);
+    Zotero.Prefs.set("devtools.debugger.remote-port", 6100, true);
+    Zotero.Prefs.set("devtools.debugger.prompt-connection", false, true);
+    Zotero.Prefs.set("devtools.debugger.chrome-debugging-websocket", false, true);
+    
+    env =
+        Services.env ||
+        Cc["@mozilla.org/process/environment;1"].getService(Ci.nsIEnvironment);
+    
+    env.set("MOZ_BROWSER_TOOLBOX_PORT", 6100);
+    Zotero.openInViewer(
+        "chrome://devtools/content/framework/browser-toolbox/window.html",
+        {
+        onLoad: (doc) => {
+            doc.querySelector("#status-message-container").style.visibility =
+            "collapse";
+            let toolboxBody;
+            waitUntil(
+            () => {
+                toolboxBody = doc
+                .querySelector(".devtools-toolbox-browsertoolbox-iframe")
+                ?.contentDocument?.querySelector(".theme-body");
+                return toolboxBody;
+            },
+            () => {
+                toolboxBody.style = "pointer-events: all !important";
+            }
+            );
+        },
+        }
+    );
+    
+    function waitUntil(condition, callback, interval = 100, timeout = 10000) {
+        const start = Date.now();
+        const intervalId = setInterval(() => {
+        if (condition()) {
+            clearInterval(intervalId);
+            callback();
+        } else if (Date.now() - start > timeout) {
+            clearInterval(intervalId);
+        }
+        }, interval);
+    }  
+    })()`;
+    const url = `zotero://ztoolkit-debug/?run=${encodeURIComponent(
+      openDevToolScript,
+    )}`;
+    const startZoteroCmd = `"${this.zoteroBinPath}" --debugger --purgecaches -profile "${this.profilePath}"`;
+    const command = `${startZoteroCmd} -url "${url}"`;
+    execSync(command);
+  }
+
+  private get zoteroBinPath() {
+    this.logger.debug("zoteroBinPath", process.env.zoteroBinPath);
+    return process.env.zoteroBinPath ?? "";
+  }
+  private get profilePath() {
+    this.logger.debug("profilePath", process.env.profilePath);
+    return process.env.profilePath ?? "";
+  }
+  private get dataDir() {
+    return process.env.dataDir ?? "";
+  }
+  private get addonID() {
+    return this.config.define.addonID;
+  }
+  private get addonName() {
+    return this.config.define.addonName;
+  }
+  private get version() {
+    return this.config.define.buildVersion;
   }
 }
