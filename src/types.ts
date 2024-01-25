@@ -79,6 +79,8 @@ export interface ConfigBase {
     author: string;
     description: string;
     homepage: string;
+    ghOwner: string;
+    ghRepo: string;
 
     // code
     /**

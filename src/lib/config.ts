@@ -70,6 +70,8 @@ export async function loadConfig(file?: string): Promise<Config> {
       description: pkg.description || "",
       homepage: pkg.homepage,
       author: pkg.author,
+      ghOwner: owner,
+      ghRepo: repo,
       addonRef: pkg.config?.addonRef || _.kebabCase(addonName),
       addonInstance: pkg.config?.addonInstence || _.camelCase(addonName),
       prefsPrefix: `extensions.zotero.${addonRef}`,

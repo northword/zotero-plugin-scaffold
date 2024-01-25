@@ -21,8 +21,8 @@ export default class Serve extends LibBase {
     this.builder.run();
 
     // start Zotero
-    this.startZotero();
-    // this.startZoteroWebExt();
+    // this.startZotero();
+    this.startZoteroWebExt();
 
     // watch
     await this.config.extraServer(this.config);
@@ -117,7 +117,7 @@ export default class Serve extends LibBase {
         keepProfileChanges: true,
         args: ["--debugger", "--purgecaches"],
         // browserConsole: true,
-        // openDevTool: true,  // need Zotero upgrade to firefox 115
+        // openDevTool: true, // need Zotero upgrade to firefox 115
       },
       {
         // These are non CLI related options for each function.
@@ -274,14 +274,5 @@ export default class Serve extends LibBase {
   }
   private get dataDir() {
     return process.env.dataDir ?? "";
-  }
-  private get addonID() {
-    return this.config.define.addonID;
-  }
-  private get addonName() {
-    return this.config.define.addonName;
-  }
-  private get version() {
-    return this.config.define.buildVersion;
   }
 }
