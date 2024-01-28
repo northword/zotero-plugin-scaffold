@@ -1,21 +1,22 @@
 import { Config } from "../types.js";
 import { LibBase } from "../utils/libBase.js";
+import { Octokit } from "@octokit/rest";
 import versionBump from "bumpp";
 import ci from "ci-info";
 import { default as glob } from "fast-glob";
 import fs from "fs-extra";
 import _ from "lodash";
-import { Octokit } from "octokit";
+import mime from "mime";
 import path from "path";
 import releaseIt from "release-it";
 
 export default class Release extends LibBase {
   isCI: boolean;
-  client: Octokit["rest"];
+  client: Octokit;
   constructor(config: Config) {
     super(config);
     this.isCI = ci.isCI;
-    this.client = this.getClient().rest;
+    this.client = this.getClient();
   }
 
   /**
@@ -35,8 +36,7 @@ export default class Release extends LibBase {
         );
       }
       this.uploadXPI();
-      // this.createRelease();
-      // this.uploadAssets();
+      this.uploadUpdateJSON();
     }
   }
 
@@ -74,78 +74,97 @@ export default class Release extends LibBase {
     releaseIt(_.defaultsDeep(releaseItConfig, this.config.release.releaseIt));
   }
 
-  // @ts-ignore 01111
-  async getRelease(tag: string, isPreRelease: boolean) {
-    try {
-      return await this.client.repos.getReleaseByTag({
+  async getReleaseByTag(tag: string) {
+    return await this.client.repos
+      .getReleaseByTag({
         owner: this.owner,
         repo: this.repo,
         tag: tag,
+      })
+      .then((res) => {
+        if (res.status == 200) {
+          return res.data;
+        }
+      })
+      .catch((err) => {
+        this.logger.debug(err);
+        return undefined;
       });
-    } catch {
-      return await this.client.repos.createRelease({
-        owner: this.owner,
-        repo: this.repo,
-        tag_name: tag,
-        prerelease: isPreRelease,
-      });
-    }
   }
 
-  async uploadAsset(
-    release: any,
-    asset: string,
-    contentType: string,
-    isUpdate: boolean,
+  async creatRelease(
+    options: Parameters<Octokit["repos"]["createRelease"]>[0],
   ) {
-    this.logger.debug(
-      `uploading ${path.basename(asset)} to ${release.data.tag_name}`,
-    );
-    const name = path.basename(asset);
-    // const contentType = mime.contentType(name) || 'application/octet-stream';
-    const contentLength = fs.statSync(asset).size;
-
-    const exists = (
-      await this.client.repos.listReleaseAssets({
-        owner: this.owner,
-        repo: this.repo,
-        release_id: release.data.id,
+    return await this.client.repos
+      .createRelease(options)
+      .then((res) => {
+        if (res.status == 201) {
+          return res.data;
+        }
       })
-    ).data.find((a) => a.name === name);
-    if (exists && isUpdate) {
-      await this.client.repos.deleteReleaseAsset({
-        owner: this.owner,
-        repo: this.repo,
-        asset_id: exists.id,
+      .catch((err) => {
+        this.logger.debug(err);
+        return undefined;
       });
-    } else {
-      throw new Error(
-        `failed to upload ${path.basename(asset)} to ${release.data.html_url}: asset exists`,
-      );
-    }
+  }
 
-    try {
-      await this.client.repos.uploadReleaseAsset({
+  async uploadAsset(releaseID: number, asset: string) {
+    return await this.client.repos
+      .uploadReleaseAsset({
         owner: this.owner,
         repo: this.repo,
-        url: release.data.upload_url,
-        release_id: release.data.id,
+        release_id: releaseID,
         data: fs.readFileSync(asset) as unknown as string,
         headers: {
-          "content-type": contentType,
-          "content-length": contentLength,
+          "content-type": mime.getType(asset) || "application/octet-stream",
+          "content-length": fs.statSync(asset).size,
         },
-        name,
+        name: path.basename(asset),
+      })
+      .then((res) => {
+        return res.data;
       });
-    } catch (err) {
-      throw new Error(
-        `failed to upload ${path.basename(asset)} to ${release.data.html_url}: ${err}`,
-      );
-    }
   }
 
-  uploadUpdateJSON() {
-    //
+  async uploadUpdateJSON() {
+    const assets = ["update.json", "update-beta.json"];
+
+    const release =
+      (await this.getReleaseByTag("release")) ??
+      (await this.creatRelease({
+        owner: this.owner,
+        repo: this.repo,
+        tag_name: "release",
+        name: "Release Manifest",
+        body: `This release is used to host \`update.json\`, please do not delete or modify it! \n Updated in UTC ${new Date().toISOString()} for version ${this.version}`,
+        make_latest: "false",
+      }));
+
+    if (!release) throw new Error("Get or create 'release' failed.");
+
+    const existAssets = await this.client.repos
+      .listReleaseAssets({
+        owner: this.owner,
+        repo: this.repo,
+        release_id: release.id,
+      })
+      .then((res) => {
+        return res.data.filter((asset) => assets.includes(asset.name));
+      });
+
+    if (existAssets) {
+      for (const existAsset of existAssets) {
+        await this.client.repos.deleteReleaseAsset({
+          owner: this.owner,
+          repo: this.repo,
+          asset_id: existAsset.id,
+        });
+      }
+    }
+
+    for (const asset of assets) {
+      await this.uploadAsset(release.id, path.join(this.config.dist, asset));
+    }
   }
 
   getClient(): Octokit {

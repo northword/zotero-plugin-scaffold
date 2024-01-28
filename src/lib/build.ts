@@ -271,29 +271,4 @@ export default class Build extends LibBase {
     //   filename: `${this.pkg.name ?? "name"}.xpi`,
     // });
   }
-
-  // private get version() {
-  //   return this.config.define.buildVersion;
-  // }
-  // private get addonName() {
-  //   return this.config.define.addonName;
-  // }
-  // private get addonID() {
-  //   return this.config.define.addonID;
-  // }
-  // private get addonRef() {
-  //   return this.config.define.addonRef;
-  // }
-  // private get addonInstence() {
-  //   return this.config.define.addonInstance;
-  // }
-  // private get updateLink() {
-  //   return this.config.define.updateLink;
-  // }
-  // private get updateURL() {
-  //   return this.config.define.updateURL;
-  // }
-  // private get xpiName() {
-  //   return this.config.define.xpiName;
-  // }
 }

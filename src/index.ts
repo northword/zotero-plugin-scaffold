@@ -1,5 +1,5 @@
+import { defineConfig, loadConfig } from "./config.js";
 import Build from "./lib/build.js";
-import { defineConfig, loadConfig } from "./lib/config.js";
 import Create from "./lib/create.js";
 import Release from "./lib/release.js";
 import Serve from "./lib/serve.js";

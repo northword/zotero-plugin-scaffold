@@ -40,9 +40,10 @@ jobs:
         run: |
           pnpm run build
 
-      - name: Release to GitHub
+      - name: Release
         run: |
-          pnpm dlx release-it --no-increment --no-git --npm.publish --github.release --ci --VV
+          pnpm publish
+          pnpm exec release-it --no-increment --no-git --no.npm --github.release --ci --VV
           sleep 1s
 
       - name: Notify release

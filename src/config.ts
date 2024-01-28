@@ -1,4 +1,4 @@
-import { Config, UserConfig } from "../types";
+import { Config, UserConfig } from "./types";
 import { cosmiconfig } from "cosmiconfig";
 import * as dotenv from "dotenv";
 import { default as fs } from "fs-extra";
@@ -188,10 +188,7 @@ export async function loadConfig(file?: string): Promise<Config> {
       dataDir: dotenvResult["dataDir"],
     },
     pkgUser: pkg,
-    pkgAbsolute: path.join(
-      path.dirname(fileURLToPath(import.meta.url)),
-      "../..",
-    ),
+    pkgAbsolute: path.join(path.dirname(fileURLToPath(import.meta.url)), "../"),
   } satisfies Config;
 
   // merge config
