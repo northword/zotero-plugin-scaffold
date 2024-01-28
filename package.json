@@ -38,8 +38,8 @@
   },
   "files": [
     "bin/**/*",
-    "dist/**/*.d.ts",
-    "dist/**/*.js",
+    "dist/**/*",
+    "template/**/*",
     "docs/**/*",
     "types/**/*.d.ts"
   ],
