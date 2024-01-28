@@ -42,7 +42,7 @@ jobs:
 
       - name: Release
         run: |
-          pnpm publish
+          pnpm publish --no-git-checks
           pnpm exec release-it --no-increment --no-git --no.npm --github.release --ci --VV
           sleep 1s
 
