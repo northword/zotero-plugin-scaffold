@@ -1,7 +1,7 @@
 import { Config } from "../types.js";
-import Log from "./log.js";
+import Log from "../utils/log.js";
 
-export abstract class LibBase {
+export abstract class Base {
   config: Config;
   logger: InstanceType<typeof Log>;
 

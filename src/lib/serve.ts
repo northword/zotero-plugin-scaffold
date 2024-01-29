@@ -1,5 +1,5 @@
 import { Config } from "../types.js";
-import { LibBase } from "../utils/libBase.js";
+import { Base } from "./base.js";
 import Build from "./build.js";
 import { execSync, spawn } from "child_process";
 import chokidar from "chokidar";
@@ -9,10 +9,11 @@ import path from "path";
 import { exit } from "process";
 import webext from "web-ext";
 
-export default class Serve extends LibBase {
+export default class Serve extends Base {
   private builder: Build;
   constructor(config: Config) {
     super(config);
+    process.env.NODE_ENV ??= "development";
     this.builder = new Build(config);
   }
 

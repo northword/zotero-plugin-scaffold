@@ -1,5 +1,5 @@
 import { Config } from "../types.js";
-import { LibBase } from "../utils/libBase.js";
+import { Base } from "./base.js";
 import { Octokit } from "@octokit/rest";
 import versionBump from "bumpp";
 import ci from "ci-info";
@@ -10,7 +10,7 @@ import mime from "mime";
 import path from "path";
 import releaseIt from "release-it";
 
-export default class Release extends LibBase {
+export default class Release extends Base {
   isCI: boolean;
   client: Octokit;
   constructor(config: Config) {

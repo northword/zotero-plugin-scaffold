@@ -1,7 +1,7 @@
 import { Config } from "../types.js";
 import { generateHashSync } from "../utils/crypto.js";
-import { LibBase } from "../utils/libBase.js";
 import { dateFormat } from "../utils/string.js";
+import { Base } from "./base.js";
 import chalk from "chalk";
 import { zip } from "compressing";
 import { buildSync } from "esbuild";
@@ -14,11 +14,12 @@ import webext from "web-ext";
 
 const { replaceInFileSync } = replaceInFile;
 
-export default class Build extends LibBase {
+export default class Build extends Base {
   private buildTime: string;
   private isPreRelease: boolean;
   constructor(config: Config) {
     super(config);
+    process.env.NODE_ENV ??= "production";
     this.buildTime = "";
     this.isPreRelease = this.version.includes("-");
   }
