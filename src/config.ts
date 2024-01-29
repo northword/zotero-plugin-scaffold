@@ -33,7 +33,7 @@ export async function loadConfig(file?: string): Promise<Config> {
   const dotenvResult = dotenv.config({
     path: path.resolve(process.cwd(), userConfig.dotEnvPath ?? ".env"),
   }).parsed;
-  if (!dotenvResult) throw new Error(".env file not found");
+  // if (!dotenvResult) throw new Error(".env file not found");
 
   // Load user's package.json
   const pkg = fs.readJsonSync(path.join("package.json"), {
@@ -182,11 +182,6 @@ export async function loadConfig(file?: string): Promise<Config> {
     },
     logLevel: "info",
     dotEnvPath: ".env",
-    cmd: {
-      zoteroBinPath: dotenvResult["zoteroBinPath"],
-      profilePath: dotenvResult["profilePath"],
-      dataDir: dotenvResult["dataDir"],
-    },
     pkgUser: pkg,
     pkgAbsolute: path.join(path.dirname(fileURLToPath(import.meta.url)), "../"),
   } satisfies Config;

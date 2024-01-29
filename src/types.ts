@@ -291,11 +291,6 @@ export interface ConfigBase {
 }
 
 export interface Config extends ConfigBase {
-  cmd: {
-    zoteroBinPath: string;
-    profilePath: string;
-    dataDir: string;
-  };
   pkgUser: any;
   pkgAbsolute: string;
 }

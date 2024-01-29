@@ -111,8 +111,8 @@ export default class Serve extends LibBase {
   async startZoteroWebExt() {
     await webext.cmd.run(
       {
-        firefox: this.config.cmd.zoteroBinPath,
-        firefoxProfile: this.config.cmd.profilePath,
+        firefox: this.zoteroBinPath,
+        firefoxProfile: this.profilePath,
         sourceDir: path.resolve(`${this.config.dist}/addon`),
         keepProfileChanges: true,
         args: ["--debugger", "--purgecaches"],
