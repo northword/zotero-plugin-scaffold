@@ -1,6 +1,6 @@
 {
   "name": "zotero-plugin-scaffold",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "A scaffold for Zotero plugin development.",
   "main": "dist/index.js",
   "bin": {
