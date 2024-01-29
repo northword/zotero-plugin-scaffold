@@ -23,8 +23,6 @@ pnpm dlx zotero-plugin create
 
 #### From NPM
 
-> WIP
-
 ```bash
 npm install -D zotero-plugin-scaffold
 
@@ -66,7 +64,7 @@ You can import `defineConfig` in js module to get type hints. If no value is spe
 import { defineConfig } from "zotero-plugin-scaffold";
 
 export default defineConfig({
-  placeholders: {
+  define: {
     addonName: "Test Addon for Zotero",
     addonID: "",
     addonRef: "",
@@ -137,7 +135,7 @@ import { Build, Config } from "zotero-plugin-scaffold";
 
 const config = await Config.loadConfig();
 
-const Builder = new Build(config, "production");
+const Builder = new Build(config);
 await Builder.run();
 ```
 
