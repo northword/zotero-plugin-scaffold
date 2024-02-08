@@ -19,11 +19,11 @@ export default class Serve extends Base {
 
   async run() {
     // build
-    this.builder.run();
+    await this.builder.run();
 
     // start Zotero
-    // this.startZotero();
-    this.startZoteroWebExt();
+    this.startZotero();
+    // this.startZoteroWebExt();
 
     // watch
     await this.config.extraServer(this.config);
@@ -78,7 +78,8 @@ export default class Serve extends Base {
       });
   }
 
-  startZotero() {
+  async startZotero() {
+    let isZoteroReady = false;
     if (!fs.existsSync(this.zoteroBinPath)) {
       throw new Error("Zotero binary does not exist.");
     }
@@ -87,12 +88,31 @@ export default class Serve extends Base {
       throw new Error("The given Zotero profile does not exist.");
     }
 
+    this.prepareDevEnv();
+
     const zoteroProcess = spawn(this.zoteroBinPath, [
       "--debugger",
       "--purgecaches",
       "-profile",
       this.profilePath,
     ]);
+
+    zoteroProcess.stdout?.on("data", (data) => {
+      if (
+        !isZoteroReady &&
+        data
+          .toString()
+          .includes(
+            `Calling bootstrap method 'startup' for plugin ${this.addonID}`,
+          )
+      ) {
+        console.log(data.toString());
+        isZoteroReady = true;
+        setTimeout(() => {
+          this.openDevTool();
+        }, 1000);
+      }
+    });
 
     zoteroProcess.on("close", (code) => {
       this.logger.info(`Zotero terminated with code ${code}.`);
@@ -104,6 +124,8 @@ export default class Serve extends Base {
       zoteroProcess.kill();
       exit();
     });
+
+    return zoteroProcess;
   }
 
   /**
@@ -266,11 +288,11 @@ export default class Serve extends Base {
   }
 
   private get zoteroBinPath() {
-    this.logger.debug("zoteroBinPath", process.env.zoteroBinPath);
+    // this.logger.debug("zoteroBinPath", process.env.zoteroBinPath);
     return process.env.zoteroBinPath ?? "";
   }
   private get profilePath() {
-    this.logger.debug("profilePath", process.env.profilePath);
+    // this.logger.debug("profilePath", process.env.profilePath);
     return process.env.profilePath ?? "";
   }
   private get dataDir() {
