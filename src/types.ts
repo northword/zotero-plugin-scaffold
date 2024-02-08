@@ -279,7 +279,7 @@ export interface ConfigBase {
    * 发布相关配置
    */
   release: {
-    releaseIt: Partial<ReleaseItConfig>;
+    // releaseIt: Partial<ReleaseItConfig>;
     bumpp: VersionBumpOptions;
   };
   /**

@@ -60,9 +60,12 @@
     "ci-info": "^4.0.0",
     "commander": "^11.1.0",
     "compressing": "^1.10.0",
+    "conventional-changelog": "^5.1.0",
+    "conventional-commits-detector": "^1.0.3",
     "cosmiconfig": "^9.0.0",
     "dotenv": "^16.4.1",
     "esbuild": "^0.19.12",
+    "execa": "^8.0.1",
     "fast-glob": "^3.3.2",
     "fs-extra": "^11.2.0",
     "lodash": "^4.17.21",
@@ -75,16 +78,24 @@
   },
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^4.3.0",
+    "@types/conventional-changelog": "^3.1.5",
     "@types/fs-extra": "^11.0.4",
     "@types/lodash": "^4.14.202",
-    "@types/node": "^20.11.9",
+    "@types/node": "^20.11.16",
     "@types/update-notifier": "^6.0.8",
-    "@typescript-eslint/eslint-plugin": "^6.19.1",
-    "@typescript-eslint/parser": "^6.19.1",
+    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@typescript-eslint/parser": "^6.20.0",
     "eslint": "^8.56.0",
     "eslint-config-prettier": "^9.1.0",
     "prettier": "^3.2.4",
     "typescript": "^5.3.3"
+  },
+  "pnpm": {
+    "peerDependencyRules": {
+      "allowAny": [
+        "node-fetch"
+      ]
+    }
   },
   "release-it": {
     "git": {

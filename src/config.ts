@@ -157,19 +157,19 @@ export async function loadConfig(file?: string): Promise<Config> {
     extraBuilder: () => {},
     addonLint: {},
     release: {
-      releaseIt: {
-        preReleaseId: "beta",
-        git: {
-          tagName: "v${version}",
-          requireCleanWorkingDir: false,
-        },
-        npm: {
-          publish: false,
-        },
-        github: {
-          assets: [`${userConfig.dist}/*.xpi`],
-        },
-      },
+      // releaseIt: {
+      //   preReleaseId: "beta",
+      //   git: {
+      //     tagName: "v${version}",
+      //     requireCleanWorkingDir: false,
+      //   },
+      //   npm: {
+      //     publish: false,
+      //   },
+      //   github: {
+      //     assets: [`${userConfig.dist}/*.xpi`],
+      //   },
+      // },
       bumpp: {
         release: "prompt",
         preid: "beta",

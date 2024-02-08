@@ -3,6 +3,7 @@ import { Base } from "./base.js";
 import { Octokit } from "@octokit/rest";
 import versionBump from "bumpp";
 import ci from "ci-info";
+import conventionalChangelog from "conventional-changelog";
 import { default as glob } from "fast-glob";
 import fs from "fs-extra";
 import _ from "lodash";
@@ -46,32 +47,45 @@ export default class Release extends Base {
    * release: bump version, run build, git add, git commit, git tag, git push
    */
   bump() {
-    // versionBump(this.config.release.bumpp);
-    const releaseItConfig: ReleaseItConfig = {
-      "only-version": true,
-    };
-    releaseIt(_.defaultsDeep(releaseItConfig, this.config.release.releaseIt));
+    versionBump(this.config.release.bumpp);
+    // const releaseItConfig: ReleaseItConfig = {
+    //   "only-version": true,
+    // };
+    // releaseIt(_.defaultsDeep(releaseItConfig, this.config.release.releaseIt));
   }
 
   /**
    * Create new release and upload XPI to asset
    */
-  uploadXPI() {
-    const releaseItConfig: ReleaseItConfig = {
-      increment: false,
-      git: {
-        commit: false,
-        tag: false,
-        push: false,
-      },
-      github: {
-        release: true,
-      },
-      verbose: 2,
-      ci: true,
-    };
+  async uploadXPI() {
+    // const releaseItConfig: ReleaseItConfig = {
+    //   increment: false,
+    //   git: { commit: false, tag: false, push: false },
+    //   github: {
+    //     release: true,
+    //   },
+    //   verbose: 2,
+    //   ci: true,
+    // };
 
-    releaseIt(_.defaultsDeep(releaseItConfig, this.config.release.releaseIt));
+    // releaseIt(_.defaultsDeep(releaseItConfig, this.config.release.releaseIt));
+
+    const release = await this.creatRelease({
+      owner: this.owner,
+      repo: this.repo,
+      tag_name: `v${this.version}`,
+      name: `Release v${this.version}`,
+      bofy: await this.getChangelog(),
+      prerelease: this.version.includes("-"),
+      make_latest: "true",
+    });
+
+    if (!release) throw new Error("Creat release failed!");
+
+    this.uploadAsset(
+      release.id,
+      path.join(this.config.dist, `${this.xpiName}.xpi`),
+    );
   }
 
   async getReleaseByTag(tag: string) {
@@ -165,6 +179,22 @@ export default class Release extends Base {
     for (const asset of assets) {
       await this.uploadAsset(release.id, path.join(this.config.dist, asset));
     }
+  }
+
+  getChangelog() {
+    return new Promise((resolve, reject) => {
+      let changelog = "";
+      conventionalChangelog({ releaseCount: 2 }, { version: this.version })
+        .on("data", (chunk) => {
+          changelog += chunk.toString();
+        })
+        .on("end", () => {
+          resolve(changelog);
+        })
+        .on("error", (err) => {
+          reject(err);
+        });
+    });
   }
 
   getClient(): Octokit {
