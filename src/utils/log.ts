@@ -46,7 +46,8 @@ export default class Log {
   }
 
   debug(...args: any[]) {
-    if (this.logLevel <= 1) this.log(chalk.grey("DEBUG"), ...args);
+    // if (this.logLevel <= 1) this.log(chalk.grey("DEBUG"), ...args);
+    if (this.logLevel <= 1) this.log(...args);
   }
 
   trace(...args: any[]) {
