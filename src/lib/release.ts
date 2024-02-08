@@ -75,7 +75,7 @@ export default class Release extends Base {
       repo: this.repo,
       tag_name: `v${this.version}`,
       name: `Release v${this.version}`,
-      bofy: await this.getChangelog(),
+      body: await this.getChangelog(),
       prerelease: this.version.includes("-"),
       make_latest: "true",
     });
@@ -149,12 +149,18 @@ export default class Release extends Base {
         owner: this.owner,
         repo: this.repo,
         tag_name: "release",
-        name: "Release Manifest",
-        body: `This release is used to host \`update.json\`, please do not delete or modify it! \n Updated in UTC ${new Date().toISOString()} for version ${this.version}`,
-        make_latest: "false",
       }));
 
     if (!release) throw new Error("Get or create 'release' failed.");
+
+    await this.client.repos.updateRelease({
+      owner: this.owner,
+      repo: this.repo,
+      release_id: release.id,
+      name: "Release Manifest",
+      body: `This release is used to host \`update.json\`, please do not delete or modify it! \n Updated in UTC ${new Date().toISOString()} for version ${this.version}`,
+      make_latest: "false",
+    });
 
     const existAssets = await this.client.repos
       .listReleaseAssets({
@@ -181,7 +187,7 @@ export default class Release extends Base {
     }
   }
 
-  getChangelog() {
+  getChangelog(): Promise<string> {
     return new Promise((resolve, reject) => {
       let changelog = "";
       conventionalChangelog({ releaseCount: 2 }, { version: this.version })
@@ -189,6 +195,7 @@ export default class Release extends Base {
           changelog += chunk.toString();
         })
         .on("end", () => {
+          this.logger.debug("changelog:", changelog);
           resolve(changelog);
         })
         .on("error", (err) => {
