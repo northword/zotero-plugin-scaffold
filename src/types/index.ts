@@ -21,6 +21,7 @@ interface UserConfig extends RecursivePartial<Config> {
 
 interface Context extends Config {
   pkgUser: any;
+  xpiName: string;
   version: string;
   hooks: Hookable<Hooks>;
   templateDate: { [placeholder: string]: string };

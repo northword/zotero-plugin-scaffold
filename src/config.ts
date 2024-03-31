@@ -55,6 +55,7 @@ function resolveConfig(config: Config): Context {
   const ctx: Context = {
     ...config,
     pkgUser: pkg,
+    xpiName: dash(config.name),
     version: pkg.version,
     hooks: createHooks(),
     templateDate: data,

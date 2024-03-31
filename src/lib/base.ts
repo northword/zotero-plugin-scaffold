@@ -40,6 +40,6 @@ export abstract class Base {
     return this.ctx.updateURL;
   }
   get xpiName() {
-    return this.ctx.build.define.xpiName;
+    return this.ctx.xpiName;
   }
 }

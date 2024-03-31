@@ -233,7 +233,7 @@ export default class Build extends Base {
       max = manifest.applications?.zotero?.strict_max_version;
 
     const updateHash = generateHashSync(
-      path.join(this.dist, `${this.ctx.templateDate.xpiName}.xpi`),
+      path.join(this.dist, `${this.xpiName}.xpi`),
       "sha512",
     );
 
@@ -278,7 +278,7 @@ export default class Build extends Base {
     await webext.cmd.build({
       sourceDir: `${this.dist}/addon`,
       artifactsDir: this.dist,
-      filename: `${this.ctx.templateDate.xpiName}.xpi`,
+      filename: `${this.xpiName}.xpi`,
       overwriteDest: true,
     });
   }
