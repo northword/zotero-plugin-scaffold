@@ -8,7 +8,6 @@ import mime from "mime";
 import { Octokit } from "octokit";
 import path from "path";
 import _ from "radash";
-import releaseIt from "release-it";
 import { isCI } from "std-env";
 
 export default class Release extends Base {
@@ -34,9 +33,7 @@ export default class Release extends Base {
       await this.bump();
     } else {
       if (glob.globSync(`${this.dist}/*.xpi`).length == 0) {
-        this.logger.error(
-          "No xpi file found, are you sure you have run the build?",
-        );
+        throw new Error("No xpi file found, are you sure you have run build?");
       }
       await this.uploadXPI();
       await this.uploadUpdateJSON();
@@ -102,27 +99,17 @@ export default class Release extends Base {
         if (res.status == 200) {
           return res.data;
         }
-      })
-      .catch((err) => {
-        this.logger.debug(err);
-        return undefined;
       });
   }
 
   async creatRelease(
     options: Parameters<Octokit["rest"]["repos"]["createRelease"]>[0],
   ) {
-    return await this.client.rest.repos
-      .createRelease(options)
-      .then((res) => {
-        if (res.status == 201) {
-          return res.data;
-        }
-      })
-      .catch((err) => {
-        this.logger.debug(err);
-        return undefined;
-      });
+    return await this.client.rest.repos.createRelease(options).then((res) => {
+      if (res.status == 201) {
+        return res.data;
+      }
+    });
   }
 
   async uploadAsset(releaseID: number, asset: string) {
