@@ -157,6 +157,10 @@ pnpm run build
 pnpm run lint:fix
 ```
 
+## License
+
+GNU Affero General Public License Version 3
+
 ## Acknowledgements
 
 This project references the design and code of the [Zotero Plugin Template](https://github.com/windingwind/zotero-plugin-template).
