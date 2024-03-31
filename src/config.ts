@@ -1,10 +1,10 @@
-import { Config, UserConfig } from "./types";
-import { cosmiconfig } from "cosmiconfig";
-import * as dotenv from "dotenv";
-import { default as fs } from "fs-extra";
-import _ from "lodash";
+import { Config, Context, OverrideConfig, UserConfig } from "./types";
+import { dateFormat } from "./utils/string";
+import { loadConfig as c12 } from "c12";
+import fs from "fs-extra";
+import { createHooks } from "hookable";
 import path from "path";
-import { fileURLToPath } from "url";
+import { dash, template } from "radash";
 
 /**
  * Define the configuration.
@@ -22,87 +22,76 @@ export const defineConfig = (userConfig: UserConfig): UserConfig => {
  * @param [file="zotero-plugin.config.{ts,js,mjs,cjs}"] The path of config file.
  * @returns Config with userDefined and defaultConfig merged.
  */
-export async function loadConfig(file?: string): Promise<Config> {
-  // load user defined config file
-  // Do not use the sync method, as the sync method only supports compiling configuration files into cjs modules.
-  const explorer = cosmiconfig("zotero-plugin"),
-    result = await explorer.search(file);
-  const userConfig: UserConfig = result?.config ?? {};
+export async function loadConfig(overrides?: OverrideConfig): Promise<Context> {
+  const result = await c12<Config>({
+    name: "zotero-plugin",
+    dotenv: true,
+    defaults: getDefaultConfig(),
+    overrides: overrides as Config,
+  });
+  return resolveConfig(result.config as Config);
+}
 
-  // load `.env` file.
-  const dotenvResult = dotenv.config({
-    path: path.resolve(process.cwd(), userConfig.dotEnvPath ?? ".env"),
-  }).parsed;
-  // if (!dotenvResult) throw new Error(".env file not found");
-
+function resolveConfig(config: Config): Context {
   // Load user's package.json
   const pkg = fs.readJsonSync(path.join("package.json"), {
-    encoding: "utf-8",
-  });
-
-  // define addon config 防呆
-  const addonName =
-      userConfig.define?.addonName ||
-      pkg.config?.addonName ||
-      _.startCase(pkg.name) ||
-      "",
-    addonRef =
-      userConfig.define?.addonRef ||
-      pkg.config?.addonRef ||
-      _.kebabCase(addonName),
-    xpiName = userConfig.define?.xpiName || pkg.name || _.kebabCase(addonName),
+      encoding: "utf-8",
+    }),
     [, owner, repo] = (pkg.repository?.url ?? "").match(
       /:\/\/github.com\/([^/]+)\/([^.]+)\.git$/,
     ),
-    releasePage =
-      userConfig.define?.releasePage ||
-      (owner && repo ? `https://github.com/${owner}/${repo}/release` : ""),
-    isPreRelease = pkg.version.includes("-");
+    data = {
+      owner: owner,
+      repo: repo,
+      version: pkg.version,
+      isPreRelease: pkg.version.includes("-"),
+      xpiName: dash(config.name),
+      buildTime: dateFormat("YYYY-mm-dd HH:MM:SS", new Date()),
+    };
 
-  // define default config.
-  const defaultConfig = {
-    source: ["src"],
-    dist: "build",
+  config.updateURL = template(config.updateURL, data);
+  config.xpiDownloadLink = template(config.xpiDownloadLink, data);
+
+  const ctx: Context = {
+    ...config,
+    pkgUser: pkg,
+    version: pkg.version,
+    hooks: createHooks(),
+    templateDate: data,
+  };
+
+  if (config.build.hooks) {
+    ctx.hooks.addHooks(config.build.hooks);
+  }
+  if (config.server.hooks) {
+    ctx.hooks.addHooks(config.server.hooks);
+  }
+
+  return ctx;
+}
+
+const getDefaultConfig = () => <Config>defaultConfig;
+
+const defaultConfig = {
+  source: ["src"],
+  dist: "build",
+
+  name: "",
+  id: "",
+  namespace: "",
+  xpiDownloadLink:
+    "https://github.com/{{owner}}/{{repo}}/release/download/v{{version}}/{{xpiName}}.xpi",
+  updateURL:
+    "https://github.com/{{owner}}/{{repo}}/release/download/release/update.json",
+
+  build: {
     assets: ["src/**/*.*", "!src/**/*.ts"],
-    define: {
-      addonName: addonName,
-      addonID: pkg.config?.addonID || "",
-      description: pkg.description || "",
-      homepage: pkg.homepage,
-      author: pkg.author,
-      ghOwner: owner,
-      ghRepo: repo,
-      addonRef: pkg.config?.addonRef || _.kebabCase(addonName),
-      addonInstance: pkg.config?.addonInstance || _.camelCase(addonName),
-      prefsPrefix: `extensions.zotero.${addonRef}`,
-      xpiName: xpiName,
-      releasePage: releasePage,
-      updateURL: `${releasePage}/download/${userConfig.makeUpdateJson?.tagName || "release"}/${isPreRelease ? "update-beta" : "update"}.json`,
-      updateLink: `${releasePage}/download/v${pkg.version}/${xpiName}.xpi`,
-      buildVersion: pkg.version,
-    },
-
+    define: {},
     fluent: {
       prefixFluentMessages: true,
       prefixLocaleFiles: true,
     },
-    esbuildOptions: [
-      {
-        entryPoints: ["src/index.ts"],
-        define: {
-          __env__: `"${process.env.NODE_ENV}"`,
-        },
-        bundle: true,
-        target: "firefox102",
-        outfile: path.join(
-          process.cwd(),
-          userConfig.dist || "build",
-          `addon/${addonRef || "index"}.js`,
-        ),
-        minify: process.env.NODE_ENV === "production",
-      },
-    ],
-    makeBootstrap: true,
+    esbuildOptions: [],
     makeManifest: {
       enable: true,
       template: {
@@ -133,60 +122,28 @@ export async function loadConfig(file?: string): Promise<Config> {
     },
     makeUpdateJson: {
       enable: true,
-      tagName: "release",
-      template: {
-        addons: {
-          __addonID__: {
-            updates: [
-              {
-                version: "__version__",
-                update_link: "__updateLink__",
-                update_hash: "__updateHash__",
-                applications: {
-                  zotero: {
-                    strict_min_version: "6.999",
-                  },
-                },
-              },
-            ],
-          },
-        },
-      },
+      updates: [],
+      hash: true,
     },
-    extraServer: () => {},
-    extraBuilder: () => {},
-    addonLint: {},
-    release: {
-      // releaseIt: {
-      //   preReleaseId: "beta",
-      //   git: {
-      //     tagName: "v${version}",
-      //     requireCleanWorkingDir: false,
-      //   },
-      //   npm: {
-      //     publish: false,
-      //   },
-      //   github: {
-      //     assets: [`${userConfig.dist}/*.xpi`],
-      //   },
-      // },
-      bumpp: {
-        release: "prompt",
-        preid: "beta",
-        // execute: "npm run build",
-        all: true,
-        commit: "Release v%s",
-        tag: "v%s",
-        push: true,
-      },
+    hooks: {},
+  },
+  server: {
+    startArgs: ["--debugger", "--purgecaches"],
+    asProxy: false,
+    hooks: {},
+  },
+  addonLint: {},
+  release: {
+    bumpp: {
+      release: "prompt",
+      preid: "beta",
+      // execute: "npm run build",
+      all: false,
+      commit: "Release v%s",
+      tag: "v%s",
+      push: true,
     },
-    logLevel: "info",
-    dotEnvPath: ".env",
-    pkgUser: pkg,
-    pkgAbsolute: path.join(path.dirname(fileURLToPath(import.meta.url)), "../"),
-  } satisfies Config;
-
-  // merge config
-  const config = _.defaultsDeep(userConfig, defaultConfig);
-  return config;
-}
+  },
+  logLevel: "info",
+  dotEnvPath: ".env",
+} satisfies Config;

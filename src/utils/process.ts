@@ -1,6 +1,6 @@
-import { exec } from "child_process";
+import { execSync } from "child_process";
 
-export function isRunning(query: string, cb: (status: boolean) => void) {
+export function isRunning(query: string) {
   const platform = process.platform;
   let cmd = "";
   switch (platform) {
@@ -16,7 +16,11 @@ export function isRunning(query: string, cb: (status: boolean) => void) {
     default:
       break;
   }
-  exec(cmd, (err, stdout, stderr) => {
-    cb(stdout.toLowerCase().indexOf(query.toLowerCase()) > -1);
-  });
+
+  try {
+    const stdout = execSync(cmd, { encoding: "utf8" });
+    return stdout.toLowerCase().indexOf(query.toLowerCase()) > -1;
+  } catch (error) {
+    return false;
+  }
 }

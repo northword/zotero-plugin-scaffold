@@ -1,24 +1,23 @@
-import { Config } from "../types.js";
-import { generateHashSync } from "../utils/crypto.js";
-import { dateFormat } from "../utils/string.js";
-import { Base } from "./base.js";
+import { Context } from "../types";
+import { Manifest } from "../types/manifest";
+import { UpdateJSON } from "../types/update-json";
+import { generateHashSync } from "../utils/crypto";
+import { dateFormat } from "../utils/string";
+import { Base } from "./base";
 import chalk from "chalk";
-import { zip } from "compressing";
 import { buildSync } from "esbuild";
 import glob from "fast-glob";
 import fs from "fs-extra";
-import _ from "lodash";
 import path from "path";
+import { assign, template } from "radash";
 import replaceInFile from "replace-in-file";
 import webext from "web-ext";
-
-const { replaceInFileSync } = replaceInFile;
 
 export default class Build extends Base {
   private buildTime: string;
   private isPreRelease: boolean;
-  constructor(config: Config) {
-    super(config);
+  constructor(ctx: Context) {
+    super(ctx);
     process.env.NODE_ENV ??= "production";
     this.buildTime = "";
     this.isPreRelease = this.version.includes("-");
@@ -30,42 +29,48 @@ export default class Build extends Base {
   async run() {
     const t = new Date();
     this.buildTime = dateFormat("YYYY-mm-dd HH:MM:SS", t);
-    this.logger.info(
-      `Building version ${chalk.blue(this.version)} to ${chalk.blue(this.config.dist)} at ${chalk.blue(this.buildTime)} in ${chalk.blue(process.env.NODE_ENV)} mode.`,
+    this.logger.start(
+      `Building version ${chalk.blue(this.version)} to ${chalk.blue(this.dist)} at ${chalk.blue(this.buildTime)} in ${chalk.blue(process.env.NODE_ENV)} mode.`,
     );
+    await this.ctx.hooks.callHook("build:init", this.ctx);
 
-    fs.emptyDirSync(this.config.dist);
+    fs.emptyDirSync(this.dist);
+    await this.ctx.hooks.callHook("build:mkdir", this.ctx);
     this.copyAssets();
+    await this.ctx.hooks.callHook("build:copyAssets", this.ctx);
 
-    this.logger.debug("Preparing manifest...");
+    this.logger.info("Preparing manifest");
     this.makeManifest();
-    this.makebootstrap();
+    await this.ctx.hooks.callHook("build:makeManifest", this.ctx);
 
-    this.logger.debug("Preparing locale files...");
+    this.logger.info("Preparing locale files");
     this.prepareLocaleFiles();
+    await this.ctx.hooks.callHook("build:fluent", this.ctx);
 
-    this.logger.debug("Replacing...");
+    this.logger.info("Replacing");
     this.replaceString();
+    await this.ctx.hooks.callHook("build:replace", this.ctx);
 
-    this.logger.debug("Running esbuild...");
+    this.logger.info("Running esbuild");
     this.esbuild();
+    await this.ctx.hooks.callHook("build:bundle", this.ctx);
 
-    this.logger.debug("Running extra builder...");
-    await this.config.extraBuilder(this.config);
-
-    this.logger.debug("Addon prepare OK.");
+    this.logger.info("Addon prepare OK.");
 
     /**======== build resolved ===========*/
 
     if (process.env.NODE_ENV === "production") {
-      this.logger.debug("Packing Addon...");
+      this.logger.info("Packing Addon");
       await this.pack();
+      await this.ctx.hooks.callHook("build:pack", this.ctx);
 
-      this.logger.debug("Preparing update.json...");
+      this.logger.info("Preparing update.json");
       this.makeUpdateJson();
+      await this.ctx.hooks.callHook("build:makeUpdateJSON", this.ctx);
     }
 
-    this.logger.info(
+    await this.ctx.hooks.callHook("build:done", this.ctx);
+    this.logger.success(
       `Build finished in ${(new Date().getTime() - t.getTime()) / 1000} s.`,
     );
   }
@@ -74,53 +79,59 @@ export default class Build extends Base {
    * Copys files in `Config.assets` to `Config.dist`
    */
   copyAssets() {
-    const files = glob.sync(this.config.assets);
+    const files = glob.sync(this.ctx.build.assets);
     files.forEach((file) => {
-      const newPath = `${this.config.dist}/addon/${file.replace(new RegExp(this.config.source.join("|")), "")}`;
-      this.logger.trace(`Copy ${file} to ${newPath}`);
+      const newPath = `${this.dist}/addon/${file.replace(new RegExp(this.src.join("|")), "")}`;
+      this.logger.debug(`Copy ${file} to ${newPath}`);
       fs.copySync(file, newPath);
     });
   }
 
   makeManifest() {
-    if (!this.config.makeManifest.enable) return;
-    fs.outputJSONSync(
-      `${this.config.dist}/addon/manifest.json`,
-      this.config.makeManifest.template,
-      { spaces: 2 },
-    );
-  }
+    if (!this.ctx.build.makeManifest.enable) return;
+    const userData = fs.readJSONSync(
+        `${this.dist}/addon/manifest.json`,
+      ) as Manifest,
+      template: Manifest = {
+        ...userData,
+        ...(this.name && { name: this.name }),
+        ...(this.version && { version: this.version }),
+        applications: {
+          //@ts-expect-error 此处不包含版本限制
+          zotero: {
+            id: this.id,
+            update_url: this.updateURL,
+          },
+          gecko: {
+            id: this.id,
+            update_url: this.updateURL,
+            strict_min_version: "102",
+          },
+        },
+      };
 
-  makebootstrap() {
-    if (!this.config.makeBootstrap) return;
-    fs.copySync(
-      path.join(this.config.pkgAbsolute, "template/default/bootstrap.js"),
-      `${this.config.dist}/addon/bootstrap.js`,
-    );
+    const data: Manifest = assign(userData, template);
+    this.logger.debug("manifest: ", JSON.stringify(data, null, 2));
+
+    fs.outputJSONSync(`${this.dist}/addon/manifest.json`, data, { spaces: 2 });
   }
 
   /**
    * Replace all `placeholder.key` to `placeholder.value` for all files in `dist`
    */
   replaceString() {
-    const replaceFrom: Array<RegExp | string> = [],
-      replaceTo: Array<string | any> = [];
-
-    // Config.placeholders has the highest priority
-    replaceFrom.push(
-      ...Object.keys(this.config.define).map(
-        (k) => new RegExp(`__${k}__`, "g"),
-      ),
+    const replaceMap = new Map(
+      Object.keys(this.ctx.build.define).map((key) => [
+        new RegExp(`__${key}__`, "g"),
+        template(this.ctx.build.define[key] as string, this.ctx.templateDate),
+      ]),
     );
-    replaceTo.push(...Object.values(this.config.define));
+    this.logger.debug("replace map: ", replaceMap);
 
-    replaceFrom.push(/__buildTime__/g);
-    replaceTo.push(this.buildTime);
-
-    const replaceResult = replaceInFileSync({
-      files: this.config.assets.map((asset) => `${this.config.dist}/${asset}`),
-      from: replaceFrom,
-      to: replaceTo,
+    const replaceResult = replaceInFile.sync({
+      files: this.ctx.build.assets.map((asset) => `${this.dist}/${asset}`),
+      from: Array.from(replaceMap.keys()),
+      to: Array.from(replaceMap.values()),
       countMatches: true,
     });
 
@@ -135,19 +146,16 @@ export default class Build extends Base {
   prepareLocaleFiles() {
     // Prefix Fluent messages in xhtml
     const MessagesInHTML = new Set();
-    replaceInFileSync({
-      files: [
-        `${this.config.dist}/addon/**/*.xhtml`,
-        `${this.config.dist}/addon/**/*.html`,
-      ],
+    replaceInFile.sync({
+      files: [`${this.dist}/addon/**/*.xhtml`, `${this.dist}/addon/**/*.html`],
       // @ts-expect-error ReplaceInFileConfig has processor
       processor: (input) => {
         const matchs = [...input.matchAll(/(data-l10n-id)="(\S*)"/g)];
         matchs.map((match) => {
           input = input.replace(
             match[0],
-            this.config.fluent.prefixFluentMessages == true
-              ? `${match[1]}="${this.addonRef}-${match[2]}"`
+            this.ctx.build.fluent.prefixFluentMessages == true
+              ? `${match[1]}="${this.namespace}-${match[2]}"`
               : match[0],
           );
           MessagesInHTML.add(match[2]);
@@ -158,26 +166,28 @@ export default class Build extends Base {
 
     // Walk the sub folders of `build/addon/locale`
     const localeNames = glob
-      .sync(`${this.config.dist}/addon/locale/*/`, {})
+      .sync(`${this.dist}/addon/locale/**`, { onlyDirectories: true })
       .map((locale) => path.basename(locale));
+    this.logger.debug("locale names: ", localeNames);
 
     for (const localeName of localeNames) {
       // rename *.ftl to addonRef-*.ftl
-      if (this.config.fluent.prefixLocaleFiles == true) {
+      if (this.ctx.build.fluent.prefixLocaleFiles == true) {
         glob
-          .sync(`${this.config.dist}/addon/locale/${localeName}/**/*.ftl`, {})
+          .sync(`${this.dist}/addon/locale/${localeName}/**/*.ftl`, {})
           .forEach((f) => {
             fs.moveSync(
               f,
-              `${path.dirname(f)}/${this.addonRef}-${path.basename(f)}`,
+              `${path.dirname(f)}/${this.namespace}-${path.basename(f)}`,
             );
+            this.logger.debug(`Prefix filename: ${f}`);
           });
       }
 
       // Prefix Fluent messages in each ftl
       const MessageInThisLang = new Set();
-      replaceInFileSync({
-        files: [`${this.config.dist}/addon/locale/${localeName}/**/*.ftl`],
+      replaceInFile.sync({
+        files: [`${this.dist}/addon/locale/${localeName}/**/*.ftl`],
         // @ts-expect-error ReplaceInFileConfig has processor
         processor: (fltContent) => {
           const lines = fltContent.split("\n");
@@ -188,8 +198,8 @@ export default class Build extends Base {
             );
             if (match && match.groups) {
               MessageInThisLang.add(match.groups.message);
-              return this.config.fluent.prefixFluentMessages
-                ? `${this.addonRef}-${line}`
+              return this.ctx.build.fluent.prefixFluentMessages
+                ? `${this.namespace}-${line}`
                 : line;
             } else {
               return line;
@@ -202,74 +212,74 @@ export default class Build extends Base {
       // If a message in xhtml but not in ftl of current language, log it
       MessagesInHTML.forEach((message) => {
         if (!MessageInThisLang.has(message)) {
-          this.logger.error(`${message} don't exist in ${localeName}`);
+          this.logger.warn(`${message} don't exist in ${localeName}`);
         }
       });
     }
   }
 
   esbuild() {
-    this.config.esbuildOptions.forEach(async (esbuildOption) => {
+    if (this.ctx.build.esbuildOptions.length == 0) return;
+    this.ctx.build.esbuildOptions.forEach(async (esbuildOption) => {
       buildSync(esbuildOption);
     });
   }
 
   makeUpdateJson() {
-    fs.writeJsonSync(
-      `${this.config.dist}/update-beta.json`,
-      this.config.makeUpdateJson.template,
-      { spaces: 2 },
-    );
-    fs.writeJsonSync(
-      `${this.config.dist}/update.json`,
-      this.config.makeUpdateJson.template,
-      { spaces: 2 },
-    );
+    const manifest = fs.readJSONSync(
+        `${this.dist}/addon/manifest.json`,
+      ) as Manifest,
+      min = manifest.applications?.zotero?.strict_min_version,
+      max = manifest.applications?.zotero?.strict_max_version;
 
     const updateHash = generateHashSync(
-      path.join(this.config.dist, `${this.xpiName}.xpi`),
+      path.join(this.dist, `${this.ctx.templateDate.xpiName}.xpi`),
       "sha512",
     );
 
-    const replaceResult = replaceInFileSync({
-      files: [
-        `${this.config.dist}/update-beta.json`,
-        `${this.config.dist}/${this.isPreRelease ? "pass" : "update.json"}`,
-      ],
-      from: [
-        /__addonID__/g,
-        /__version__/g,
-        /__updateLink__/g,
-        /__updateHash__/g,
-      ],
-      to: [this.addonID, this.version, this.updateLink, updateHash],
-      countMatches: true,
-    });
+    const data: UpdateJSON = {
+      addons: {
+        [this.id]: {
+          updates: [
+            ...this.ctx.build.makeUpdateJson.updates,
+            {
+              version: this.version,
+              update_link: this.updateLink,
+              ...(this.ctx.build.makeUpdateJson.hash && {
+                update_hash: updateHash,
+              }),
+              applications: {
+                zotero: {
+                  strict_min_version: min,
+                  ...(max && { strict_max_version: max }),
+                },
+              },
+            },
+          ],
+        },
+      },
+    };
 
-    this.logger.debug(
+    fs.writeJsonSync(`${this.dist}/update-beta.json`, data, { spaces: 2 });
+    !this.isPreRelease
+      ? fs.writeJsonSync(`${this.dist}/update.json`, data, { spaces: 2 })
+      : "pass";
+
+    this.logger.log(
       `Prepare Update.json for ${
         this.isPreRelease
           ? "\u001b[31m Prerelease \u001b[0m"
           : "\u001b[32m Release \u001b[0m"
       }`,
-      replaceResult
-        .filter((f) => f.hasChanged)
-        .map((f) => `${f.file} : ${f.numReplacements} / ${f.numMatches}`),
     );
   }
 
   async pack() {
-    await zip.compressDir(
-      path.join(this.config.dist, "addon"),
-      path.join(this.config.dist, `${this.xpiName}.xpi`),
-      {
-        ignoreBase: true,
-      },
-    );
-    // await webext.cmd.build({
-    //   sourceDir: `${this.config.dist}/addon`,
-    //   artifactsDir: this.config.dist,
-    //   filename: `${this.pkg.name ?? "name"}.xpi`,
-    // });
+    await webext.cmd.build({
+      sourceDir: `${this.dist}/addon`,
+      artifactsDir: this.dist,
+      filename: `${this.ctx.templateDate.xpiName}.xpi`,
+      overwriteDest: true,
+    });
   }
 }

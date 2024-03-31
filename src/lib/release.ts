@@ -1,22 +1,22 @@
-import { Config } from "../types.js";
+import { Context } from "../types";
 import { Base } from "./base.js";
-import { Octokit } from "@octokit/rest";
 import versionBump from "bumpp";
-import ci from "ci-info";
 import conventionalChangelog from "conventional-changelog";
 import { default as glob } from "fast-glob";
 import fs from "fs-extra";
-import _ from "lodash";
 import mime from "mime";
+import { Octokit } from "octokit";
 import path from "path";
+import _ from "radash";
 import releaseIt from "release-it";
+import { isCI } from "std-env";
 
 export default class Release extends Base {
   isCI: boolean;
   client: Octokit;
-  constructor(config: Config) {
-    super(config);
-    this.isCI = ci.isCI;
+  constructor(ctx: Context) {
+    super(ctx);
+    this.isCI = isCI;
     this.client = this.getClient();
   }
 
@@ -31,7 +31,7 @@ export default class Release extends Base {
     if (!this.isCI) {
       this.bump();
     } else {
-      if (glob.globSync(`${this.config.dist}/*.xpi`).length == 0) {
+      if (glob.globSync(`${this.dist}/*.xpi`).length == 0) {
         this.logger.error(
           "No xpi file found, are you sure you have run the build?",
         );
@@ -47,7 +47,7 @@ export default class Release extends Base {
    * release: bump version, run build, git add, git commit, git tag, git push
    */
   bump() {
-    versionBump(this.config.release.bumpp);
+    versionBump(this.ctx.release.bumpp);
     // const releaseItConfig: ReleaseItConfig = {
     //   "only-version": true,
     // };
@@ -80,16 +80,13 @@ export default class Release extends Base {
       make_latest: "true",
     });
 
-    if (!release) throw new Error("Creat release failed!");
+    if (!release) throw new Error("Create release failed!");
 
-    this.uploadAsset(
-      release.id,
-      path.join(this.config.dist, `${this.xpiName}.xpi`),
-    );
+    this.uploadAsset(release.id, path.join(this.dist, `${this.xpiName}.xpi`));
   }
 
   async getReleaseByTag(tag: string) {
-    return await this.client.repos
+    return await this.client.rest.repos
       .getReleaseByTag({
         owner: this.owner,
         repo: this.repo,
@@ -107,9 +104,9 @@ export default class Release extends Base {
   }
 
   async creatRelease(
-    options: Parameters<Octokit["repos"]["createRelease"]>[0],
+    options: Parameters<Octokit["rest"]["repos"]["createRelease"]>[0],
   ) {
-    return await this.client.repos
+    return await this.client.rest.repos
       .createRelease(options)
       .then((res) => {
         if (res.status == 201) {
@@ -123,7 +120,7 @@ export default class Release extends Base {
   }
 
   async uploadAsset(releaseID: number, asset: string) {
-    return await this.client.repos
+    return await this.client.rest.repos
       .uploadReleaseAsset({
         owner: this.owner,
         repo: this.repo,
@@ -153,7 +150,7 @@ export default class Release extends Base {
 
     if (!release) throw new Error("Get or create 'release' failed.");
 
-    await this.client.repos.updateRelease({
+    await this.client.rest.repos.updateRelease({
       owner: this.owner,
       repo: this.repo,
       release_id: release.id,
@@ -162,7 +159,7 @@ export default class Release extends Base {
       make_latest: "false",
     });
 
-    const existAssets = await this.client.repos
+    const existAssets = await this.client.rest.repos
       .listReleaseAssets({
         owner: this.owner,
         repo: this.repo,
@@ -174,7 +171,7 @@ export default class Release extends Base {
 
     if (existAssets) {
       for (const existAsset of existAssets) {
-        await this.client.repos.deleteReleaseAsset({
+        await this.client.rest.repos.deleteReleaseAsset({
           owner: this.owner,
           repo: this.repo,
           asset_id: existAsset.id,
@@ -183,7 +180,7 @@ export default class Release extends Base {
     }
 
     for (const asset of assets) {
-      await this.uploadAsset(release.id, path.join(this.config.dist, asset));
+      await this.uploadAsset(release.id, path.join(this.dist, asset));
     }
   }
 
@@ -215,9 +212,9 @@ export default class Release extends Base {
   }
 
   get owner(): string {
-    return this.config.define.ghOwner;
+    return this.ctx.templateDate.owner;
   }
   get repo(): string {
-    return this.config.define.ghRepo;
+    return this.ctx.templateDate.repo;
   }
 }

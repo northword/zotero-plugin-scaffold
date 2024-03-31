@@ -1,5 +1,5 @@
 import * as crypto from "crypto";
-import * as fs from "fs";
+import * as fs from "fs-extra";
 
 export function generateHash(
   filePath: string,

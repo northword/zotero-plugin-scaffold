@@ -1,7 +1,7 @@
 import { Config } from "../types";
 import chalk from "chalk";
-import { isCI } from "ci-info";
-import _ from "lodash";
+import { createConsola } from "consola";
+import { isCI } from "std-env";
 
 enum LOG_LEVEL {
   "trace", // 0
@@ -11,6 +11,26 @@ enum LOG_LEVEL {
   "error", //4
 }
 
+type LogType =
+  | "trace"
+  | "debug" // 1
+  | "info" // 2
+  | "warn" //3
+  | "error"; //4
+
+export const LogLevels: Record<LogType, number> = {
+  trace: 5,
+  debug: 4,
+  info: 3,
+  warn: 1,
+  error: 0,
+};
+
+/**
+ * Log
+ *
+ * @deprecated
+ */
 export default class Log {
   private logLevel: number;
   constructor(config?: Config) {

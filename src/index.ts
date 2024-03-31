@@ -9,4 +9,4 @@ const Config = {
   loadConfig,
 };
 
-export { defineConfig, Config, Create, Build, Serve, Release };
+export { defineConfig, Config, Build, Serve, Release };

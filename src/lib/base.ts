@@ -1,37 +1,45 @@
-import { Config } from "../types.js";
-import Log from "../utils/log.js";
+import { Context } from "../types";
+import { LogLevels } from "../utils/log";
+import { ConsolaInstance, createConsola } from "consola";
 
 export abstract class Base {
-  config: Config;
-  logger: InstanceType<typeof Log>;
-
-  constructor(config: Config) {
-    this.config = config;
-    this.logger = new Log(config);
+  ctx: Context;
+  // logger: InstanceType<typeof Log>;
+  logger: ConsolaInstance;
+  constructor(ctx: Context) {
+    this.ctx = ctx;
+    // this.logger = new Log(config);
+    this.logger = createConsola({
+      level: LogLevels[ctx.logLevel],
+      fancy: true,
+    });
   }
 
+  get dist() {
+    return this.ctx.dist;
+  }
+  get src() {
+    return this.ctx.source;
+  }
   get version() {
-    return this.config.define.buildVersion;
+    return this.ctx.version;
   }
-  get addonName() {
-    return this.config.define.addonName;
+  get name() {
+    return this.ctx.name;
   }
-  get addonID() {
-    return this.config.define.addonID;
+  get id() {
+    return this.ctx.id;
   }
-  get addonRef() {
-    return this.config.define.addonRef;
-  }
-  get addonInstence() {
-    return this.config.define.addonInstance;
+  get namespace() {
+    return this.ctx.namespace;
   }
   get updateLink() {
-    return this.config.define.updateLink;
+    return this.ctx.xpiDownloadLink;
   }
   get updateURL() {
-    return this.config.define.updateURL;
+    return this.ctx.updateURL;
   }
   get xpiName() {
-    return this.config.define.xpiName;
+    return this.ctx.build.define.xpiName;
   }
 }
