@@ -4,8 +4,10 @@
     "config:recommended",
     ":prHourlyLimitNone",
     ":prConcurrentLimitNone",
+    "group:allNonMajor",
     ":enableVulnerabilityAlerts",
     ":dependencyDashboard",
     "schedule:weekly"
-  ]
+  ],
+  "labels": ["dependencies"]
 }
