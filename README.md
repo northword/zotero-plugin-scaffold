@@ -64,9 +64,6 @@ export default defineConfig({
   name: pkg.config.addonName,
   id: pkg.config.addonID,
   namespace: pkg.config.addonRef,
-  updateURL: `https://raw.githubusercontent.com/{{owner}}/{{repo}}/main/update.json`,
-  xpiDownloadLink:
-    "https://github.com/{{owner}}/{{repo}}/releases/download/v{{version}}/{{xpiName}}.xpi",
   build: {
     esbuildOptions: [
       {
@@ -159,7 +156,7 @@ pnpm run lint:fix
 
 ## License
 
-GNU Affero General Public License Version 3
+GNU Affero General Public License Version 3.
 
 ## Acknowledgements
 

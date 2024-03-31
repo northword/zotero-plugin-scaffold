@@ -19,8 +19,6 @@ interface UserConfig extends RecursivePartial<Config> {
   name: string;
   id: string;
   namespace: string;
-  xpiDownloadLink: string;
-  updateURL: string;
 }
 
 interface Context extends Config {
