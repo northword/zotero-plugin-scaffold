@@ -1,4 +1,5 @@
 import { Config, Context, OverrideConfig, UserConfig } from "./types";
+import { progress } from "./utils/progress";
 import { dateFormat } from "./utils/string";
 import { loadConfig as c12 } from "c12";
 import fs from "fs-extra";
@@ -137,12 +138,14 @@ const defaultConfig = {
   release: {
     bumpp: {
       release: "prompt",
+      confirm: true,
       preid: "beta",
       // execute: "npm run build",
       all: false,
-      commit: "Release v%s",
+      commit: "chore(publish): release v%s",
       tag: "v%s",
       push: true,
+      progress: progress,
     },
   },
   logLevel: "info",
