@@ -10,7 +10,11 @@ type RequiredRecursively<T> = {
 };
 
 interface OverrideConfig extends RecursivePartial<Config> {}
-
+/**
+ * User config
+ *
+ * 用户输入的配置，总配置全可选基础上添加部分为必填
+ */
 interface UserConfig extends RecursivePartial<Config> {
   name: string;
   id: string;

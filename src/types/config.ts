@@ -26,7 +26,7 @@ export interface Config {
    * 构建目录。
    *
    * 脚手架将在 `${dist}/addon` 存放构建后打包前的代码。
-   * 在 `${dist}/${package_json.name}.xpi` 存放打包结果。
+   * 在 `${dist}/${xpiName}.xpi` 存放打包结果。
    *
    * @default "build"
    */
@@ -50,7 +50,7 @@ export interface Config {
    *
    * 插件命名空间
    *
-   * @default _.kebabCase(name)
+   * @default _.dash(name)
    */
   namespace: string;
 
@@ -67,26 +67,29 @@ export interface Config {
    */
   updateURL: string;
 
+  /**
+   * 构建所需的配置
+   */
   build: BuildConfig;
+
+  /**
+   * serve 所需的配置
+   */
   server: ServerConfig;
 
   /**
    * TODO: 使用 addonLint 检查 XPI
    */
   addonLint: object;
-  /**
-   * .dotenv 文件路径
-   *
-   * @default `.env`
-   * @deprecated
-   */
-  dotEnvPath: string;
+
   /**
    * 发布相关配置
    *
    */
   release: {
-    // releaseIt: Partial<ReleaseItConfig>;
+    /**
+     * bumpp 配置
+     */
     bumpp: VersionBumpOptions;
   };
   /**
@@ -171,18 +174,18 @@ export interface BuildConfig {
      * ```json
      * {
      *   manifest_version: 2,
-     *   name: "__addonName__",
-     *   version: "__buildVersion__",
+     *   name: "${name}",
+     *   version: "${version}",
      *   applications: {
      *     zotero: {
-     *       id: "__addonID__",
-     *       update_url: "__updateURL__",
+     *       id: "${id}",
+     *       update_url: "${updateURL}",
      *       strict_min_version: "6.999",
      *       strict_max_version: "7.0.*",
      *     },
      *     gecko: {
-     *       id: "__addonID__",
-     *       update_url: "__updateURL__",
+     *       id: "${id}",
+     *       update_url: "${updateURL}",
      *       strict_min_version: "102",
      *     };
      *   };
@@ -200,7 +203,6 @@ export interface BuildConfig {
   makeUpdateJson: {
     /**
      * 是否启用
-     *
      *
      * @default true
      */
@@ -220,16 +222,7 @@ export interface BuildConfig {
     // tagName: "release" | "updater" | string;
   };
   /**
-   * The function called when build-in build resolved.
-   *
-   * Usually some extra build process.
-   * All configurations will be parameterized to this function.
-   *
-   * 在默认构建步骤执行结束后执行的函数.
-   *
-   * 通常是一些额外的构建流程.
-   * 所有的配置将作为参数传入此函数.
-   *
+   * The lifecycle hooks.
    */
   hooks: Partial<BuildHooks>;
 }
@@ -275,8 +268,7 @@ export interface ServerConfig {
    */
   asProxy: boolean;
   /**
-   * The function called after Zotero started, before build-in watcher ready.
-   *
+   * The lifecycle hook.
    */
   hooks: Partial<ServeHooks>;
 }

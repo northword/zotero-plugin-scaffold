@@ -19,7 +19,7 @@ export const defineConfig = (userConfig: UserConfig): UserConfig => {
 
 /**
  * Loads config
- * @param [file="zotero-plugin.config.{ts,js,mjs,cjs}"] The path of config file.
+ * @param [override={}] Highest Priority Configuration.
  * @returns Config with userDefined and defaultConfig merged.
  */
 export async function loadConfig(overrides?: OverrideConfig): Promise<Context> {
@@ -146,5 +146,4 @@ const defaultConfig = {
     },
   },
   logLevel: "info",
-  dotEnvPath: ".env",
 } satisfies Config;

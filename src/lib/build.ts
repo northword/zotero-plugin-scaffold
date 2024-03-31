@@ -76,7 +76,7 @@ export default class Build extends Base {
   }
 
   /**
-   * Copys files in `Config.assets` to `Config.dist`
+   * Copys files in `Config.build.assets` to `Config.dist`
    */
   copyAssets() {
     const files = glob.sync(this.ctx.build.assets);
@@ -87,6 +87,12 @@ export default class Build extends Base {
     });
   }
 
+  /**
+   * Override user's manifest
+   *
+   * Write `applications.gecko` to `manifest.json`
+   *
+   */
   makeManifest() {
     if (!this.ctx.build.makeManifest.enable) return;
     const userData = fs.readJSONSync(

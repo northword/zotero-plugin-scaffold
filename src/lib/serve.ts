@@ -102,6 +102,9 @@ export default class Serve extends Base {
       });
   }
 
+  /**
+   * Starts zotero with plugins pre-installed as proxy file
+   */
   async startZotero() {
     let isZoteroReady = false;
     if (!fs.existsSync(this.zoteroBinPath)) {
@@ -174,7 +177,11 @@ export default class Serve extends Base {
       },
     );
   }
-
+  /**
+   * Preparing the development environment
+   *
+   * When asProxy=true, generate a proxy file to replace prefs.
+   */
   prepareDevEnv() {
     const addonProxyFilePath = path.join(
       this.profilePath,
@@ -320,11 +327,9 @@ export default class Serve extends Base {
   }
 
   private get zoteroBinPath() {
-    // this.logger.debug("zoteroBinPath", process.env.zoteroBinPath);
     return process.env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH ?? "";
   }
   private get profilePath() {
-    // this.logger.debug("profilePath", process.env.profilePath);
     return process.env.ZOTERO_PLUGIN_PROFILE_PATH ?? "";
   }
   private get dataDir() {
