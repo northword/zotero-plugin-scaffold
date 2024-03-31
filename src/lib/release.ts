@@ -31,15 +31,15 @@ export default class Release extends Base {
     const t = new Date();
 
     if (!this.isCI) {
-      this.bump();
+      await this.bump();
     } else {
       if (glob.globSync(`${this.dist}/*.xpi`).length == 0) {
         this.logger.error(
           "No xpi file found, are you sure you have run the build?",
         );
       }
-      this.uploadXPI();
-      this.uploadUpdateJSON();
+      await this.uploadXPI();
+      await this.uploadUpdateJSON();
     }
 
     this.logger.success(
@@ -52,8 +52,8 @@ export default class Release extends Base {
    *
    * release: bump version, run build, git add, git commit, git tag, git push
    */
-  bump() {
-    versionBump(this.ctx.release.bumpp);
+  async bump() {
+    await versionBump(this.ctx.release.bumpp);
     // const releaseItConfig: ReleaseItConfig = {
     //   "only-version": true,
     // };
