@@ -28,6 +28,8 @@ export default class Release extends Base {
    *    then, create or update release (tag is "release"), update `update.json`.
    */
   async run() {
+    const t = new Date();
+
     if (!this.isCI) {
       this.bump();
     } else {
@@ -39,6 +41,10 @@ export default class Release extends Base {
       this.uploadXPI();
       this.uploadUpdateJSON();
     }
+
+    this.logger.success(
+      `Done in ${(new Date().getTime() - t.getTime()) / 1000} s.`,
+    );
   }
 
   /**

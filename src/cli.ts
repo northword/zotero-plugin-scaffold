@@ -58,8 +58,7 @@ export default async function main() {
     .command("release")
     .description("Release.")
     .action(async (options: any) => {
-      consola.error("The release not yet implemented");
-
+      // consola.error("The release not yet implemented");
       process.env.NODE_ENV = "production";
       const config = await Config.loadConfig({});
       new Release(config).run();
