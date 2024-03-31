@@ -43,7 +43,7 @@ jobs:
       - name: Release
         run: |
           pnpm publish --no-git-checks
-          pnpm exec release-it --no-increment --no-git --no.npm --github.release --ci --VV
+          pnpx changelogithub
           sleep 1s
 
       - name: Notify release

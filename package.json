@@ -7,7 +7,7 @@
     "build": "tsc --noEmit && unbuild",
     "lint": "eslint --max-warnings=0 . && prettier --check .",
     "lint:fix": "eslint --fix . && prettier --write .",
-    "release": "release-it --only-version --preReleaseId=beta",
+    "release": "bumpp --commit \"chore(release): publish v%s\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "type": "module",
@@ -87,7 +87,6 @@
     "eslint": "8.57.0",
     "eslint-config-prettier": "9.1.0",
     "prettier": "3.2.5",
-    "release-it": "17.1.1",
     "typescript": "5.4.3",
     "unbuild": "2.0.0"
   },
@@ -96,18 +95,6 @@
       "allowAny": [
         "node-fetch"
       ]
-    }
-  },
-  "release-it": {
-    "git": {
-      "commitMessage": "chore(publish): release v${version}",
-      "tagName": "v${version}"
-    },
-    "npm": {
-      "publish": false
-    },
-    "github": {
-      "release": false
     }
   }
 }
