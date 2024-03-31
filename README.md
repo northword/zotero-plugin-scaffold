@@ -65,7 +65,8 @@ export default defineConfig({
   id: pkg.config.addonID,
   namespace: pkg.config.addonRef,
   updateURL: `https://raw.githubusercontent.com/{{owner}}/{{repo}}/main/update.json`,
-  xpiDownloadLink: "https://github.com/{{owner}}/{{repo}}/releases/download/v{{version}}/{{xpiName}}.xpi",
+  xpiDownloadLink:
+    "https://github.com/{{owner}}/{{repo}}/releases/download/v{{version}}/{{xpiName}}.xpi",
   build: {
     esbuildOptions: [
       {
@@ -79,7 +80,6 @@ export default defineConfig({
     ],
   },
 });
-
 ```
 
 Full config please refrence in [src/types](./src/types/index.ts).
@@ -96,7 +96,7 @@ NOTE: Do not check-in this file to the repository!
 
 ```ini
 # The path of the Zotero binary file.
-# The path delimiter should be escaped as `\\` for win32. 
+# The path delimiter should be escaped as `\\` for win32.
 # The path is `*/Zotero.app/Contents/MacOS/zotero` for MacOS.
 ZOTERO_PLUGIN_ZOTERO_BIN_PATH = /path/to/zotero.exe
 
