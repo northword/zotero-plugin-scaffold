@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { Build, Config, Release, Serve } from ".";
 import pkg from "../package.json";
 import { Command } from "commander";
