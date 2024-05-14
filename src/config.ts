@@ -1,6 +1,6 @@
-import { Config, Context, OverrideConfig, UserConfig } from "./types";
-import { bumppProgress } from "./utils/log";
-import { dateFormat } from "./utils/string";
+import { Config, Context, OverrideConfig, UserConfig } from "./types/index.js";
+import { bumppProgress } from "./utils/log.js";
+import { dateFormat } from "./utils/string.js";
 import { loadConfig as c12 } from "c12";
 import fs from "fs-extra";
 import { createHooks } from "hookable";

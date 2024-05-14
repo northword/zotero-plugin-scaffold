@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { Build, Config, Release, Serve } from ".";
 import pkg from "../package.json";
+import { Build, Config, Release, Serve } from "./index.js";
 import { Command } from "commander";
 import consola from "consola";
 import updateNotifier from "update-notifier";

@@ -1,4 +1,4 @@
-import { isRunning } from "./process";
+import { isRunning } from "./process.js";
 import { execSync } from "child_process";
 import consola from "consola";
 import { isLinux, isMacOS, isWindows } from "std-env";

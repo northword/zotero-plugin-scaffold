@@ -1,5 +1,5 @@
-import { Context } from "../types";
-import { killZotero } from "../utils/kill-zotero";
+import { Context } from "../types/index.js";
+import { killZotero } from "../utils/kill-zotero.js";
 import { Base } from "./base.js";
 import Build from "./build.js";
 import { execSync, spawn } from "child_process";

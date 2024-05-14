@@ -1,9 +1,9 @@
-import { Context } from "../types";
-import { Manifest } from "../types/manifest";
-import { UpdateJSON } from "../types/update-json";
-import { generateHashSync } from "../utils/crypto";
-import { dateFormat } from "../utils/string";
-import { Base } from "./base";
+import { Context } from "../types/index.js";
+import { Manifest } from "../types/manifest.js";
+import { UpdateJSON } from "../types/update-json.js";
+import { generateHashSync } from "../utils/crypto.js";
+import { dateFormat } from "../utils/string.js";
+import { Base } from "./base.js";
 import chalk from "chalk";
 import { buildSync } from "esbuild";
 import glob from "fast-glob";
@@ -103,7 +103,7 @@ export default class Build extends Base {
         ...(this.name && { name: this.name }),
         ...(this.version && { version: this.version }),
         applications: {
-          //@ts-expect-error 此处不包含版本限制
+          //@ts-ignore 此处不包含版本限制
           zotero: {
             id: this.id,
             update_url: this.updateURL,

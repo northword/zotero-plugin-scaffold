@@ -1,5 +1,5 @@
-import { Context } from "../types";
-import { LogLevels } from "../utils/log";
+import { Context } from "../types/index.js";
+import { LogLevels } from "../utils/log.js";
 import { ConsolaInstance, createConsola } from "consola";
 
 export abstract class Base {

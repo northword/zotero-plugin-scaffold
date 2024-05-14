@@ -1,6 +1,6 @@
-import { Context } from "../types";
+import { Context } from "../types/index.js";
 import { Base } from "./base.js";
-import versionBump from "bumpp";
+import { versionBump } from "bumpp";
 import conventionalChangelog from "conventional-changelog";
 import { default as glob } from "fast-glob";
 import fs from "fs-extra";

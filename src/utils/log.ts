@@ -1,4 +1,4 @@
-import { Config } from "../types";
+import { Config } from "../types/index.js";
 import { ProgressEvent, VersionBumpProgress } from "bumpp";
 import chalk from "chalk";
 import consola from "consola";

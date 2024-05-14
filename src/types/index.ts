@@ -1,4 +1,4 @@
-import { Config, Hooks } from "./config";
+import { Config, Hooks } from "./config.js";
 import { Hookable } from "hookable";
 
 type RecursivePartial<T> = {

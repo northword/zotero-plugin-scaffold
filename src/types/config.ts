@@ -1,6 +1,6 @@
-import { Context } from ".";
-import { Manifest } from "./manifest";
-import { UpdateJSON } from "./update-json";
+import { Context } from "./index.js";
+import { Manifest } from "./manifest.js";
+import { UpdateJSON } from "./update-json.js";
 import { type VersionBumpOptions } from "bumpp";
 import { BuildOptions } from "esbuild";
 
