@@ -190,7 +190,7 @@ export default class Serve extends Base {
       !fs.existsSync(addonProxyFilePath) ||
       fs.readFileSync(addonProxyFilePath, "utf-8") !== buildPath
     ) {
-      fs.writeFileSync(addonProxyFilePath, buildPath);
+      fs.outputFileSync(addonProxyFilePath, buildPath);
       this.logger.debug(
         `Addon proxy file has been updated. 
           File path: ${addonProxyFilePath} 
