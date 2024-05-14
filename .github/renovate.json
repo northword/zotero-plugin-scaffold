@@ -7,7 +7,7 @@
     "group:allNonMajor",
     ":enableVulnerabilityAlerts",
     ":dependencyDashboard",
-    "schedule:weekly"
+    "schedule:monthly"
   ],
   "labels": ["dependencies"]
 }
