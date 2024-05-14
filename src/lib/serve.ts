@@ -127,9 +127,7 @@ export default class Serve extends Base {
     zoteroProcess.stdout?.on("data", (data) => {
       if (
         !isZoteroReady &&
-        data
-          .toString()
-          .includes(`Calling bootstrap method 'startup' for plugin ${this.id}`)
+        data.toString().includes(`Plugin ${this.id} startup`)
       ) {
         this.logger.log(data.toString());
         isZoteroReady = true;
