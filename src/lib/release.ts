@@ -19,7 +19,7 @@ export default class Release extends Base {
     this.client = this.getClient();
 
     // Output detailed logs in CI for debugging purposes
-    if (isCI) {
+    if (this.isCI) {
       this.logger.level = 4;
     }
   }
@@ -40,7 +40,9 @@ export default class Release extends Base {
       if (glob.globSync(`${this.dist}/*.xpi`).length == 0) {
         throw new Error("No xpi file found, are you sure you have run build?");
       }
+      this.logger.info("Uploading XPI...");
       await this.uploadXPI();
+      this.logger.info("Uploading update manifest...");
       await this.uploadUpdateJSON();
     }
 
@@ -105,8 +107,12 @@ export default class Release extends Base {
         repo: this.repo,
         tag: tag,
       })
+      .catch((e) => {
+        this.logger.log(`Release with tag ${tag} not found.`);
+        return undefined;
+      })
       .then((res) => {
-        if (res.status == 200) {
+        if (res && res.status == 200) {
           return res.data;
         }
       });
@@ -156,6 +162,7 @@ export default class Release extends Base {
         owner: this.owner,
         repo: this.repo,
         tag_name: "release",
+        make_latest: "false",
       }));
 
     if (!release) throw new Error("Get or create 'release' failed.");
