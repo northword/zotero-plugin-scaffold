@@ -17,6 +17,11 @@ export default class Release extends Base {
     super(ctx);
     this.isCI = isCI;
     this.client = this.getClient();
+
+    // Output detailed logs in CI for debugging purposes
+    if (isCI) {
+      this.logger.level = 4;
+    }
   }
 
   /**
@@ -85,7 +90,12 @@ export default class Release extends Base {
 
     if (!release) throw new Error("Create release failed!");
 
-    this.uploadAsset(release.id, path.join(this.dist, `${this.xpiName}.xpi`));
+    this.logger.debug("Uploading xpi asset...");
+
+    await this.uploadAsset(
+      release.id,
+      path.join(this.dist, `${this.xpiName}.xpi`),
+    );
   }
 
   async getReleaseByTag(tag: string) {
@@ -105,11 +115,18 @@ export default class Release extends Base {
   async creatRelease(
     options: Parameters<Octokit["rest"]["repos"]["createRelease"]>[0],
   ) {
-    return await this.client.rest.repos.createRelease(options).then((res) => {
-      if (res.status == 201) {
-        return res.data;
-      }
-    });
+    this.logger.debug("Creating release...", options);
+    return await this.client.rest.repos
+      .createRelease(options)
+      .catch((e) => {
+        this.logger.error(e);
+        throw new Error("Create release failed.");
+      })
+      .then((res) => {
+        if (res.status == 201) {
+          return res.data;
+        }
+      });
   }
 
   async uploadAsset(releaseID: number, asset: string) {
@@ -185,8 +202,8 @@ export default class Release extends Base {
           changelog += chunk.toString();
         })
         .on("end", () => {
-          this.logger.debug("changelog:", changelog);
-          resolve(changelog);
+          this.logger.debug("changelog:", changelog.trim());
+          resolve(changelog.trim());
         })
         .on("error", (err) => {
           reject(err);
