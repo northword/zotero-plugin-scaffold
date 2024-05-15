@@ -155,8 +155,9 @@ export default class Serve extends Base {
         keepProfileChanges: true,
         args: this.ctx.server.startArgs,
         pref: { "extensions.experiments.enabled": true },
-        browserConsole: true,
-        // devtools: true, // need Zotero upgrade to firefox 115,
+        // Use Zotero's devtools instead
+        browserConsole: false,
+        devtools: false,
         noInput: true,
       },
       {

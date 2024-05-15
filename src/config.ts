@@ -130,7 +130,13 @@ const defaultConfig = {
     hooks: {},
   },
   server: {
-    startArgs: ["--debugger", "--purgecaches"],
+    startArgs: [
+      "--no-remote",
+      "--start-debugger-server",
+      "--jsdebugger",
+      "--debugger",
+      "--purgecaches",
+    ],
     asProxy: false,
     hooks: {},
   },
