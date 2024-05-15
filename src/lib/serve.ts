@@ -106,7 +106,6 @@ export default class Serve extends Base {
    * Starts zotero with plugins pre-installed as proxy file
    */
   async startZotero() {
-    let isZoteroReady = false;
     if (!fs.existsSync(this.zoteroBinPath)) {
       throw new Error("Zotero binary does not exist.");
     }
@@ -118,24 +117,17 @@ export default class Serve extends Base {
     this.prepareDevEnv();
 
     const zoteroProcess = spawn(this.zoteroBinPath, [
+      "--no-remote",
+      "--start-debugger-server",
+      "--jsdebugger",
       "--debugger",
       "--purgecaches",
       "-profile",
       this.profilePath,
     ]);
 
-    zoteroProcess.stdout?.on("data", (data) => {
-      if (
-        !isZoteroReady &&
-        data.toString().includes(`Plugin ${this.id} startup`)
-      ) {
-        this.logger.log(data.toString());
-        isZoteroReady = true;
-        setTimeout(() => {
-          this.openDevTool();
-        }, 1000);
-      }
-    });
+    // Necessary on MacOS
+    zoteroProcess.stdout?.on("data", (data) => {});
 
     zoteroProcess.on("close", (code) => {
       this.logger.info(`Zotero terminated with code ${code}.`);
@@ -247,69 +239,6 @@ export default class Serve extends Base {
     })()`;
     const url = `zotero://ztoolkit-debug/?run=${encodeURIComponent(
       reloadScript,
-    )}`;
-    const startZoteroCmd = `"${this.zoteroBinPath}" --debugger --purgecaches -profile "${this.profilePath}"`;
-    const command = `${startZoteroCmd} -url "${url}"`;
-    execSync(command);
-  }
-
-  openDevTool() {
-    this.logger.debug("Open dev tools...");
-    const openDevToolScript = `
-    (async () => {
-    
-    // const { BrowserToolboxLauncher } = ChromeUtils.import(
-    //   "resource://devtools/client/framework/browser-toolbox/Launcher.jsm",
-    // );
-    // BrowserToolboxLauncher.init();
-    // TODO: Use the above code to open the devtool after https://github.com/zotero/zotero/pull/3387
-    
-    Zotero.Prefs.set("devtools.debugger.remote-enabled", true, true);
-    Zotero.Prefs.set("devtools.debugger.remote-port", 6100, true);
-    Zotero.Prefs.set("devtools.debugger.prompt-connection", false, true);
-    Zotero.Prefs.set("devtools.debugger.chrome-debugging-websocket", false, true);
-    
-    env =
-        Services.env ||
-        Cc["@mozilla.org/process/environment;1"].getService(Ci.nsIEnvironment);
-    
-    env.set("MOZ_BROWSER_TOOLBOX_PORT", 6100);
-    Zotero.openInViewer(
-        "chrome://devtools/content/framework/browser-toolbox/window.html",
-        {
-        onLoad: (doc) => {
-            doc.querySelector("#status-message-container").style.visibility =
-            "collapse";
-            let toolboxBody;
-            waitUntil(
-            () => {
-                toolboxBody = doc
-                .querySelector(".devtools-toolbox-browsertoolbox-iframe")
-                ?.contentDocument?.querySelector(".theme-body");
-                return toolboxBody;
-            },
-            () => {
-                toolboxBody.style = "pointer-events: all !important";
-            }
-            );
-        },
-        }
-    );
-    
-    function waitUntil(condition, callback, interval = 100, timeout = 10000) {
-        const start = Date.now();
-        const intervalId = setInterval(() => {
-        if (condition()) {
-            clearInterval(intervalId);
-            callback();
-        } else if (Date.now() - start > timeout) {
-            clearInterval(intervalId);
-        }
-        }, interval);
-    }  
-    })()`;
-    const url = `zotero://ztoolkit-debug/?run=${encodeURIComponent(
-      openDevToolScript,
     )}`;
     const startZoteroCmd = `"${this.zoteroBinPath}" --debugger --purgecaches -profile "${this.profilePath}"`;
     const command = `${startZoteroCmd} -url "${url}"`;
