@@ -39,10 +39,10 @@ export default class Serve extends Base {
 
     // start Zotero
     if (this.ctx.server.asProxy) {
-      this.startZotero();
+      this.startZoteroByProxyFile();
     } else {
       console.log("");
-      await this.startZoteroWebExt();
+      await this.startZoteroByWebExt();
     }
 
     // watch
@@ -105,15 +105,7 @@ export default class Serve extends Base {
   /**
    * Starts zotero with plugins pre-installed as proxy file
    */
-  async startZotero() {
-    if (!fs.existsSync(this.zoteroBinPath)) {
-      throw new Error("Zotero binary does not exist.");
-    }
-
-    if (!fs.existsSync(this.profilePath)) {
-      throw new Error("The given Zotero profile does not exist.");
-    }
-
+  async startZoteroByProxyFile() {
     this.prepareDevEnv();
 
     const zoteroProcess = spawn(this.zoteroBinPath, [
@@ -146,7 +138,7 @@ export default class Serve extends Base {
   /**
    * start zotero with plugin installed and reload when dist changed
    */
-  async startZoteroWebExt() {
+  async startZoteroByWebExt() {
     return await webext.cmd.run(
       {
         firefox: this.zoteroBinPath,
@@ -168,12 +160,16 @@ export default class Serve extends Base {
       },
     );
   }
+
   /**
    * Preparing the development environment
    *
-   * When asProxy=true, generate a proxy file to replace prefs.
+   * When asProxy=true, generate a proxy file and replace prefs.
+   *
+   * @see https://www.zotero.org/support/dev/client_coding/plugin_development#setting_up_a_plugin_development_environment
    */
   prepareDevEnv() {
+    // Create a proxy file
     const addonProxyFilePath = path.join(
       this.profilePath,
       `extensions/${this.id}`,
@@ -191,14 +187,17 @@ export default class Serve extends Base {
       );
     }
 
+    // Delete XPI file
     const addonXpiFilePath = path.join(
       this.profilePath,
       `extensions/${this.id}.xpi`,
     );
     if (fs.existsSync(addonXpiFilePath)) {
-      fs.rmSync(addonXpiFilePath);
+      fs.removeSync(addonXpiFilePath);
+      this.logger.debug(`XPI file found, removed.`);
     }
 
+    // Force Zotero to load the plugin from the proxy file
     const prefsPath = path.join(this.profilePath, "prefs.js");
     if (fs.existsSync(prefsPath)) {
       const PrefsLines = fs.readFileSync(prefsPath, "utf-8").split("\n");
@@ -217,6 +216,21 @@ export default class Serve extends Base {
       const updatedPrefs = filteredLines.join("\n");
       fs.writeFileSync(prefsPath, updatedPrefs, "utf-8");
       this.logger.debug("The <profile>/prefs.js has been modified.");
+    }
+
+    // Force enable plugin in extensions.json
+    const addonInfoFilePath = path.join(this.profilePath, "extensions.json");
+    if (fs.existsSync(addonInfoFilePath)) {
+      const content = fs.readJSONSync(addonInfoFilePath);
+      content.addons = content.addons.map((addon: any) => {
+        if (addon.id === this.id && addon.active === false) {
+          addon.active = true;
+          addon.userDisabled = false;
+          this.logger.debug(`Active plugin ${this.id} in extensions.json.`);
+        }
+        return addon;
+      });
+      fs.outputJSONSync(addonInfoFilePath, content);
     }
   }
 
