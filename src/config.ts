@@ -131,7 +131,6 @@ const defaultConfig = {
   },
   server: {
     startArgs: [
-      "--no-remote",
       "--start-debugger-server",
       "--jsdebugger",
       "--debugger",

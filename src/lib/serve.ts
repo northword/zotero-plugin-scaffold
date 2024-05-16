@@ -109,7 +109,8 @@ export default class Serve extends Base {
     this.prepareDevEnv();
 
     const zoteroProcess = spawn(this.zoteroBinPath, [
-      "--no-remote",
+      // Do not disable remote, or the debug bridge command will not run.
+      // "--no-remote",
       "--start-debugger-server",
       "--jsdebugger",
       "--debugger",
