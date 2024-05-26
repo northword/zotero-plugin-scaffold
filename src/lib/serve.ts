@@ -65,7 +65,13 @@ export default class Serve extends Base {
         if (path.endsWith(".ts")) {
           this.builder.esbuild();
         } else {
-          this.builder.run();
+          await this.builder.run();
+        }
+
+        if (this.ctx.server.asProxy) {
+          this.reload();
+          this.logger.info("Reloaded done.");
+          await this.ctx.hooks.callHook("serve:onReloaded", this.ctx);
         }
       } catch (err) {
         // Do not abort the watcher when errors occur
@@ -88,14 +94,7 @@ export default class Serve extends Base {
           console.log("");
         }
 
-        onChange.cancel();
         onChange(path);
-
-        if (this.ctx.server.asProxy) {
-          this.reload();
-          this.logger.info("Reloaded done.");
-          await this.ctx.hooks.callHook("serve:onReloaded", this.ctx);
-        }
       })
       .on("error", (err) => {
         this.logger.error("Server start failed!", err);
