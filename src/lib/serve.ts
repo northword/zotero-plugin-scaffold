@@ -88,7 +88,8 @@ export default class Serve extends Base {
       })
       .on("change", async (path) => {
         if (this.ctx.server.asProxy) {
-          this.logger.log(`\n${path} changed`);
+          console.clear();
+          this.logger.log(`${path} changed`);
         } else {
           // 从 web-ext 的 reload 日志上换行
           console.log("");
