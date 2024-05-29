@@ -154,7 +154,7 @@ export default class Build extends Base {
     const MessagesInHTML = new Set();
     replaceInFile.sync({
       files: [`${this.dist}/addon/**/*.xhtml`, `${this.dist}/addon/**/*.html`],
-      // @ts-expect-error ReplaceInFileConfig has processor
+      // @ts-ignore ReplaceInFileConfig has processor
       processor: (input) => {
         const matchs = [...input.matchAll(/(data-l10n-id)="(\S*)"/g)];
         matchs.map((match) => {
@@ -194,7 +194,7 @@ export default class Build extends Base {
       const MessageInThisLang = new Set();
       replaceInFile.sync({
         files: [`${this.dist}/addon/locale/${localeName}/**/*.ftl`],
-        // @ts-expect-error ReplaceInFileConfig has processor
+        // @ts-ignore ReplaceInFileConfig has processor
         processor: (fltContent) => {
           const lines = fltContent.split("\n");
           const prefixedLines = lines.map((line: string) => {
