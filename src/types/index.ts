@@ -9,7 +9,9 @@ type RequiredRecursively<T> = {
   [K in keyof T]-?: T[K] extends object ? RequiredRecursively<T[K]> : T[K];
 };
 
+/* eslint-disable-next-line @typescript-eslint/no-empty-object-type */
 interface OverrideConfig extends RecursivePartial<Config> {}
+
 /**
  * User config
  *

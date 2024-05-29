@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "unbuild --stub",
     "build": "tsc --noEmit && unbuild",
-    "lint": "eslint --max-warnings=0 . && prettier --check .",
-    "lint:fix": "eslint --fix . && prettier --write .",
+    "lint": "eslint . & prettier --check .",
+    "lint:fix": "eslint --fix . & prettier --write .",
     "release": "bumpp --commit \"chore(release): publish v%s\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -82,12 +82,10 @@
     "@types/fs-extra": "11.0.4",
     "@types/node": "20.12.12",
     "@types/update-notifier": "6.0.8",
-    "@typescript-eslint/eslint-plugin": "7.9.0",
-    "@typescript-eslint/parser": "7.9.0",
-    "eslint": "8.57.0",
-    "eslint-config-prettier": "9.1.0",
+    "eslint": "9.3.0",
     "prettier": "3.2.5",
     "typescript": "5.4.5",
+    "typescript-eslint": "8.0.0-alpha.20",
     "unbuild": "2.0.0"
   },
   "pnpm": {

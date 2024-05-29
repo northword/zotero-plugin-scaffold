@@ -33,9 +33,7 @@ declare module "web-ext" {
     sign(params: any, options?: any): Promise<any>;
     docs(params: any, options?: any): Promise<any>;
   };
-  export const main: {
-    //
-  };
+  export const main: any;
 }
 
 interface LintParams {

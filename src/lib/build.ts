@@ -267,9 +267,8 @@ export default class Build extends Base {
     };
 
     fs.writeJsonSync(`${this.dist}/update-beta.json`, data, { spaces: 2 });
-    !this.isPreRelease
-      ? fs.writeJsonSync(`${this.dist}/update.json`, data, { spaces: 2 })
-      : "pass";
+    if (!this.isPreRelease)
+      fs.writeJsonSync(`${this.dist}/update.json`, data, { spaces: 2 });
 
     this.logger.log(
       `Prepare Update.json for ${
