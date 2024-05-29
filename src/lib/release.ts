@@ -83,7 +83,9 @@ export default class Release extends Base {
     const release = await this.creatRelease({
       owner: this.owner,
       repo: this.repo,
-      tag_name: `v${this.version}`,
+      tag_name: this.ctx.release.bumpp
+        .tag!.toString()
+        .replaceAll("%s", this.version),
       name: `Release v${this.version}`,
       body: await this.getChangelog(),
       prerelease: this.version.includes("-"),
