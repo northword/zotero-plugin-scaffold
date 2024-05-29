@@ -43,7 +43,7 @@ export default class Release extends Base {
       this.logger.info("Uploading XPI...");
       await this.uploadXPI();
       this.logger.info("Uploading update manifest...");
-      await this.uploadUpdateJSON();
+      await this.refreshUpdateManifest();
     }
 
     this.logger.success(
@@ -153,8 +153,8 @@ export default class Release extends Base {
       });
   }
 
-  async uploadUpdateJSON() {
-    const assets = ["update.json", "update-beta.json"];
+  async refreshUpdateManifest() {
+    const assets = glob.globSync(`${this.dist}/*.json`);
 
     const release =
       (await this.getReleaseByTag("release")) ??
