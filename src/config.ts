@@ -27,6 +27,7 @@ export async function loadConfig(overrides?: OverrideConfig): Promise<Context> {
   const result = await c12<Config>({
     name: "zotero-plugin",
     dotenv: true,
+    packageJson: true,
     defaults: getDefaultConfig(),
     overrides: overrides as Config,
   });
