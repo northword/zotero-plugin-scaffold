@@ -40,7 +40,7 @@ function resolveConfig(config: Config): Context {
       encoding: "utf-8",
     }),
     [, owner, repo] = (pkg.repository?.url ?? "").match(
-      /:\/\/github.com\/([^/]+)\/([^.]+)\.git$/,
+      /:\/\/.*.com\/([^/]+)\/([^.]+)\.git$/,
     ),
     data = {
       owner: owner,
