@@ -83,9 +83,9 @@ const defaultConfig = {
   id: "",
   namespace: "",
   xpiDownloadLink:
-    "https://github.com/{{owner}}/{{repo}}/release/download/v{{version}}/{{xpiName}}.xpi",
+    "https://github.com/{{owner}}/{{repo}}/releases/download/v{{version}}/{{xpiName}}.xpi",
   updateURL:
-    "https://github.com/{{owner}}/{{repo}}/release/download/release/update.json",
+    "https://github.com/{{owner}}/{{repo}}/releases/download/release/update.json",
 
   build: {
     assets: ["src/**/*.*", "!src/**/*.ts"],

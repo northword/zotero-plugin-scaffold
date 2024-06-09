@@ -82,7 +82,7 @@ export default class Release extends Base {
 
     // releaseIt(_.defaultsDeep(releaseItConfig, this.config.release.releaseIt));
 
-    const release = await this.creatRelease({
+    const release = await this.createRelease({
       owner: this.owner,
       repo: this.repo,
       tag_name: this.ctx.release.bumpp
@@ -119,7 +119,7 @@ export default class Release extends Base {
       });
   }
 
-  async creatRelease(
+  async createRelease(
     options: Parameters<Octokit["rest"]["repos"]["createRelease"]>[0],
   ) {
     this.logger.debug("Creating release...", options);
@@ -159,7 +159,7 @@ export default class Release extends Base {
 
     const release =
       (await this.getReleaseByTag("release")) ??
-      (await this.creatRelease({
+      (await this.createRelease({
         owner: this.owner,
         repo: this.repo,
         tag_name: "release",
