@@ -1,6 +1,6 @@
 {
   "name": "zotero-plugin-scaffold",
-  "version": "0.0.27",
+  "version": "0.0.28",
   "description": "A scaffold for Zotero plugin development.",
   "scripts": {
     "dev": "unbuild --stub",
