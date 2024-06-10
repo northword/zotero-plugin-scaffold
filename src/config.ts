@@ -55,7 +55,7 @@ function resolveConfig(config: Config): Context {
   config.xpiDownloadLink = template(config.xpiDownloadLink, data);
 
   const ctx: Context = {
-    ...(config as Config),
+    ...config,
     pkgUser: pkg,
     xpiName: dash(config.name),
     version: pkg.version,
