@@ -102,6 +102,7 @@ export default class Build extends Base {
         ...userData,
         ...(this.name && { name: this.name }),
         ...(this.version && { version: this.version }),
+        manifest_version: 2,
         applications: {
           //@ts-ignore 此处不包含版本限制
           zotero: {
