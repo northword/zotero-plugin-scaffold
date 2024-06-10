@@ -62,7 +62,7 @@ export default class Serve extends Base {
       try {
         await this.ctx.hooks.callHook("serve:onChanged", this.ctx, path);
 
-        if (path.endsWith(".ts")) {
+        if (path.endsWith(".ts") || path.endsWith(".tsx")) {
           await this.builder.esbuild();
         } else {
           await this.builder.run();
