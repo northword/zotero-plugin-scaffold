@@ -2,7 +2,7 @@ import { Context } from "../types/index.js";
 import { Manifest } from "../types/manifest.js";
 import { UpdateJSON } from "../types/update-json.js";
 import { generateHashSync } from "../utils/crypto.js";
-import { dateFormat, string2Array } from "../utils/string.js";
+import { dateFormat, toArray } from "../utils/string.js";
 import { Base } from "./base.js";
 import chalk from "chalk";
 import { build as buildAsync } from "esbuild";
@@ -81,7 +81,7 @@ export default class Build extends Base {
   copyAssets() {
     const files = glob.sync(this.ctx.build.assets);
     files.forEach((file) => {
-      const newPath = `${this.dist}/addon/${file.replace(new RegExp(string2Array(this.src).join("|")), "")}`;
+      const newPath = `${this.dist}/addon/${file.replace(new RegExp(toArray(this.src).join("|")), "")}`;
       this.logger.debug(`Copy ${file} to ${newPath}`);
       fs.copySync(file, newPath);
     });
@@ -135,7 +135,7 @@ export default class Build extends Base {
     this.logger.debug("replace map: ", replaceMap);
 
     const replaceResult = replaceInFile.sync({
-      files: string2Array(this.ctx.build.assets).map(
+      files: toArray(this.ctx.build.assets).map(
         (asset) => `${this.dist}/${asset}`,
       ),
       from: Array.from(replaceMap.keys()),
