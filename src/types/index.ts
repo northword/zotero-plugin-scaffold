@@ -23,8 +23,8 @@ interface UserConfig extends RecursivePartial<Config> {
   namespace: string;
 }
 
-type WrapArray<T> = T extends (infer U)[] ? U[] : never;
-type Arrayify<T> = WrapArray<T> extends never ? T : WrapArray<T>;
+type ArrayOrNever<T> = T extends any[] ? T : never;
+type Arrayify<T> = ArrayOrNever<T> extends never ? T : ArrayOrNever<T>;
 type ArrayifyDeeply<T> = {
   [K in keyof T]: T[K] extends object ? ArrayifyDeeply<T[K]> : Arrayify<T[K]>;
 };
