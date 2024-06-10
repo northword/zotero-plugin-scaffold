@@ -1,4 +1,4 @@
-import { Config, Context, OverrideConfig, UserConfig } from "./types/index.js";
+import { Config, Context, OverrideConfig, UserConfig, ArrayifyDeeply } from "./types/index.js";
 import { bumppProgress } from "./utils/log.js";
 import { dateFormat } from "./utils/string.js";
 import { loadConfig as c12 } from "c12";
@@ -34,6 +34,10 @@ export async function loadConfig(overrides?: OverrideConfig): Promise<Context> {
   return resolveConfig(result.config as Config);
 }
 
+function wrapArray<T>(value: T | T[]): T[] {
+  return Array.isArray(value) ? value : [value];
+}
+
 function resolveConfig(config: Config): Context {
   // Load user's package.json
   const pkg = fs.readJsonSync(path.join("package.json"), {
@@ -54,8 +58,11 @@ function resolveConfig(config: Config): Context {
   config.updateURL = template(config.updateURL, data);
   config.xpiDownloadLink = template(config.xpiDownloadLink, data);
 
+  config.source = wrapArray(config.source);
+  config.build.assets = wrapArray(config.build.assets);
+
   const ctx: Context = {
-    ...config,
+    ...(config as ArrayifyDeeply<Config>),
     pkgUser: pkg,
     xpiName: dash(config.name),
     version: pkg.version,
@@ -76,7 +83,7 @@ function resolveConfig(config: Config): Context {
 const getDefaultConfig = () => <Config>defaultConfig;
 
 const defaultConfig = {
-  source: ["src"],
+  source: "src",
   dist: "build",
 
   name: "",
@@ -88,7 +95,7 @@ const defaultConfig = {
     "https://github.com/{{owner}}/{{repo}}/releases/download/release/update.json",
 
   build: {
-    assets: ["src/**/*.*", "!src/**/*.ts"],
+    assets: "addon/**/*.*",
     define: {},
     fluent: {
       prefixFluentMessages: true,

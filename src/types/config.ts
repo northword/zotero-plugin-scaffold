@@ -14,9 +14,9 @@ export interface Config {
    *
    * 可以是多个目录，将在 `server` 运行时监听这些目录的变更。
    *
-   * @default ["src"]
+   * @default "src"
    */
-  source: string[];
+  source: string | string[];
   /**
    * The build directories.
    *
@@ -112,9 +112,11 @@ export interface BuildConfig {
    *
    * @see {@link https://github.com/mrmlnc/fast-glob?tab=readme-ov-file#pattern-syntax | Pattern syntax | 语法说明 }
    *
-   * @default `["src/**\/*.*", "!src/**\/*.ts"]` (no `\`)
+   * @example `["src/**\/*.*", "!src/**\/*.ts"]` (no `\`)
+   * 
+   * @default "addon/**\/*.*" (no `\`)
    */
-  assets: string[];
+  assets: string | string[];
   /**
    * placeholders to replace in static assets
    *
