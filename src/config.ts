@@ -76,7 +76,7 @@ function resolveConfig(config: Config): Context {
 const getDefaultConfig = () => <Config>defaultConfig;
 
 const defaultConfig = {
-  source: ["src"],
+  source: "src",
   dist: "build",
 
   name: "",
@@ -88,7 +88,7 @@ const defaultConfig = {
     "https://github.com/{{owner}}/{{repo}}/releases/download/release/update.json",
 
   build: {
-    assets: ["src/**/*.*", "!src/**/*.ts"],
+    assets: "addon/**/*.*",
     define: {},
     fluent: {
       prefixFluentMessages: true,

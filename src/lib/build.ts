@@ -2,10 +2,10 @@ import { Context } from "../types/index.js";
 import { Manifest } from "../types/manifest.js";
 import { UpdateJSON } from "../types/update-json.js";
 import { generateHashSync } from "../utils/crypto.js";
-import { dateFormat } from "../utils/string.js";
+import { dateFormat, toArray } from "../utils/string.js";
 import { Base } from "./base.js";
 import chalk from "chalk";
-import { buildSync } from "esbuild";
+import { build as buildAsync } from "esbuild";
 import glob from "fast-glob";
 import fs from "fs-extra";
 import path from "path";
@@ -52,7 +52,7 @@ export default class Build extends Base {
     await this.ctx.hooks.callHook("build:replace", this.ctx);
 
     this.logger.info("Running esbuild");
-    this.esbuild();
+    await this.esbuild();
     await this.ctx.hooks.callHook("build:bundle", this.ctx);
 
     this.logger.info("Addon prepare OK.");
@@ -81,7 +81,7 @@ export default class Build extends Base {
   copyAssets() {
     const files = glob.sync(this.ctx.build.assets);
     files.forEach((file) => {
-      const newPath = `${this.dist}/addon/${file.replace(new RegExp(this.src.join("|")), "")}`;
+      const newPath = `${this.dist}/addon/${file.replace(new RegExp(toArray(this.src).join("|")), "")}`;
       this.logger.debug(`Copy ${file} to ${newPath}`);
       fs.copySync(file, newPath);
     });
@@ -135,7 +135,9 @@ export default class Build extends Base {
     this.logger.debug("replace map: ", replaceMap);
 
     const replaceResult = replaceInFile.sync({
-      files: this.ctx.build.assets.map((asset) => `${this.dist}/${asset}`),
+      files: toArray(this.ctx.build.assets).map(
+        (asset) => `${this.dist}/${asset}`,
+      ),
       from: Array.from(replaceMap.keys()),
       to: Array.from(replaceMap.values()),
       countMatches: true,
@@ -226,9 +228,11 @@ export default class Build extends Base {
 
   esbuild() {
     if (this.ctx.build.esbuildOptions.length == 0) return;
-    this.ctx.build.esbuildOptions.forEach(async (esbuildOption) => {
-      buildSync(esbuildOption);
-    });
+    return Promise.all(
+      this.ctx.build.esbuildOptions.map((esbuildOption) =>
+        buildAsync(esbuildOption),
+      ),
+    );
   }
 
   makeUpdateJson() {
