@@ -19,3 +19,7 @@ export function dateFormat(fmt: string, date: Date) {
   }
   return fmt;
 }
+
+export function string2Array<T>(value: T | T[]): T[] {
+  return Array.isArray(value) ? value : [value];
+}

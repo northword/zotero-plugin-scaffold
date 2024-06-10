@@ -23,13 +23,7 @@ interface UserConfig extends RecursivePartial<Config> {
   namespace: string;
 }
 
-type ArrayOrNever<T> = T extends any[] ? T : never;
-type Arrayify<T> = ArrayOrNever<T> extends never ? T : ArrayOrNever<T>;
-type ArrayifyDeeply<T> = {
-  [K in keyof T]: T[K] extends object ? ArrayifyDeeply<T[K]> : Arrayify<T[K]>;
-};
-
-interface Context extends ArrayifyDeeply<Config> {
+interface Context extends Config {
   pkgUser: any;
   xpiName: string;
   version: string;
@@ -37,4 +31,4 @@ interface Context extends ArrayifyDeeply<Config> {
   templateDate: { [placeholder: string]: string };
 }
 
-export { OverrideConfig, UserConfig, Config, Context, ArrayifyDeeply };
+export { OverrideConfig, UserConfig, Config, Context };
