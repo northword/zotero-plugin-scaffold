@@ -205,7 +205,7 @@ export default class Build extends Base {
           `${this.dist}/addon/**/*.xhtml`,
           `${this.dist}/addon/**/*.html`,
         ],
-        // @ts-expect-error ReplaceInFileConfig has processor
+        // @ts-ignore ReplaceInFileConfig has processor
         processor: (input) => {
           const matches = [
             ...input.matchAll(
