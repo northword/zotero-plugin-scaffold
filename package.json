@@ -75,7 +75,7 @@
     "replace-in-file": "7.2.0",
     "std-env": "3.7.0",
     "update-notifier": "7.0.0",
-    "web-ext": "7.12.0"
+    "web-ext": "8.2.0"
   },
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "4.3.0",
