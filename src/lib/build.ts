@@ -153,26 +153,6 @@ export default class Build extends Base {
   }
 
   prepareLocaleFiles() {
-    // Prefix Fluent messages in xhtml
-    const MessagesInHTML = new Set();
-    replaceInFile.sync({
-      files: [`${this.dist}/addon/**/*.xhtml`, `${this.dist}/addon/**/*.html`],
-      // @ts-ignore ReplaceInFileConfig has processor
-      processor: (input) => {
-        const matchs = [...input.matchAll(/(data-l10n-id)="(\S*)"/g)];
-        matchs.map((match) => {
-          input = input.replace(
-            match[0],
-            this.ctx.build.fluent.prefixFluentMessages == true
-              ? `${match[1]}="${this.namespace}-${match[2]}"`
-              : match[0],
-          );
-          MessagesInHTML.add(match[2]);
-        });
-        return input;
-      },
-    });
-
     // Walk the sub folders of `build/addon/locale`
     const localeNames = glob
       .sync(`${this.dist}/addon/locale/**`, { onlyDirectories: true })
@@ -218,11 +198,37 @@ export default class Build extends Base {
         },
       });
 
-      // If a message in xhtml but not in ftl of current language, log it
-      MessagesInHTML.forEach((message) => {
-        if (!MessageInThisLang.has(message)) {
-          this.logger.warn(`${message} don't exist in ${localeName}`);
-        }
+      // Prefix Fluent messages in xhtml
+      const MessagesInHTML = new Set();
+      replaceInFile.sync({
+        files: [
+          `${this.dist}/addon/**/*.xhtml`,
+          `${this.dist}/addon/**/*.html`,
+        ],
+        // @ts-expect-error ReplaceInFileConfig has processor
+        processor: (input) => {
+          const matches = [
+            ...input.matchAll(
+              new RegExp(`(data-l10n-id)="((?!${this.namespace})\\S*)"`, "g"),
+            ),
+          ];
+          matches.forEach((match) => {
+            const [matched, attrKey, attrVal] = match;
+            if (!MessageInThisLang.has(attrVal)) {
+              this.logger.warn(`${attrVal} don't exist in ${localeName}`);
+              return;
+            }
+            if (!this.ctx.build.fluent.prefixFluentMessages) {
+              return;
+            }
+            input = input.replace(
+              matched,
+              `${attrKey}="${this.namespace}-${attrVal}"`,
+            );
+            MessagesInHTML.add(attrVal);
+          });
+          return input;
+        },
       });
     }
   }
