@@ -108,7 +108,7 @@ ZOTERO_PLUGIN_PROFILE_PATH = /path/to/profile
 ```json
 {
   "scripts": {
-    "start": "zotero-plugin server",
+    "start": "zotero-plugin serve",
     "build": "zotero-plugin build",
     "release": "zotero-plugin release"
   }
