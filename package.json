@@ -72,7 +72,7 @@
     "mime": "4.0.4",
     "octokit": "4.0.2",
     "radash": "12.1.0",
-    "replace-in-file": "7.2.0",
+    "replace-in-file": "8.1.0",
     "std-env": "3.7.0",
     "update-notifier": "7.0.0",
     "web-ext": "8.2.0"
