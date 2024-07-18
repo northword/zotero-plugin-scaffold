@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { env, exit, on } from "node:process";
+import process from "node:process";
 import { Command } from "commander";
 import consola from "consola";
 import updateNotifier from "update-notifier";
@@ -12,7 +12,7 @@ export default async function main() {
 
   // Env variables are initialized to dev, but can be overridden by each command
   // For example, "zotero-plugin build" overrides them to "production"
-  env.NODE_ENV ??= "development";
+  process.env.NODE_ENV ??= "development";
 
   const cli = new Command();
   cli.version(pkg.version).usage("<command> [options]");
@@ -26,7 +26,7 @@ export default async function main() {
       "the full path for the new output directory, relative to the current workspace (default: build)",
     )
     .action(async (options: any) => {
-      env.NODE_ENV = options.dev ? "development" : "production";
+      process.env.NODE_ENV = options.dev ? "development" : "production";
       const config = await Config.loadConfig({
         dist: options.dist,
       });
@@ -62,7 +62,7 @@ export default async function main() {
     .description("Release.")
     .action(async (_options: any) => {
       // consola.error("The release not yet implemented");
-      env.NODE_ENV = "production";
+      process.env.NODE_ENV = "production";
       const config = await Config.loadConfig({});
       new Release(config).run();
     });
@@ -79,12 +79,12 @@ main().catch((err) => {
   console.log("");
   consola.error(err);
   console.log("");
-  exit(1);
+  process.exit(1);
 });
 
-on("unhandledRejection", (err) => {
+process.on("unhandledRejection", (err) => {
   console.log("");
   consola.error(err);
   console.log("");
-  exit(1);
+  process.exit(1);
 });

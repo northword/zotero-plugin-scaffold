@@ -1,6 +1,6 @@
 import { execSync, spawn } from "node:child_process";
 import path from "node:path";
-import { env, exit, on } from "node:process";
+import process from "node:process";
 import chokidar from "chokidar";
 import fs from "fs-extra";
 import { debounce } from "radash";
@@ -14,14 +14,14 @@ export default class Serve extends Base {
   private builder: Build;
   constructor(ctx: Context) {
     super(ctx);
-    env.NODE_ENV ??= "development";
+    process.env.NODE_ENV ??= "development";
     this.builder = new Build(ctx);
   }
 
   async run() {
     // Handle interrupt signal (Ctrl+C) to gracefully terminate Zotero process
     // Must be placed at the top to prioritize registration of events to prevent web-ext interference
-    on("SIGINT", () => {
+    process.on("SIGINT", () => {
       this.exit();
     });
 
@@ -128,13 +128,13 @@ export default class Serve extends Base {
 
     zoteroProcess.on("close", (code) => {
       this.logger.info(`Zotero terminated with code ${code}.`);
-      exit(0);
+      process.exit(0);
     });
 
-    on("SIGINT", () => {
+    process.on("SIGINT", () => {
       // Handle interrupt signal (Ctrl+C) to gracefully terminate Zotero process
       zoteroProcess.kill();
-      exit();
+      process.exit();
     });
 
     return zoteroProcess;
@@ -270,18 +270,18 @@ export default class Serve extends Base {
     this.logger.info("Server shutdown by user request.");
     killZotero();
     this.ctx.hooks.callHook("serve:exit", this.ctx);
-    exit();
+    process.exit();
   }
 
   private get zoteroBinPath() {
-    return env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH ?? "";
+    return process.env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH ?? "";
   }
 
   private get profilePath() {
-    return env.ZOTERO_PLUGIN_PROFILE_PATH ?? "";
+    return process.env.ZOTERO_PLUGIN_PROFILE_PATH ?? "";
   }
 
   private get dataDir() {
-    return env.ZOTERO_PLUGIN_DATA_DIR ?? "";
+    return process.env.ZOTERO_PLUGIN_DATA_DIR ?? "";
   }
 }
