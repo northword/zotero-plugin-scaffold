@@ -1,24 +1,25 @@
-import { Context } from "../types/index.js";
-import { Manifest } from "../types/manifest.js";
-import { UpdateJSON } from "../types/update-json.js";
-import { generateHashSync } from "../utils/crypto.js";
-import { dateFormat, toArray } from "../utils/string.js";
-import { Base } from "./base.js";
+import path from "node:path";
+import { env } from "node:process";
 import chalk from "chalk";
 import { build as buildAsync } from "esbuild";
 import glob from "fast-glob";
 import fs from "fs-extra";
-import path from "path";
 import { assign, template } from "radash";
 import { replaceInFileSync } from "replace-in-file";
 import webext from "web-ext";
+import type { Context } from "../types/index.js";
+import type { Manifest } from "../types/manifest.js";
+import type { UpdateJSON } from "../types/update-json.js";
+import { generateHashSync } from "../utils/crypto.js";
+import { dateFormat, toArray } from "../utils/string.js";
+import { Base } from "./base.js";
 
 export default class Build extends Base {
   private buildTime: string;
   private isPreRelease: boolean;
   constructor(ctx: Context) {
     super(ctx);
-    process.env.NODE_ENV ??= "production";
+    env.NODE_ENV ??= "production";
     this.buildTime = "";
     this.isPreRelease = this.version.includes("-");
   }
@@ -30,7 +31,7 @@ export default class Build extends Base {
     const t = new Date();
     this.buildTime = dateFormat("YYYY-mm-dd HH:MM:SS", t);
     this.logger.start(
-      `Building version ${chalk.blue(this.version)} to ${chalk.blue(this.dist)} at ${chalk.blue(this.buildTime)} in ${chalk.blue(process.env.NODE_ENV)} mode.`,
+      `Building version ${chalk.blue(this.version)} to ${chalk.blue(this.dist)} at ${chalk.blue(this.buildTime)} in ${chalk.blue(env.NODE_ENV)} mode.`,
     );
     await this.ctx.hooks.callHook("build:init", this.ctx);
 
@@ -57,9 +58,9 @@ export default class Build extends Base {
 
     this.logger.info("Addon prepare OK.");
 
-    /**======== build resolved ===========*/
+    /** ======== build resolved =========== */
 
-    if (process.env.NODE_ENV === "production") {
+    if (env.NODE_ENV === "production") {
       this.logger.info("Packing Addon");
       await this.pack();
       await this.ctx.hooks.callHook("build:pack", this.ctx);
@@ -94,28 +95,29 @@ export default class Build extends Base {
    *
    */
   makeManifest() {
-    if (!this.ctx.build.makeManifest.enable) return;
+    if (!this.ctx.build.makeManifest.enable)
+      return;
     const userData = fs.readJSONSync(
-        `${this.dist}/addon/manifest.json`,
-      ) as Manifest,
-      template: Manifest = {
-        ...userData,
-        ...(this.name && { name: this.name }),
-        ...(this.version && { version: this.version }),
-        manifest_version: 2,
-        applications: {
-          //@ts-ignore 此处不包含版本限制
-          zotero: {
-            id: this.id,
-            update_url: this.updateURL,
-          },
-          gecko: {
-            id: this.id,
-            update_url: this.updateURL,
-            strict_min_version: "102",
-          },
+      `${this.dist}/addon/manifest.json`,
+    ) as Manifest;
+    const template: Manifest = {
+      ...userData,
+      ...(this.name && { name: this.name }),
+      ...(this.version && { version: this.version }),
+      manifest_version: 2,
+      applications: {
+        // @ts-expect-error 此处不包含版本限制
+        zotero: {
+          id: this.id,
+          update_url: this.updateURL,
         },
-      };
+        gecko: {
+          id: this.id,
+          update_url: this.updateURL,
+          strict_min_version: "102",
+        },
+      },
+    };
 
     const data: Manifest = assign(userData, template);
     this.logger.debug("manifest: ", JSON.stringify(data, null, 2));
@@ -128,7 +130,7 @@ export default class Build extends Base {
    */
   replaceString() {
     const replaceMap = new Map(
-      Object.keys(this.ctx.build.define).map((key) => [
+      Object.keys(this.ctx.build.define).map(key => [
         new RegExp(`__${key}__`, "g"),
         template(this.ctx.build.define[key] as string, this.ctx.templateDate),
       ]),
@@ -137,7 +139,7 @@ export default class Build extends Base {
 
     const replaceResult = replaceInFileSync({
       files: toArray(this.ctx.build.assets).map(
-        (asset) => `${this.dist}/${asset}`,
+        asset => `${this.dist}/${asset}`,
       ),
       from: Array.from(replaceMap.keys()),
       to: Array.from(replaceMap.values()),
@@ -147,8 +149,8 @@ export default class Build extends Base {
     this.logger.debug(
       "Run replace in ",
       replaceResult
-        .filter((f) => f.hasChanged)
-        .map((f) => `${f.file} : ${f.numReplacements} / ${f.numMatches}`),
+        .filter(f => f.hasChanged)
+        .map(f => `${f.file} : ${f.numReplacements} / ${f.numMatches}`),
     );
   }
 
@@ -156,12 +158,12 @@ export default class Build extends Base {
     // Walk the sub folders of `build/addon/locale`
     const localeNames = glob
       .sync(`${this.dist}/addon/locale/**`, { onlyDirectories: true })
-      .map((locale) => path.basename(locale));
+      .map(locale => path.basename(locale));
     this.logger.debug("locale names: ", localeNames);
 
     for (const localeName of localeNames) {
       // rename *.ftl to addonRef-*.ftl
-      if (this.ctx.build.fluent.prefixLocaleFiles == true) {
+      if (this.ctx.build.fluent.prefixLocaleFiles === true) {
         glob
           .sync(`${this.dist}/addon/locale/${localeName}/**/*.ftl`, {})
           .forEach((f) => {
@@ -177,20 +179,21 @@ export default class Build extends Base {
       const MessageInThisLang = new Set();
       replaceInFileSync({
         files: [`${this.dist}/addon/locale/${localeName}/**/*.ftl`],
-        // @ts-ignore ReplaceInFileConfig has processor
         processor: (fltContent) => {
           const lines = fltContent.split("\n");
           const prefixedLines = lines.map((line: string) => {
             // https://regex101.com/r/lQ9x5p/1
             const match = line.match(
-              /^(?<message>[a-zA-Z]\S*)([ ]*=[ ]*)(?<pattern>.*)$/m,
+              // eslint-disable-next-line regexp/no-super-linear-backtracking
+              /^(?<message>[a-z]\S*)( *= *)(?<pattern>.*)$/im,
             );
             if (match && match.groups) {
               MessageInThisLang.add(match.groups.message);
               return this.ctx.build.fluent.prefixFluentMessages
                 ? `${this.namespace}-${line}`
                 : line;
-            } else {
+            }
+            else {
               return line;
             }
           });
@@ -205,7 +208,6 @@ export default class Build extends Base {
           `${this.dist}/addon/**/*.xhtml`,
           `${this.dist}/addon/**/*.html`,
         ],
-        // @ts-ignore ReplaceInFileConfig has processor
         processor: (input) => {
           const matches = [
             ...input.matchAll(
@@ -234,9 +236,10 @@ export default class Build extends Base {
   }
 
   esbuild() {
-    if (this.ctx.build.esbuildOptions.length == 0) return;
+    if (this.ctx.build.esbuildOptions.length === 0)
+      return;
     return Promise.all(
-      this.ctx.build.esbuildOptions.map((esbuildOption) =>
+      this.ctx.build.esbuildOptions.map(esbuildOption =>
         buildAsync(esbuildOption),
       ),
     );
@@ -244,10 +247,10 @@ export default class Build extends Base {
 
   makeUpdateJson() {
     const manifest = fs.readJSONSync(
-        `${this.dist}/addon/manifest.json`,
-      ) as Manifest,
-      min = manifest.applications?.zotero?.strict_min_version,
-      max = manifest.applications?.zotero?.strict_max_version;
+      `${this.dist}/addon/manifest.json`,
+    ) as Manifest;
+    const min = manifest.applications?.zotero?.strict_min_version;
+    const max = manifest.applications?.zotero?.strict_max_version;
 
     const updateHash = generateHashSync(
       path.join(this.dist, `${this.xpiName}.xpi`),
@@ -284,8 +287,8 @@ export default class Build extends Base {
     this.logger.log(
       `Prepare Update.json for ${
         this.isPreRelease
-          ? "\u001b[31m Prerelease \u001b[0m"
-          : "\u001b[32m Release \u001b[0m"
+          ? "\u001B[31m Prerelease \u001B[0m"
+          : "\u001B[32m Release \u001B[0m"
       }`,
     );
   }

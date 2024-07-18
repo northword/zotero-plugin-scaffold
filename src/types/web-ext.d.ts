@@ -1,10 +1,7 @@
 declare module "web-ext" {
-  export default webext = {
-    cmd,
-    main,
-  };
+
   export const cmd: {
-    build(
+    build: (
       params: {
         sourceDir: string;
         artifactsDir: string;
@@ -26,14 +23,19 @@ declare module "web-ext" {
         filename?: string;
       },
       options?: any,
-    ): Promise<any>;
+    ) => Promise<any>;
 
-    lint(params: LintParams, options?: any): Promise<any>;
-    run(params: any, options?: any): Promise<any>;
-    sign(params: any, options?: any): Promise<any>;
-    docs(params: any, options?: any): Promise<any>;
+    lint: (params: LintParams, options?: any) => Promise<any>;
+    run: (params: any, options?: any) => Promise<any>;
+    sign: (params: any, options?: any) => Promise<any>;
+    docs: (params: any, options?: any) => Promise<any>;
   };
   export const main: any;
+
+  export default webext = {
+    cmd,
+    main,
+  };
 }
 
 interface LintParams {

@@ -1,16 +1,18 @@
 #!/usr/bin/env node
-import pkg from "../package.json";
-import { Build, Config, Release, Serve } from "./index.js";
+
+import { env, exit, on } from "node:process";
 import { Command } from "commander";
 import consola from "consola";
 import updateNotifier from "update-notifier";
+import pkg from "../package.json";
+import { Build, Config, Release, Serve } from "./index.js";
 
 export default async function main() {
-  updateNotifier({ pkg: pkg }).notify();
+  updateNotifier({ pkg }).notify();
 
   // Env variables are initialized to dev, but can be overridden by each command
   // For example, "zotero-plugin build" overrides them to "production"
-  process.env.NODE_ENV ??= "development";
+  env.NODE_ENV ??= "development";
 
   const cli = new Command();
   cli.version(pkg.version).usage("<command> [options]");
@@ -24,7 +26,7 @@ export default async function main() {
       "the full path for the new output directory, relative to the current workspace (default: build)",
     )
     .action(async (options: any) => {
-      process.env.NODE_ENV = options.dev ? "development" : "production";
+      env.NODE_ENV = options.dev ? "development" : "production";
       const config = await Config.loadConfig({
         dist: options.dist,
       });
@@ -42,7 +44,7 @@ export default async function main() {
     //   "--only-start",
     //   "skip building website before deploy it (default: false)",
     // )
-    .action(async (options: any) => {
+    .action(async (_options: any) => {
       const config = await Config.loadConfig({});
       new Serve(config).run();
     });
@@ -50,7 +52,7 @@ export default async function main() {
   cli
     .command("create")
     .description("Create the plugin template.")
-    .action((options: any) => {
+    .action((_options: any) => {
       consola.error("The create not yet implemented");
       // new Create().run();
     });
@@ -58,9 +60,9 @@ export default async function main() {
   cli
     .command("release")
     .description("Release.")
-    .action(async (options: any) => {
+    .action(async (_options: any) => {
       // consola.error("The release not yet implemented");
-      process.env.NODE_ENV = "production";
+      env.NODE_ENV = "production";
       const config = await Config.loadConfig({});
       new Release(config).run();
     });
@@ -70,19 +72,19 @@ export default async function main() {
     consola.error(`Unknown command name=${cmd}.`);
   });
 
-  cli.parse(process.argv);
+  cli.parse();
 }
 
 main().catch((err) => {
   console.log("");
   consola.error(err);
   console.log("");
-  process.exit(1);
+  exit(1);
 });
 
-process.on("unhandledRejection", (err) => {
+on("unhandledRejection", (err) => {
   console.log("");
   consola.error(err);
   console.log("");
-  process.exit(1);
+  exit(1);
 });

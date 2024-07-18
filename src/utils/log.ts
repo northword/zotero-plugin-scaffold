@@ -1,8 +1,9 @@
-import { Config } from "../types/index.js";
-import { ProgressEvent, VersionBumpProgress } from "bumpp";
+import type { VersionBumpProgress } from "bumpp";
+import { ProgressEvent } from "bumpp";
 import chalk from "chalk";
 import consola from "consola";
 import { isCI } from "std-env";
+import type { Config } from "../types/index.js";
 
 /**
  * Log level
@@ -10,19 +11,19 @@ import { isCI } from "std-env";
  * @deprecated
  */
 enum LOG_LEVEL {
-  "trace", // 0
-  "debug", // 1
-  "info", // 2
-  "warn", //3
-  "error", //4
+  trace, // 0
+  debug, // 1
+  info, // 2
+  warn, // 3
+  error, // 4
 }
 
 type LogType =
   | "trace"
   | "debug" // 1
   | "info" // 2
-  | "warn" //3
-  | "error"; //4
+  | "warn" // 3
+  | "error"; // 4
 
 export const LogLevels: Record<LogType, number> = {
   trace: 5,
@@ -42,7 +43,8 @@ export default class Log {
   constructor(config?: Config) {
     if (config) {
       this.logLevel = isCI ? 0 : LOG_LEVEL[config.logLevel];
-    } else {
+    }
+    else {
       this.logLevel = 0;
     }
   }
@@ -53,31 +55,37 @@ export default class Log {
 
   log(...args: any[]) {
     args = args.map((arg) => {
-      if (typeof arg == "object") return JSON.stringify(arg, null, 2);
+      if (typeof arg == "object")
+        return JSON.stringify(arg, null, 2);
       return arg;
     });
     console.log(...args);
   }
 
   error(...args: any[]) {
-    if (this.logLevel <= 4) console.log(chalk.red("ERROR"), ...args);
+    if (this.logLevel <= 4)
+      console.log(chalk.red("ERROR"), ...args);
   }
 
   warn(...args: any[]) {
-    if (this.logLevel <= 3) this.log(chalk.yellow("WARNING"), ...args);
+    if (this.logLevel <= 3)
+      this.log(chalk.yellow("WARNING"), ...args);
   }
 
   info(...args: any[]) {
-    if (this.logLevel <= 2) this.log(chalk.green("INFO"), ...args);
+    if (this.logLevel <= 2)
+      this.log(chalk.green("INFO"), ...args);
   }
 
   debug(...args: any[]) {
     // if (this.logLevel <= 1) this.log(chalk.grey("DEBUG"), ...args);
-    if (this.logLevel <= 1) this.log(...args);
+    if (this.logLevel <= 1)
+      this.log(...args);
   }
 
   trace(...args: any[]) {
-    if (this.logLevel <= 0) this.log(chalk.grey(...args));
+    if (this.logLevel <= 0)
+      this.log(chalk.grey(...args));
   }
 }
 

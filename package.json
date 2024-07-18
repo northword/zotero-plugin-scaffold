@@ -1,17 +1,26 @@
 {
   "name": "zotero-plugin-scaffold",
-  "version": "0.0.32",
-  "description": "A scaffold for Zotero plugin development.",
-  "scripts": {
-    "dev": "unbuild --stub",
-    "build": "tsc --noEmit && unbuild",
-    "lint": "eslint . & prettier --check .",
-    "lint:fix": "eslint --fix . & prettier --write .",
-    "release": "bumpp --commit \"chore(release): publish v%s\"",
-    "update:deps": "pnpx taze minor -w -f -l",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "type": "module",
+  "version": "0.0.32",
+  "packageManager": "pnpm@9.5.0",
+  "description": "A scaffold for Zotero plugin development.",
+  "author": "northword",
+  "license": "AGPL-3.0-or-later",
+  "homepage": "https://github.com/northword/zotero-plugin-scaffold#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/northword/zotero-plugin-scaffold.git"
+  },
+  "bugs": {
+    "url": "https://github.com/northword/zotero-plugin-scaffold/issues"
+  },
+  "keywords": [
+    "zotero",
+    "plugin",
+    "developer",
+    "scaffold",
+    "web-ext"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -27,23 +36,18 @@
   "files": [
     "dist"
   ],
-  "keywords": [
-    "zotero",
-    "plugin",
-    "developer",
-    "scaffold",
-    "web-ext"
-  ],
-  "author": "northword",
-  "license": "AGPL-3.0-or-later",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/northword/zotero-plugin-scaffold.git"
+  "engines": {
+    "node": ">=18"
   },
-  "bugs": {
-    "url": "https://github.com/northword/zotero-plugin-scaffold/issues"
+  "scripts": {
+    "dev": "unbuild --stub",
+    "build": "tsc --noEmit && unbuild",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "release": "bumpp --commit \"chore(release): publish v%s\"",
+    "update:deps": "pnpx taze minor -w -f -l",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "homepage": "https://github.com/northword/zotero-plugin-scaffold#readme",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org"
@@ -52,10 +56,6 @@
     "lib": "dist",
     "doc": "docs"
   },
-  "engines": {
-    "node": ">=18"
-  },
-  "packageManager": "pnpm@9.5.0",
   "dependencies": {
     "@inquirer/prompts": "5.1.2",
     "bumpp": "9.4.1",
@@ -78,14 +78,13 @@
     "web-ext": "8.2.0"
   },
   "devDependencies": {
-    "@trivago/prettier-plugin-sort-imports": "4.3.0",
+    "@antfu/eslint-config": "^2.23.0",
     "@types/fs-extra": "11.0.4",
     "@types/node": "20.14.10",
     "@types/update-notifier": "6.0.8",
     "eslint": "9.6.0",
-    "prettier": "3.3.2",
+    "eslint-plugin-format": "^0.1.2",
     "typescript": "5.5.3",
-    "typescript-eslint": "8.0.0-alpha.39",
     "unbuild": "2.0.0"
   },
   "pnpm": {

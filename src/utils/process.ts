@@ -1,7 +1,7 @@
-import { execSync } from "child_process";
+import { execSync } from "node:child_process";
+import { platform } from "node:process";
 
 export function isRunning(query: string) {
-  const platform = process.platform;
   let cmd = "";
   switch (platform) {
     case "win32":
@@ -19,8 +19,9 @@ export function isRunning(query: string) {
 
   try {
     const stdout = execSync(cmd, { encoding: "utf8" });
-    return stdout.toLowerCase().indexOf(query.toLowerCase()) > -1;
-  } catch (error) {
+    return stdout.toLowerCase().includes(query.toLowerCase());
+  }
+  catch {
     return false;
   }
 }

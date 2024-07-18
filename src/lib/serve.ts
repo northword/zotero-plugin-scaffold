@@ -1,27 +1,27 @@
-import { Context } from "../types/index.js";
-import { killZotero } from "../utils/kill-zotero.js";
-import { Base } from "./base.js";
-import Build from "./build.js";
-import { execSync, spawn } from "child_process";
+import { execSync, spawn } from "node:child_process";
+import path from "node:path";
+import { env, exit, on } from "node:process";
 import chokidar from "chokidar";
 import fs from "fs-extra";
-import path from "path";
-import { exit } from "process";
 import { debounce } from "radash";
 import webext from "web-ext";
+import { killZotero } from "../utils/kill-zotero.js";
+import type { Context } from "../types/index.js";
+import Build from "./build.js";
+import { Base } from "./base.js";
 
 export default class Serve extends Base {
   private builder: Build;
   constructor(ctx: Context) {
     super(ctx);
-    process.env.NODE_ENV ??= "development";
+    env.NODE_ENV ??= "development";
     this.builder = new Build(ctx);
   }
 
   async run() {
     // Handle interrupt signal (Ctrl+C) to gracefully terminate Zotero process
     // Must be placed at the top to prioritize registration of events to prevent web-ext interference
-    process.on("SIGINT", () => {
+    on("SIGINT", () => {
       this.exit();
     });
 
@@ -40,7 +40,8 @@ export default class Serve extends Base {
     // start Zotero
     if (this.ctx.server.asProxy) {
       this.startZoteroByProxyFile();
-    } else {
+    }
+    else {
       console.log("");
       await this.startZoteroByWebExt();
     }
@@ -64,7 +65,8 @@ export default class Serve extends Base {
 
         if (path.endsWith(".ts") || path.endsWith(".tsx")) {
           await this.builder.esbuild();
-        } else {
+        }
+        else {
           await this.builder.run();
         }
 
@@ -73,7 +75,8 @@ export default class Serve extends Base {
           this.logger.info("Reloaded done.");
           await this.ctx.hooks.callHook("serve:onReloaded", this.ctx);
         }
-      } catch (err) {
+      }
+      catch (err) {
         // Do not abort the watcher when errors occur
         // in builds triggered by the watcher.
         this.logger.error(err);
@@ -90,7 +93,8 @@ export default class Serve extends Base {
         if (this.ctx.server.asProxy) {
           console.clear();
           this.logger.log(`${path} changed`);
-        } else {
+        }
+        else {
           // 从 web-ext 的 reload 日志上换行
           console.log("");
         }
@@ -120,14 +124,14 @@ export default class Serve extends Base {
     ]);
 
     // Necessary on MacOS
-    zoteroProcess.stdout?.on("data", (data) => {});
+    zoteroProcess.stdout?.on("data", (_data) => {});
 
     zoteroProcess.on("close", (code) => {
       this.logger.info(`Zotero terminated with code ${code}.`);
       exit(0);
     });
 
-    process.on("SIGINT", () => {
+    on("SIGINT", () => {
       // Handle interrupt signal (Ctrl+C) to gracefully terminate Zotero process
       zoteroProcess.kill();
       exit();
@@ -177,8 +181,8 @@ export default class Serve extends Base {
     );
     const buildPath = path.resolve("build/addon");
     if (
-      !fs.existsSync(addonProxyFilePath) ||
-      fs.readFileSync(addonProxyFilePath, "utf-8") !== buildPath
+      !fs.existsSync(addonProxyFilePath)
+      || fs.readFileSync(addonProxyFilePath, "utf-8") !== buildPath
     ) {
       fs.outputFileSync(addonProxyFilePath, buildPath);
       this.logger.debug(
@@ -204,10 +208,10 @@ export default class Serve extends Base {
       const PrefsLines = fs.readFileSync(prefsPath, "utf-8").split("\n");
       const filteredLines = PrefsLines.map((line: string) => {
         if (
-          line.includes("extensions.lastAppBuildId") ||
-          line.includes("extensions.lastAppVersion")
+          line.includes("extensions.lastAppBuildId")
+          || line.includes("extensions.lastAppVersion")
         ) {
-          return;
+          return "";
         }
         if (line.includes("extensions.zotero.dataDir") && this.dataDir !== "") {
           return `user_pref("extensions.zotero.dataDir", "${this.dataDir}");`;
@@ -266,16 +270,18 @@ export default class Serve extends Base {
     this.logger.info("Server shutdown by user request.");
     killZotero();
     this.ctx.hooks.callHook("serve:exit", this.ctx);
-    process.exit();
+    exit();
   }
 
   private get zoteroBinPath() {
-    return process.env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH ?? "";
+    return env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH ?? "";
   }
+
   private get profilePath() {
-    return process.env.ZOTERO_PLUGIN_PROFILE_PATH ?? "";
+    return env.ZOTERO_PLUGIN_PROFILE_PATH ?? "";
   }
+
   private get dataDir() {
-    return process.env.ZOTERO_PLUGIN_DATA_DIR ?? "";
+    return env.ZOTERO_PLUGIN_DATA_DIR ?? "";
   }
 }

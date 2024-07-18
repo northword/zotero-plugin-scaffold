@@ -1,11 +1,11 @@
-import { Config, Context, OverrideConfig, UserConfig } from "./types/index.js";
-import { bumppProgress } from "./utils/log.js";
-import { dateFormat } from "./utils/string.js";
+import path from "node:path";
 import { loadConfig as c12 } from "c12";
 import fs from "fs-extra";
 import { createHooks } from "hookable";
-import path from "path";
 import { dash, template } from "radash";
+import type { Config, Context, OverrideConfig, UserConfig } from "./types/index.js";
+import { bumppProgress } from "./utils/log.js";
+import { dateFormat } from "./utils/string.js";
 
 /**
  * Define the configuration.
@@ -14,13 +14,13 @@ import { dash, template } from "radash";
  * @param [userConfig]
  * @returns Config with userDefined.
  */
-export const defineConfig = (userConfig: UserConfig): UserConfig => {
+export function defineConfig(userConfig: UserConfig): UserConfig {
   return userConfig;
-};
+}
 
 /**
  * Loads config
- * @param [override={}] Highest Priority Configuration.
+ * @param [overrides] Highest Priority Configuration.
  * @returns Config with userDefined and defaultConfig merged.
  */
 export async function loadConfig(overrides?: OverrideConfig): Promise<Context> {
@@ -28,6 +28,7 @@ export async function loadConfig(overrides?: OverrideConfig): Promise<Context> {
     name: "zotero-plugin",
     dotenv: true,
     packageJson: true,
+    // eslint-disable-next-line ts/no-use-before-define
     defaults: getDefaultConfig(),
     overrides: overrides as Config,
   });
@@ -37,19 +38,19 @@ export async function loadConfig(overrides?: OverrideConfig): Promise<Context> {
 function resolveConfig(config: Config): Context {
   // Load user's package.json
   const pkg = fs.readJsonSync(path.join("package.json"), {
-      encoding: "utf-8",
-    }),
-    [, owner, repo] = (pkg.repository?.url ?? "").match(
-      /:\/\/.*.com\/([^/]+)\/([^.]+)\.git$/,
-    ),
-    data = {
-      owner: owner,
-      repo: repo,
-      version: pkg.version,
-      isPreRelease: pkg.version.includes("-"),
-      xpiName: dash(config.name),
-      buildTime: dateFormat("YYYY-mm-dd HH:MM:SS", new Date()),
-    };
+    encoding: "utf-8",
+  });
+  const [, owner, repo] = (pkg.repository?.url ?? "").match(
+    /:\/\/.+com\/([^/]+)\/([^.]+)\.git$/,
+  );
+  const data = {
+    owner,
+    repo,
+    version: pkg.version,
+    isPreRelease: pkg.version.includes("-"),
+    xpiName: dash(config.name),
+    buildTime: dateFormat("YYYY-mm-dd HH:MM:SS", new Date()),
+  };
 
   config.updateURL = template(config.updateURL, data);
   config.xpiDownloadLink = template(config.xpiDownloadLink, data);
@@ -72,8 +73,6 @@ function resolveConfig(config: Config): Context {
 
   return ctx;
 }
-
-const getDefaultConfig = () => <Config>defaultConfig;
 
 const defaultConfig = {
   source: "src",
@@ -105,8 +104,8 @@ const defaultConfig = {
         homepage_url: "__homepage__",
         author: "__author__",
         icons: {
-          "48": "content/icons/favicon@0.5x.png",
-          "96": "content/icons/favicon.png",
+          48: "content/icons/favicon@0.5x.png",
+          96: "content/icons/favicon.png",
         },
         applications: {
           zotero: {
@@ -156,3 +155,5 @@ const defaultConfig = {
   },
   logLevel: "info",
 } satisfies Config;
+
+const getDefaultConfig = () => <Config>defaultConfig;

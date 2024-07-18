@@ -92,13 +92,13 @@ interface ReleaseItConfigBase {
 interface ReleaseItConfigConstructor {
   "dry-run"?: boolean;
   "only-version"?: boolean;
-  increment?: boolean;
-  preReleaseId?: "alpha" | "beta" | "next" | "rc" | string;
-  ci?: boolean;
-  changelog?: boolean;
-  verbose?: boolean | number;
+  "increment"?: boolean;
+  "preReleaseId"?: "alpha" | "beta" | "next" | "rc" | string;
+  "ci"?: boolean;
+  "changelog"?: boolean;
+  "verbose"?: boolean | number;
 }
 
 interface ReleaseItConfig
   extends ReleaseItConfigConstructor,
-    ReleaseItConfigBase {}
+  ReleaseItConfigBase {}

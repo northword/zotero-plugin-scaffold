@@ -1,8 +1,8 @@
-import { Context } from "./index.js";
-import { Manifest } from "./manifest.js";
-import { UpdateJSON } from "./update-json.js";
-import { type VersionBumpOptions } from "bumpp";
-import { BuildOptions } from "esbuild";
+import type { VersionBumpOptions } from "bumpp";
+import type { BuildOptions } from "esbuild";
+import type { Manifest } from "./manifest.js";
+import type { UpdateJSON } from "./update-json.js";
+import type { Context } from "./index.js";
 
 export interface Config {
   /**
@@ -113,7 +113,7 @@ export interface BuildConfig {
    * @see {@link https://github.com/mrmlnc/fast-glob?tab=readme-ov-file#pattern-syntax | Pattern syntax | 语法说明 }
    *
    * @example `["src/**\/*.*", "!src/**\/*.ts"]` (no `\`)
-   * 
+   *
    * @default "addon/**\/*.*" (no `\`)
    */
   assets: string | string[];

@@ -1,4 +1,4 @@
-import * as crypto from "crypto";
+import * as crypto from "node:crypto";
 import fs from "fs-extra";
 
 export function generateHash(

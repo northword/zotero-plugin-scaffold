@@ -1,15 +1,15 @@
-import { Context } from "../types/index.js";
-import { Base } from "./base.js";
+import { basename, join } from "node:path";
+import { env } from "node:process";
 import { versionBump } from "bumpp";
 // @ts-expect-error no types
 import conventionalChangelog from "conventional-changelog";
-import { default as glob } from "fast-glob";
+import glob from "fast-glob";
 import fs from "fs-extra";
 import mime from "mime";
 import { Octokit } from "octokit";
-import { basename, join } from "path";
-import _ from "radash";
 import { isCI } from "std-env";
+import type { Context } from "../types/index.js";
+import { Base } from "./base.js";
 
 export default class Release extends Base {
   isCI: boolean;
@@ -37,8 +37,9 @@ export default class Release extends Base {
 
     if (!this.isCI) {
       await this.bump();
-    } else {
-      if (glob.globSync(`${this.dist}/*.xpi`).length == 0) {
+    }
+    else {
+      if (glob.globSync(`${this.dist}/*.xpi`).length === 0) {
         throw new Error("No xpi file found, are you sure you have run build?");
       }
       this.logger.info("Uploading XPI...");
@@ -95,7 +96,8 @@ export default class Release extends Base {
       make_latest: "true",
     });
 
-    if (!release) throw new Error("Create release failed!");
+    if (!release)
+      throw new Error("Create release failed!");
 
     this.logger.debug("Uploading xpi asset...");
 
@@ -107,14 +109,14 @@ export default class Release extends Base {
       .getReleaseByTag({
         owner: this.owner,
         repo: this.repo,
-        tag: tag,
+        tag,
       })
       .catch((e) => {
-        this.logger.log(`Release with tag ${tag} not found.`);
+        this.logger.log(`Release with tag ${tag} not found. ${e}`);
         return undefined;
       })
       .then((res) => {
-        if (res && res.status == 200) {
+        if (res && res.status === 200) {
           return res.data;
         }
       });
@@ -131,7 +133,7 @@ export default class Release extends Base {
         throw new Error("Create release failed.");
       })
       .then((res) => {
-        if (res.status == 201) {
+        if (res.status === 201) {
           return res.data;
         }
       });
@@ -156,11 +158,11 @@ export default class Release extends Base {
   }
 
   async refreshUpdateManifest() {
-    const assets = glob.globSync(`${this.dist}/*.json`).map((p) => basename(p));
+    const assets = glob.globSync(`${this.dist}/*.json`).map(p => basename(p));
 
-    const release =
-      (await this.getReleaseByTag("release")) ??
-      (await this.createRelease({
+    const release
+      = (await this.getReleaseByTag("release"))
+      ?? (await this.createRelease({
         owner: this.owner,
         repo: this.repo,
         tag_name: "release",
@@ -168,7 +170,8 @@ export default class Release extends Base {
         make_latest: "false",
       }));
 
-    if (!release) throw new Error("Get or create 'release' failed.");
+    if (!release)
+      throw new Error("Get or create 'release' failed.");
 
     const existAssets = await this.client.rest.repos
       .listReleaseAssets({
@@ -177,7 +180,7 @@ export default class Release extends Base {
         release_id: release.id,
       })
       .then((res) => {
-        return res.data.filter((asset) => assets.includes(asset.name));
+        return res.data.filter(asset => assets.includes(asset.name));
       });
 
     if (existAssets) {
@@ -225,9 +228,10 @@ export default class Release extends Base {
   }
 
   getClient(): Octokit {
-    if (!process.env.GITHUB_TOKEN) throw new Error("No GITHUB_TOKEN.");
+    if (!env.GITHUB_TOKEN)
+      throw new Error("No GITHUB_TOKEN.");
     const client = new Octokit({
-      auth: process.env.GITHUB_TOKEN,
+      auth: env.GITHUB_TOKEN,
       userAgent: `zotero-plugin-scaffold/${this.version}`,
     });
 
@@ -237,6 +241,7 @@ export default class Release extends Base {
   get owner(): string {
     return this.ctx.templateDate.owner;
   }
+
   get repo(): string {
     return this.ctx.templateDate.repo;
   }

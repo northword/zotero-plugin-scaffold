@@ -1,6 +1,5 @@
 // AddonLint
-import { Config } from "../types/index.js";
-import webext from "web-ext";
+import type { Config } from "../types/index.js";
 
 export default class Lint {
   options: Config;

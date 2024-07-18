@@ -1,15 +1,15 @@
 {
   "compilerOptions": {
     "target": "ESNext",
+    "rootDir": "src",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "esModuleInterop": true,
-    "strict": true,
     "resolveJsonModule": true,
+    "strict": true,
     "declaration": true,
     "outDir": "dist",
-    "skipLibCheck": true,
-    "rootDir": "src"
+    "esModuleInterop": true,
+    "skipLibCheck": true
   },
   "include": ["src", "types", "bin"]
 }

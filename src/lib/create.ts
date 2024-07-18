@@ -1,5 +1,5 @@
 // npx 创建模板
-import { confirm, input, select } from "@inquirer/prompts";
+import { input } from "@inquirer/prompts";
 
 export default class Create {
   async run() {
