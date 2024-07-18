@@ -1,6 +1,7 @@
 import { Context } from "../types/index.js";
 import { Base } from "./base.js";
 import { versionBump } from "bumpp";
+// @ts-expect-error no types
 import conventionalChangelog from "conventional-changelog";
 import { default as glob } from "fast-glob";
 import fs from "fs-extra";
@@ -210,14 +211,14 @@ export default class Release extends Base {
     return new Promise((resolve, reject) => {
       let changelog = "";
       conventionalChangelog({ releaseCount: 2 }, { version: this.version })
-        .on("data", (chunk) => {
+        .on("data", (chunk: any) => {
           changelog += chunk.toString();
         })
         .on("end", () => {
           this.logger.debug("changelog:", changelog.trim());
           resolve(changelog.trim());
         })
-        .on("error", (err) => {
+        .on("error", (err: any) => {
           reject(err);
         });
     });
