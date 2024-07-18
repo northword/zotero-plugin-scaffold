@@ -10,7 +10,7 @@ import glob from "fast-glob";
 import fs from "fs-extra";
 import path from "path";
 import { assign, template } from "radash";
-import replaceInFile from "replace-in-file";
+import { replaceInFileSync } from "replace-in-file";
 import webext from "web-ext";
 
 export default class Build extends Base {
@@ -135,7 +135,7 @@ export default class Build extends Base {
     );
     this.logger.debug("replace map: ", replaceMap);
 
-    const replaceResult = replaceInFile.sync({
+    const replaceResult = replaceInFileSync({
       files: toArray(this.ctx.build.assets).map(
         (asset) => `${this.dist}/${asset}`,
       ),
@@ -175,7 +175,7 @@ export default class Build extends Base {
 
       // Prefix Fluent messages in each ftl
       const MessageInThisLang = new Set();
-      replaceInFile.sync({
+      replaceInFileSync({
         files: [`${this.dist}/addon/locale/${localeName}/**/*.ftl`],
         // @ts-ignore ReplaceInFileConfig has processor
         processor: (fltContent) => {
@@ -200,7 +200,7 @@ export default class Build extends Base {
 
       // Prefix Fluent messages in xhtml
       const MessagesInHTML = new Set();
-      replaceInFile.sync({
+      replaceInFileSync({
         files: [
           `${this.dist}/addon/**/*.xhtml`,
           `${this.dist}/addon/**/*.html`,
