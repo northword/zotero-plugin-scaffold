@@ -139,7 +139,7 @@ export default class Build extends Base {
 
     const replaceResult = replaceInFileSync({
       files: toArray(this.ctx.build.assets).map(
-        asset => `${this.dist}/${asset}`,
+        asset => `${this.dist}/addon/${asset.split("/").slice(1).join("/")}`,
       ),
       from: Array.from(replaceMap.keys()),
       to: Array.from(replaceMap.values()),
