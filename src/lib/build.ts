@@ -102,7 +102,7 @@ export default class Build extends Base {
     ) as Manifest;
     const template: Manifest = {
       ...userData,
-      ...(this.name && { name: this.name }),
+      ...((!userData.name && this.name) && { name: this.name }),
       ...(this.version && { version: this.version }),
       manifest_version: 2,
       applications: {

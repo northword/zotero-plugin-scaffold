@@ -43,12 +43,16 @@ function resolveConfig(config: Config): Context {
   const [, owner, repo] = (pkg.repository?.url ?? "").match(
     /:\/\/.+com\/([^/]+)\/([^.]+)\.git$/,
   );
+
+  if (!config.xpiName)
+    config.xpiName = dash(config.name);
+
   const data = {
     owner,
     repo,
     version: pkg.version,
     isPreRelease: pkg.version.includes("-"),
-    xpiName: dash(config.name),
+    xpiName: config.xpiName,
     buildTime: dateFormat("YYYY-mm-dd HH:MM:SS", new Date()),
   };
 
@@ -58,7 +62,6 @@ function resolveConfig(config: Config): Context {
   const ctx: Context = {
     ...config,
     pkgUser: pkg,
-    xpiName: dash(config.name),
     version: pkg.version,
     hooks: createHooks(),
     templateDate: data,
@@ -81,6 +84,7 @@ const defaultConfig = {
   name: "",
   id: "",
   namespace: "",
+  xpiName: "",
   xpiDownloadLink:
     "https://github.com/{{owner}}/{{repo}}/releases/download/v{{version}}/{{xpiName}}.xpi",
   updateURL:
