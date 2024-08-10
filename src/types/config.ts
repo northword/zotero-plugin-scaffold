@@ -55,6 +55,13 @@ export interface Config {
   namespace: string;
 
   /**
+   * XPI filename
+   *
+   * @default _.dash(name)
+   */
+  xpiName: string;
+
+  /**
    * XPI 文件的地址
    *
    * @default `https://github.com/{{owner}}/{{repo}}/release/download/v{{version}}/{{xpiName}}.xpi`
