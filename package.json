@@ -1,7 +1,7 @@
 {
   "name": "zotero-plugin-scaffold",
   "type": "module",
-  "version": "0.0.33",
+  "version": "0.0.34",
   "packageManager": "pnpm@9.6.0",
   "description": "A scaffold for Zotero plugin development.",
   "author": "northword",
