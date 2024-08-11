@@ -1,19 +1,13 @@
-import type { ConsolaInstance } from "consola";
-import { createConsola } from "consola";
 import type { Context } from "../types/index.js";
-import { LogLevels } from "../utils/log.js";
 
 export abstract class Base {
   ctx: Context;
-  // logger: InstanceType<typeof Log>;
-  logger: ConsolaInstance;
   constructor(ctx: Context) {
     this.ctx = ctx;
-    // this.logger = new Log(config);
-    this.logger = createConsola({
-      level: LogLevels[ctx.logLevel],
-      fancy: true,
-    });
+  }
+
+  get logger() {
+    return this.ctx.logger;
   }
 
   get dist() {

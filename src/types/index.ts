@@ -1,4 +1,5 @@
 import type { Hookable } from "hookable";
+import type { ConsolaInstance } from "consola";
 import type { Hooks } from "./config.js";
 import { Config } from "./config.js";
 
@@ -23,6 +24,8 @@ interface Context extends Config {
   pkgUser: any;
   version: string;
   hooks: Hookable<Hooks>;
+  // logger: InstanceType<typeof Log>;
+  logger: ConsolaInstance;
   templateDate: { [placeholder: string]: string };
 }
 
