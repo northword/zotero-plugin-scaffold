@@ -133,7 +133,7 @@ export interface BuildConfig {
    * - 替换发生在 `assets` 下的所有文件。
    */
   define: {
-    [key: string]: string | unknown;
+    [key: string]: string;
   };
 
   fluent: {

@@ -4,7 +4,7 @@ import chalk from "chalk";
 import { build as buildAsync } from "esbuild";
 import glob from "fast-glob";
 import fs from "fs-extra";
-import { assign, template } from "radash";
+import { assign } from "radash";
 import { replaceInFileSync } from "replace-in-file";
 import webext from "web-ext";
 import type { Context } from "../types/index.js";
@@ -132,7 +132,7 @@ export default class Build extends Base {
     const replaceMap = new Map(
       Object.keys(this.ctx.build.define).map(key => [
         new RegExp(`__${key}__`, "g"),
-        template(this.ctx.build.define[key] as string, this.ctx.templateDate),
+        this.ctx.build.define[key],
       ]),
     );
     this.logger.debug("replace map: ", replaceMap);

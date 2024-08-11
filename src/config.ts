@@ -2,7 +2,7 @@ import path from "node:path";
 import { loadConfig as c12 } from "c12";
 import fs from "fs-extra";
 import { createHooks } from "hookable";
-import { dash, template } from "radash";
+import { dash, mapValues, template } from "radash";
 import { createConsola } from "consola";
 import type { Config, Context, OverrideConfig, UserConfig } from "./types/index.js";
 import { LogLevels, bumppProgress } from "./utils/log.js";
@@ -54,7 +54,7 @@ function resolveConfig(config: Config): Context {
   if (!config.xpiName)
     config.xpiName = dash(config.name);
 
-  const data = {
+  const templateDate = {
     owner,
     repo,
     version: pkg.version,
@@ -62,9 +62,9 @@ function resolveConfig(config: Config): Context {
     xpiName: config.xpiName,
     buildTime: dateFormat("YYYY-mm-dd HH:MM:SS", new Date()),
   };
-
-  config.updateURL = template(config.updateURL, data);
-  config.xpiDownloadLink = template(config.xpiDownloadLink, data);
+  config.updateURL = template(config.updateURL, templateDate);
+  config.xpiDownloadLink = template(config.xpiDownloadLink, templateDate);
+  config.build.define = mapValues(config.build.define, v => template(v, templateDate));
 
   const ctx: Context = {
     ...config,
@@ -72,7 +72,7 @@ function resolveConfig(config: Config): Context {
     version: pkg.version,
     hooks: createHooks(),
     logger,
-    templateDate: data,
+    templateDate,
   };
 
   if (config.build.hooks) {
