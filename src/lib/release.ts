@@ -39,7 +39,9 @@ export default class Release extends Base {
       await this.bump();
     }
     else {
-      if (glob.globSync(`${this.dist}/*.xpi`).length === 0) {
+      const { dist } = this.ctx;
+
+      if (glob.globSync(`${dist}/*.xpi`).length === 0) {
         throw new Error("No xpi file found, are you sure you have run build?");
       }
       this.logger.info("Uploading XPI...");
@@ -72,6 +74,8 @@ export default class Release extends Base {
    * Create new release and upload XPI to asset
    */
   async uploadXPI() {
+    const { version, dist, xpiName } = this.ctx;
+
     // const releaseItConfig: ReleaseItConfig = {
     //   increment: false,
     //   git: { commit: false, tag: false, push: false },
@@ -89,10 +93,10 @@ export default class Release extends Base {
       repo: this.repo,
       tag_name: this.ctx.release.bumpp
         .tag!.toString()
-        .replaceAll("%s", this.version),
-      name: `Release v${this.version}`,
+        .replaceAll("%s", version),
+      name: `Release v${version}`,
       body: await this.getChangelog(),
-      prerelease: this.version.includes("-"),
+      prerelease: version.includes("-"),
       make_latest: "true",
     });
 
@@ -101,7 +105,7 @@ export default class Release extends Base {
 
     this.logger.debug("Uploading xpi asset...");
 
-    await this.uploadAsset(release.id, join(this.dist, `${this.xpiName}.xpi`));
+    await this.uploadAsset(release.id, join(dist, `${xpiName}.xpi`));
   }
 
   async getReleaseByTag(tag: string) {
@@ -158,7 +162,9 @@ export default class Release extends Base {
   }
 
   async refreshUpdateManifest() {
-    const assets = glob.globSync(`${this.dist}/*.json`).map(p => basename(p));
+    const { dist, version } = this.ctx;
+
+    const assets = glob.globSync(`${dist}/*.json`).map(p => basename(p));
 
     const release
       = (await this.getReleaseByTag("release"))
@@ -196,7 +202,7 @@ export default class Release extends Base {
     }
 
     for (const asset of assets) {
-      await this.uploadAsset(release.id, join(this.dist, asset));
+      await this.uploadAsset(release.id, join(dist, asset));
     }
 
     await this.client.rest.repos.updateRelease({
@@ -204,16 +210,18 @@ export default class Release extends Base {
       repo: this.repo,
       release_id: release.id,
       name: "Release Manifest",
-      body: `This release is used to host \`update.json\`, please do not delete or modify it! \n Updated in UTC ${new Date().toISOString()} for version ${this.version}`,
+      body: `This release is used to host \`update.json\`, please do not delete or modify it! \n Updated in UTC ${new Date().toISOString()} for version ${version}`,
       prerelease: true,
       make_latest: "false",
     });
   }
 
   getChangelog(): Promise<string> {
+    const { version } = this.ctx;
+
     return new Promise((resolve, reject) => {
       let changelog = "";
-      conventionalChangelog({ releaseCount: 2 }, { version: this.version })
+      conventionalChangelog({ releaseCount: 2 }, { version })
         .on("data", (chunk: any) => {
           changelog += chunk.toString();
         })
@@ -232,7 +240,7 @@ export default class Release extends Base {
       throw new Error("No GITHUB_TOKEN.");
     const client = new Octokit({
       auth: env.GITHUB_TOKEN,
-      userAgent: `zotero-plugin-scaffold/${this.version}`,
+      userAgent: "zotero-plugin-scaffold",
     });
 
     return client;

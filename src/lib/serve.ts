@@ -54,7 +54,9 @@ export default class Serve extends Base {
    * watch source dir and build when file changed
    */
   async watch() {
-    const watcher = chokidar.watch(this.src, {
+    const { source } = this.ctx;
+
+    const watcher = chokidar.watch(source, {
       ignored: /(^|[/\\])\../, // ignore dotfiles
       persistent: true,
     });
@@ -144,11 +146,12 @@ export default class Serve extends Base {
    * start zotero with plugin installed and reload when dist changed
    */
   async startZoteroByWebExt() {
+    const { dist } = this.ctx;
     return await webext.cmd.run(
       {
         firefox: this.zoteroBinPath,
         firefoxProfile: this.profilePath,
-        sourceDir: path.resolve(`${this.dist}/addon`),
+        sourceDir: path.resolve(`${dist}/addon`),
         keepProfileChanges: true,
         args: this.ctx.server.startArgs,
         pref: { "extensions.experiments.enabled": true },
@@ -174,11 +177,9 @@ export default class Serve extends Base {
    * @see https://www.zotero.org/support/dev/client_coding/plugin_development#setting_up_a_plugin_development_environment
    */
   prepareDevEnv() {
+    const { id } = this.ctx;
     // Create a proxy file
-    const addonProxyFilePath = path.join(
-      this.profilePath,
-      `extensions/${this.id}`,
-    );
+    const addonProxyFilePath = path.join(this.profilePath, `extensions/${id}`);
     const buildPath = path.resolve("build/addon");
     if (
       !fs.existsSync(addonProxyFilePath)
@@ -193,10 +194,7 @@ export default class Serve extends Base {
     }
 
     // Delete XPI file
-    const addonXpiFilePath = path.join(
-      this.profilePath,
-      `extensions/${this.id}.xpi`,
-    );
+    const addonXpiFilePath = path.join(this.profilePath, `extensions/${id}.xpi`);
     if (fs.existsSync(addonXpiFilePath)) {
       fs.removeSync(addonXpiFilePath);
       this.logger.debug(`XPI file found, removed.`);
@@ -228,10 +226,10 @@ export default class Serve extends Base {
     if (fs.existsSync(addonInfoFilePath)) {
       const content = fs.readJSONSync(addonInfoFilePath);
       content.addons = content.addons.map((addon: any) => {
-        if (addon.id === this.id && addon.active === false) {
+        if (addon.id === id && addon.active === false) {
           addon.active = true;
           addon.userDisabled = false;
-          this.logger.debug(`Active plugin ${this.id} in extensions.json.`);
+          this.logger.debug(`Active plugin ${id} in extensions.json.`);
         }
         return addon;
       });
@@ -241,17 +239,20 @@ export default class Serve extends Base {
 
   reload() {
     this.logger.debug("Reloading...");
+
+    const { id, name, version } = this.ctx;
+
     const reloadScript = `
     (async () => {
     Services.obs.notifyObservers(null, "startupcache-invalidate", null);
     const { AddonManager } = ChromeUtils.import("resource://gre/modules/AddonManager.jsm");
-    const addon = await AddonManager.getAddonByID("${this.id}");
+    const addon = await AddonManager.getAddonByID("${id}");
     await addon.reload();
     const progressWindow = new Zotero.ProgressWindow({ closeOnClick: true });
-    progressWindow.changeHeadline("${this.name} Hot Reload");
+    progressWindow.changeHeadline("${name} Hot Reload");
     progressWindow.progress = new progressWindow.ItemProgress(
         "chrome://zotero/skin/tick.png",
-        "VERSION=${this.version}, BUILD=${new Date().toLocaleString()}. By zotero-plugin-toolkit"
+        "VERSION=${version}, BUILD=${new Date().toLocaleString()}. By zotero-plugin-toolkit"
     );
     progressWindow.progress.setProgress(100);
     progressWindow.show();
