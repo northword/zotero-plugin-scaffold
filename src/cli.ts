@@ -3,21 +3,21 @@
 import process from "node:process";
 import { Command } from "commander";
 import updateNotifier from "update-notifier";
-import pkg from "../package.json";
+import { name, version } from "../package.json";
 import { Log } from "./utils/log.js";
 import { Build, Config, Release, Serve } from "./index.js";
 
 const logger = new Log();
 
 export default async function main() {
-  updateNotifier({ pkg }).notify();
+  updateNotifier({ pkg: { name, version } }).notify();
 
   // Env variables are initialized to dev, but can be overridden by each command
   // For example, "zotero-plugin build" overrides them to "production"
   process.env.NODE_ENV ??= "development";
 
   const cli = new Command();
-  cli.version(pkg.version).usage("<command> [options]");
+  cli.version(version).usage("<command> [options]");
 
   cli
     .command("build")
