@@ -4,7 +4,7 @@ import chalk from "chalk";
 import { build as buildAsync } from "esbuild";
 import glob from "fast-glob";
 import fs from "fs-extra";
-import { assign } from "radash";
+import { toMerged } from "es-toolkit";
 import { replaceInFileSync } from "replace-in-file";
 import webext from "web-ext";
 import type { Context } from "../types/index.js";
@@ -127,7 +127,7 @@ export default class Build extends Base {
       },
     };
 
-    const data: Manifest = assign(userData, template);
+    const data: Manifest = toMerged(userData, template);
     this.logger.debug("manifest: ", JSON.stringify(data, null, 2));
 
     fs.outputJSONSync(`${dist}/addon/manifest.json`, data, { spaces: 2 });

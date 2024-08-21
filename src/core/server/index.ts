@@ -1,6 +1,6 @@
 import process from "node:process";
 import chokidar from "chokidar";
-import { debounce } from "radash";
+import { debounce } from "es-toolkit";
 import type { Context } from "../../types/index.js";
 import { Base } from "../base.js";
 import Build from "../builder.js";
@@ -55,7 +55,7 @@ export default class Serve extends Base {
       persistent: true,
     });
 
-    const onChange = debounce({ delay: 500 }, async (path: string) => {
+    const onChange = debounce(async (path: string) => {
       try {
         await this.ctx.hooks.callHook("serve:onChanged", this.ctx, path);
 
@@ -77,7 +77,7 @@ export default class Serve extends Base {
         // in builds triggered by the watcher.
         this.logger.error(err);
       }
-    });
+    }, 500);
 
     watcher
       .on("ready", async () => {
