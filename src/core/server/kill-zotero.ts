@@ -1,10 +1,12 @@
 import { execSync } from "node:child_process";
 import { env } from "node:process";
-import consola from "consola";
 import { isLinux, isMacOS, isWindows } from "std-env";
-import { isRunning } from "./process.js";
+import { isRunning } from "../../utils/process.js";
+import { Log } from "../../utils/log.js";
 
 export function killZotero() {
+  const logger = new Log();
+
   function kill() {
     try {
       if (env.ZOTERO_PLUGIN_KILL_COMMAND) {
@@ -20,11 +22,11 @@ export function killZotero() {
         execSync("kill -9 $(ps -x | grep zotero)");
       }
       else {
-        consola.error("No commands found for this operating system.");
+        logger.error("No commands found for this operating system.");
       }
     }
     catch {
-      consola.fail("Kill Zotero failed.");
+      logger.fail("Kill Zotero failed.");
     }
   }
 
@@ -32,6 +34,6 @@ export function killZotero() {
     kill();
   }
   else {
-    consola.fail("No Zotero instance is currently running.");
+    logger.fail("No Zotero instance is currently running.");
   }
 }

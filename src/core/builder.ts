@@ -32,7 +32,7 @@ export default class Build extends Base {
 
     const t = new Date();
     this.buildTime = dateFormat("YYYY-mm-dd HH:MM:SS", t);
-    this.logger.start(
+    this.logger.info(
       `Building version ${chalk.blue(version)} to ${chalk.blue(dist)} at ${chalk.blue(this.buildTime)} in ${chalk.blue(env.NODE_ENV)} mode.`,
     );
     await this.ctx.hooks.callHook("build:init", this.ctx);

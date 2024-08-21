@@ -2,10 +2,12 @@
 
 import process from "node:process";
 import { Command } from "commander";
-import consola from "consola";
 import updateNotifier from "update-notifier";
 import pkg from "../package.json";
+import { Log } from "./utils/log.js";
 import { Build, Config, Release, Serve } from "./index.js";
+
+const logger = new Log();
 
 export default async function main() {
   updateNotifier({ pkg }).notify();
@@ -53,7 +55,7 @@ export default async function main() {
     .command("create")
     .description("Create the plugin template.")
     .action((_options: any) => {
-      consola.error("The create not yet implemented");
+      logger.error("The create not yet implemented");
       // new Create().run();
     });
 
@@ -61,7 +63,7 @@ export default async function main() {
     .command("release")
     .description("Release.")
     .action(async (_options: any) => {
-      // consola.error("The release not yet implemented");
+      // logger.error("The release not yet implemented");
       process.env.NODE_ENV = "production";
       const config = await Config.loadConfig({});
       new Release(config).run();
@@ -69,22 +71,22 @@ export default async function main() {
 
   cli.arguments("<command>").action((cmd) => {
     cli.outputHelp();
-    consola.error(`Unknown command name=${cmd}.`);
+    logger.error(`Unknown command name=${cmd}.`);
   });
 
   cli.parse();
 }
 
 main().catch((err) => {
-  console.log("");
-  consola.error(err);
-  console.log("");
+  logger.newLine();
+  logger.error(err);
+  logger.newLine();
   process.exit(1);
 });
 
 process.on("unhandledRejection", (err) => {
-  console.log("");
-  consola.error(err);
-  console.log("");
+  logger.newLine();
+  logger.error(err);
+  logger.newLine();
   process.exit(1);
 });

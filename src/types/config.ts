@@ -93,12 +93,8 @@ export interface Config {
    * 发布相关配置
    *
    */
-  release: {
-    /**
-     * bumpp 配置
-     */
-    bumpp: VersionBumpOptions;
-  };
+  release: ReleaseConfig;
+
   /**
    * 日志级别
    *
@@ -211,7 +207,7 @@ export interface BuildConfig {
    */
   makeUpdateJson: {
     /**
-     * 是否启用
+     * Enable make update.json
      *
      * @default true
      */
@@ -235,6 +231,52 @@ export interface BuildConfig {
    */
   hooks: Partial<BuildHooks>;
 }
+
+export interface ReleaseConfig {
+  /**
+   * bumpp 配置
+   */
+  bumpp: VersionBumpOptions;
+
+  changelog: string;
+
+  /**
+   * Release to GitHub
+   */
+  github: {
+    /**
+     * Upload XPI asset to GitHub release
+     */
+    release: boolean;
+    /**
+     * Upload update.json to release
+     *
+     * @default 'release'
+     */
+    updater: string | false;
+    /**
+     * Comment to issues and prs inlcuded in release
+     *
+     * TODO: Not implemented yet
+     */
+    comment: boolean;
+    releaseNote: (ctx: Context) => string;
+  };
+
+  /**
+   * Release to Gitee
+   *
+   * TODO: Not implemented yet
+   */
+  gitee: {
+    release: boolean;
+    updater: string | false;
+    comment: boolean;
+    releaseNote: (ctx: Context) => string;
+  };
+
+  hooks: Partial<ReleaseHooks>;
+};
 
 interface BuildHooks {
   "build:init": (ctx: Context) => void | Promise<void>;
@@ -261,7 +303,16 @@ interface ServeHooks {
   "serve:exit": (ctx: Context) => void;
 }
 
-export interface Hooks extends BuildHooks, ServeHooks {}
+interface ReleaseHooks {
+  "release:init": (ctx: Context) => void | Promise<void>;
+  "release:version": (ctx: Context) => void | Promise<void>;
+  "release:push": (ctx: Context) => void | Promise<void>;
+  // "release:handleRelease": (ctx: Context) => void | Promise<void>;
+  // "release:handleUpdater": (ctx: Context) => void | Promise<void>;
+  "release:done": (ctx: Context) => void | Promise<void>;
+}
+
+export interface Hooks extends BuildHooks, ServeHooks, ReleaseHooks {}
 
 export interface ServerConfig {
   /**

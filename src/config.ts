@@ -3,9 +3,8 @@ import { loadConfig as c12 } from "c12";
 import fs from "fs-extra";
 import { createHooks } from "hookable";
 import { dash, mapValues, template } from "radash";
-import { createConsola } from "consola";
 import type { Config, Context, OverrideConfig, UserConfig } from "./types/index.js";
-import { LogLevels, bumppProgress } from "./utils/log.js";
+import { Log, bumppProgress } from "./utils/log.js";
 import { dateFormat } from "./utils/string.js";
 
 /**
@@ -37,11 +36,7 @@ export async function loadConfig(overrides?: OverrideConfig): Promise<Context> {
 }
 
 function resolveConfig(config: Config): Context {
-  // this.logger = new Log(config);
-  const logger = createConsola({
-    level: LogLevels[config.logLevel],
-    fancy: true,
-  });
+  const logger = new Log(config);
 
   // Load user's package.json
   const pkg = fs.readJsonSync(path.join("package.json"), {
@@ -164,6 +159,24 @@ const defaultConfig = {
       push: true,
       progress: bumppProgress,
     },
+    changelog: "",
+    github: {
+      release: true,
+      updater: "release",
+      comment: false,
+      releaseNote(ctx) {
+        return ctx.release.changelog;
+      },
+    },
+    gitee: {
+      release: false,
+      updater: "release",
+      comment: false,
+      releaseNote(ctx) {
+        return ctx.release.changelog;
+      },
+    },
+    hooks: {},
   },
   logLevel: "info",
 } satisfies Config;
