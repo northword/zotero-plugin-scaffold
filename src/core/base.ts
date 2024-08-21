@@ -6,6 +6,8 @@ export abstract class Base {
     this.ctx = ctx;
   }
 
+  abstract run(): any;
+
   get logger() {
     return this.ctx.logger;
   }

@@ -1,28 +1,20 @@
 import { basename, join } from "node:path";
 import { env } from "node:process";
-import { versionBump } from "bumpp";
-// @ts-expect-error no types
-import conventionalChangelog from "conventional-changelog";
 import glob from "fast-glob";
 import fs from "fs-extra";
 import mime from "mime";
 import { Octokit } from "octokit";
 import { isCI } from "std-env";
-import type { Context } from "../types/index.js";
-import { Base } from "./base.js";
+import type { Context } from "../../types/index.js";
+import { ReleaseBase } from "./base.js";
 
-export default class Release extends Base {
+export default class GitHub extends ReleaseBase {
   isCI: boolean;
   client: Octokit;
   constructor(ctx: Context) {
     super(ctx);
     this.isCI = isCI;
     this.client = this.getClient();
-
-    // Output detailed logs in CI for debugging purposes
-    if (this.isCI) {
-      this.logger.level = 4;
-    }
   }
 
   /**
@@ -33,41 +25,17 @@ export default class Release extends Base {
    *    then, create or update release (tag is "release"), update `update.json`.
    */
   async run() {
-    const t = new Date();
+    const { dist } = this.ctx;
 
-    if (!this.isCI) {
-      await this.bump();
+    if (glob.globSync(`${dist}/*.xpi`).length === 0) {
+      throw new Error("No xpi file found, are you sure you have run build?");
     }
-    else {
-      const { dist } = this.ctx;
+    this.logger.info("Uploading XPI...");
+    await this.uploadXPI();
+    this.logger.info("Uploading update manifest...");
+    await this.refreshUpdateManifest();
 
-      if (glob.globSync(`${dist}/*.xpi`).length === 0) {
-        throw new Error("No xpi file found, are you sure you have run build?");
-      }
-      this.logger.info("Uploading XPI...");
-      await this.uploadXPI();
-      this.logger.info("Uploading update manifest...");
-      await this.refreshUpdateManifest();
-    }
-
-    this.logger.success(
-      `Done in ${(new Date().getTime() - t.getTime()) / 1000} s.`,
-    );
-  }
-
-  /**
-   * Bumps release
-   *
-   * release: bump version, run build, git add, git commit, git tag, git push
-   */
-  async bump() {
-    const result = await versionBump(this.ctx.release.bumpp);
-    this.ctx.version = result.newVersion;
-    this.ctx.release.bumpp.tag = result.tag;
-    // const releaseItConfig: ReleaseItConfig = {
-    //   "only-version": true,
-    // };
-    // releaseIt(_.defaultsDeep(releaseItConfig, this.config.release.releaseIt));
+    return this.ctx;
   }
 
   /**
@@ -216,23 +184,11 @@ export default class Release extends Base {
     });
   }
 
-  getChangelog(): Promise<string> {
-    const { version } = this.ctx;
-
-    return new Promise((resolve, reject) => {
-      let changelog = "";
-      conventionalChangelog({ releaseCount: 2 }, { version })
-        .on("data", (chunk: any) => {
-          changelog += chunk.toString();
-        })
-        .on("end", () => {
-          this.logger.debug("changelog:", changelog.trim());
-          resolve(changelog.trim());
-        })
-        .on("error", (err: any) => {
-          reject(err);
-        });
-    });
+  async getChangelog() {
+    const { release } = this.ctx;
+    const { github } = release;
+    const { releaseNote } = github;
+    return releaseNote(this.ctx);
   }
 
   getClient(): Octokit {

@@ -1,172 +1,47 @@
+import type { ChildProcess } from "node:child_process";
 import { execSync, spawn } from "node:child_process";
 import path from "node:path";
-import process from "node:process";
-import chokidar from "chokidar";
 import fs from "fs-extra";
-import { debounce } from "radash";
-import webext from "web-ext";
-import { killZotero } from "../utils/kill-zotero.js";
-import type { Context } from "../types/index.js";
-import Build from "./build.js";
-import { Base } from "./base.js";
+import type { Context } from "../../types/index.js";
+import { ServeBase } from "./base.js";
 
-export default class Serve extends Base {
-  private builder: Build;
+export default class RunnerProxy extends ServeBase {
+  private _process?: ChildProcess;
   constructor(ctx: Context) {
     super(ctx);
-    process.env.NODE_ENV ??= "development";
-    this.builder = new Build(ctx);
   }
 
   async run() {
-    // Handle interrupt signal (Ctrl+C) to gracefully terminate Zotero process
-    // Must be placed at the top to prioritize registration of events to prevent web-ext interference
-    process.on("SIGINT", () => {
-      this.exit();
-    });
-
-    if (!fs.existsSync(this.zoteroBinPath))
-      throw new Error("The Zotero binary not found.");
-
-    if (!fs.existsSync(this.profilePath))
-      throw new Error("The Zotero profile not found.");
-
-    await this.ctx.hooks.callHook("serve:init", this.ctx);
-
-    // prebuild
-    await this.builder.run();
-    await this.ctx.hooks.callHook("serve:prebuild", this.ctx);
-
     // start Zotero
-    if (this.ctx.server.asProxy) {
-      this.startZoteroByProxyFile();
-    }
-    else {
-      console.log("");
-      await this.startZoteroByWebExt();
-    }
+    this.prepareDevEnv();
 
-    // watch
-    await this.watch();
-  }
-
-  /**
-   * watch source dir and build when file changed
-   */
-  async watch() {
-    const { source } = this.ctx;
-
-    const watcher = chokidar.watch(source, {
-      ignored: /(^|[/\\])\../, // ignore dotfiles
-      persistent: true,
-    });
-
-    const onChange = debounce({ delay: 500 }, async (path: string) => {
-      try {
-        await this.ctx.hooks.callHook("serve:onChanged", this.ctx, path);
-
-        if (path.endsWith(".ts") || path.endsWith(".tsx")) {
-          await this.builder.esbuild();
-        }
-        else {
-          await this.builder.run();
-        }
-
-        if (this.ctx.server.asProxy) {
-          this.reload();
-          this.logger.info("Reloaded done.");
-          await this.ctx.hooks.callHook("serve:onReloaded", this.ctx);
-        }
-      }
-      catch (err) {
-        // Do not abort the watcher when errors occur
-        // in builds triggered by the watcher.
-        this.logger.error(err);
-      }
-    });
-
-    watcher
-      .on("ready", async () => {
-        await this.ctx.hooks.callHook("serve:ready", this.ctx);
-        console.log("");
-        this.logger.ready("Server Ready! \n");
-      })
-      .on("change", async (path) => {
-        if (this.ctx.server.asProxy) {
-          console.clear();
-          this.logger.log(`${path} changed`);
-        }
-        else {
-          // 从 web-ext 的 reload 日志上换行
-          console.log("");
-        }
-
-        onChange(path);
-      })
-      .on("error", (err) => {
-        this.logger.error("Server start failed!", err);
-      });
+    this.start();
   }
 
   /**
    * Starts zotero with plugins pre-installed as proxy file
    */
-  async startZoteroByProxyFile() {
-    this.prepareDevEnv();
-
+  start() {
     const zoteroProcess = spawn(this.zoteroBinPath, [
       // Do not disable remote, or the debug bridge command will not run.
       // "--no-remote",
-      "--start-debugger-server",
       "--jsdebugger",
-      "--debugger",
+      //   "--start-debugger-server",
+      //   "--debugger",
       "--purgecaches",
       "-profile",
       this.profilePath,
     ]);
 
-    // Necessary on MacOS
+    // Necessary on macOS
     zoteroProcess.stdout?.on("data", (_data) => {});
 
     zoteroProcess.on("close", (code) => {
       this.logger.info(`Zotero terminated with code ${code}.`);
-      process.exit(0);
     });
 
-    process.on("SIGINT", () => {
-      // Handle interrupt signal (Ctrl+C) to gracefully terminate Zotero process
-      zoteroProcess.kill();
-      process.exit();
-    });
-
+    this._process = zoteroProcess;
     return zoteroProcess;
-  }
-
-  /**
-   * start zotero with plugin installed and reload when dist changed
-   */
-  async startZoteroByWebExt() {
-    const { dist } = this.ctx;
-    return await webext.cmd.run(
-      {
-        firefox: this.zoteroBinPath,
-        firefoxProfile: this.profilePath,
-        sourceDir: path.resolve(`${dist}/addon`),
-        keepProfileChanges: true,
-        args: this.ctx.server.startArgs,
-        pref: { "extensions.experiments.enabled": true },
-        // Use Zotero's devtools instead
-        browserConsole: false,
-        devtools: false,
-        noInput: true,
-      },
-      {
-        // These are non CLI related options for each function.
-        // You need to specify this one so that your NodeJS application
-        // can continue running after web-ext is finished.
-        shouldExitProgram: false,
-      },
-    );
   }
 
   /**
@@ -267,22 +142,7 @@ export default class Serve extends Base {
   }
 
   exit() {
-    console.log("");
     this.logger.info("Server shutdown by user request.");
-    killZotero();
-    this.ctx.hooks.callHook("serve:exit", this.ctx);
-    process.exit();
-  }
-
-  private get zoteroBinPath() {
-    return process.env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH ?? "";
-  }
-
-  private get profilePath() {
-    return process.env.ZOTERO_PLUGIN_PROFILE_PATH ?? "";
-  }
-
-  private get dataDir() {
-    return process.env.ZOTERO_PLUGIN_DATA_DIR ?? "";
+    this._process?.kill();
   }
 }

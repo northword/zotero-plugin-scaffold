@@ -1,7 +1,7 @@
 import { defineConfig, loadConfig } from "./config.js";
-import Build from "./lib/build.js";
-import Release from "./lib/release.js";
-import Serve from "./lib/serve.js";
+import Build from "./core/builder.js";
+import Release from "./core/releaser/index.js";
+import Serve from "./core/server/index.js";
 
 const Config = {
   defineConfig,

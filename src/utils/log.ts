@@ -1,14 +1,12 @@
 import type { VersionBumpProgress } from "bumpp";
 import { ProgressEvent } from "bumpp";
 import chalk from "chalk";
-import consola from "consola";
 import { isCI } from "std-env";
 import type { Config } from "../types/index.js";
 
 /**
  * Log level
  *
- * @deprecated
  */
 enum LOG_LEVEL {
   trace, // 0
@@ -18,34 +16,18 @@ enum LOG_LEVEL {
   error, // 4
 }
 
-type LogType =
-  | "trace"
-  | "debug" // 1
-  | "info" // 2
-  | "warn" // 3
-  | "error"; // 4
-
-export const LogLevels: Record<LogType, number> = {
-  trace: 5,
-  debug: 4,
-  info: 3,
-  warn: 1,
-  error: 0,
-};
-
 /**
- * Log
+ * Logger
  *
- * @deprecated
  */
-export default class Log {
+export class Log {
   private logLevel: number;
   constructor(config?: Config) {
-    if (config) {
-      this.logLevel = isCI ? 0 : LOG_LEVEL[config.logLevel];
+    if (!config || isCI) {
+      this.logLevel = 0;
     }
     else {
-      this.logLevel = 0;
+      this.logLevel = LOG_LEVEL[config.logLevel];
     }
   }
 
@@ -59,12 +41,13 @@ export default class Log {
         return JSON.stringify(arg, null, 2);
       return arg;
     });
+    // eslint-disable-next-line no-console
     console.log(...args);
   }
 
   error(...args: any[]) {
     if (this.logLevel <= 4)
-      console.log(chalk.red("ERROR"), ...args);
+      this.log(chalk.red("ERROR"), ...args);
   }
 
   warn(...args: any[]) {
@@ -87,6 +70,28 @@ export default class Log {
     if (this.logLevel <= 0)
       this.log(chalk.grey(...args));
   }
+
+  ready(...args: any[]) {
+    this.log(chalk.green("√", ...args));
+  }
+
+  success(...args: any[]) {
+    this.log(chalk.green("√"), ...args);
+  }
+
+  fail(...args: any[]) {
+    this.log(chalk.red("×"), ...args);
+  }
+
+  clear() {
+    // eslint-disable-next-line no-console
+    console.clear();
+  }
+
+  newLine() {
+    // eslint-disable-next-line no-console
+    console.log("");
+  }
 }
 
 /**
@@ -101,29 +106,31 @@ export function bumppProgress({
   skippedFiles,
   newVersion,
 }: VersionBumpProgress): void {
+  const logger = new Log();
+
   switch (event) {
     case ProgressEvent.FileUpdated:
-      consola.success(`Updated ${updatedFiles.pop()} to ${newVersion}`);
+      logger.success(`Updated ${updatedFiles.pop()} to ${newVersion}`);
       break;
 
     case ProgressEvent.FileSkipped:
-      consola.info(`${skippedFiles.pop()} did not need to be updated`);
+      logger.info(`${skippedFiles.pop()} did not need to be updated`);
       break;
 
     case ProgressEvent.GitCommit:
-      consola.success("Git commit");
+      logger.success("Git commit");
       break;
 
     case ProgressEvent.GitTag:
-      consola.success("Git tag");
+      logger.success("Git tag");
       break;
 
     case ProgressEvent.GitPush:
-      consola.success("Git push");
+      logger.success("Git push");
       break;
 
     case ProgressEvent.NpmScript:
-      consola.success(`Npm run ${script}`);
+      logger.success(`Npm run ${script}`);
       break;
   }
 }
