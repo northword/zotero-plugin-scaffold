@@ -2,10 +2,10 @@ import path from "node:path";
 import { loadConfig as c12 } from "c12";
 import fs from "fs-extra";
 import { createHooks } from "hookable";
-import { dash, mapValues, template } from "radash";
+import { kebabCase, mapValues } from "es-toolkit";
 import type { Config, Context, OverrideConfig, UserConfig } from "./types/index.js";
 import { Log, bumppProgress } from "./utils/log.js";
-import { dateFormat } from "./utils/string.js";
+import { dateFormat, template } from "./utils/string.js";
 
 /**
  * Define the configuration.
@@ -47,7 +47,7 @@ function resolveConfig(config: Config): Context {
   );
 
   if (!config.xpiName)
-    config.xpiName = dash(config.name);
+    config.xpiName = kebabCase(config.name);
 
   const templateDate = {
     owner,
