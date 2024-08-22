@@ -1,6 +1,6 @@
 import { basename, join } from "node:path";
 import { env } from "node:process";
-import { globSync } from "fast-glob";
+import { globbySync } from "globby";
 import fs from "fs-extra";
 import mime from "mime";
 import { Octokit } from "octokit";
@@ -116,7 +116,7 @@ export default class GitHub extends ReleaseBase {
     const { dist, version } = this.ctx;
     this.logger.info(`Uploading update.json to ${updater}...`);
 
-    const assets = globSync(`${dist}/update*.json`)
+    const assets = globbySync(`${dist}/update*.json`)
       .map(p => basename(p));
 
     const release

@@ -113,7 +113,7 @@ export interface BuildConfig {
    * - 是一个 `glob` 模式数组，支持否定模式。
    * - 除非一个目录没有需要排除的文件，否则不要添加整个目录。
    *
-   * @see {@link https://github.com/mrmlnc/fast-glob?tab=readme-ov-file#pattern-syntax | Pattern syntax | 语法说明 }
+   * @see {@link https://github.com/sindresorhus/globby?tab=readme-ov-file#globbing-patterns | Pattern syntax | 语法说明 }
    *
    * @example `["src/**\/*.*", "!src/**\/*.ts"]` (no `\`)
    *
