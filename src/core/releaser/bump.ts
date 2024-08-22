@@ -13,16 +13,11 @@ export default class Bump extends ReleaseBase {
   /**
    * Runs release
    *
-   * if is not CI，bump version, git add (package.json), git commit, git tag, git push;
-   * if is CI, do not bump version, do not run git, create release (tag is `v${version}`) and upload xpi,
-   *    then, create or update release (tag is "release"), update `update.json`.
    */
   async run() {
-    if (!this.isCI) {
-      await this.bump();
-    }
+    await this.bump();
 
-    await this.ctx.hooks.callHook("release:version", this.ctx);
+    // await this.ctx.hooks.callHook("release:version", this.ctx);
 
     this.ctx.release.changelog = await this.getChangelog();
 
@@ -32,16 +27,36 @@ export default class Bump extends ReleaseBase {
   /**
    * Bumps release
    *
-   * release: bump version, run build, git add, git commit, git tag, git push
+   * if is not CI，do bump version, git add, git commit, git tag, and git push;
+   * if is CI, do not bump version, do git add, git commit, git tag, and git push.
    */
   async bump() {
-    const result = await versionBump(this.ctx.release.bumpp);
+    const { release, version } = this.ctx;
+
+    if (release.bumpp.release === "prompt" && this.isCI) {
+      this.logger.warn("Config `release.bumpp.release == 'prompt'` will do nothing because in CI enviroment.");
+      this.ctx.release.bumpp.release = version;
+    }
+
+    if (release.bumpp.confirm && this.isCI) {
+      this.logger.warn("Config `release.bumpp.confirm` will do nothing because in CI enviroment.");
+      this.ctx.release.bumpp.confirm = false;
+    }
+
+    const bumppConfig = {
+      ...this.ctx.release.bumpp,
+      push: true,
+      process: this.bumppProgress,
+    };
+
+    // await versionBumpInfo(bumppConfig).then((operation) => {
+    //   this.logger.debug(operation);
+    //   bumppConfig.release = operation.results.newVersion;
+    // });
+
+    const result = await versionBump(bumppConfig);
     this.ctx.version = result.newVersion;
     this.ctx.release.bumpp.tag = result.tag;
-    // const releaseItConfig: ReleaseItConfig = {
-    //   "only-version": true,
-    // };
-    // releaseIt(_.defaultsDeep(releaseItConfig, this.config.release.releaseIt));
   }
 
   getChangelog(): Promise<string> {

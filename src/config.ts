@@ -156,11 +156,10 @@ const defaultConfig = {
       all: false,
       commit: "chore(publish): release v%s",
       tag: "v%s",
-      push: true,
     },
     changelog: "",
     github: {
-      release: true,
+      enable: "ci",
       updater: "release",
       comment: false,
       releaseNote(ctx) {
@@ -168,7 +167,7 @@ const defaultConfig = {
       },
     },
     gitee: {
-      release: false,
+      enable: "false",
       updater: "release",
       comment: false,
       releaseNote(ctx) {
