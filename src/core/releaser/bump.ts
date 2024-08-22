@@ -1,4 +1,5 @@
-import { versionBump } from "bumpp";
+import type { VersionBumpProgress } from "bumpp";
+import { ProgressEvent, versionBump } from "bumpp";
 // @ts-expect-error no types
 import conventionalChangelog from "conventional-changelog";
 import type { Context } from "../../types/index.js";
@@ -60,5 +61,44 @@ export default class Bump extends ReleaseBase {
           reject(err);
         });
     });
+  }
+
+  /**
+   * bumpp 显示进度的回调
+   *
+   * @see https://github.com/antfu/bumpp/blob/main/src/cli/index.ts
+   */
+  private bumppProgress({
+    event,
+    script,
+    updatedFiles,
+    skippedFiles,
+    newVersion,
+  }: VersionBumpProgress): void {
+    switch (event) {
+      case ProgressEvent.FileUpdated:
+        this.logger.success(`Updated ${updatedFiles.pop()} to ${newVersion}`);
+        break;
+
+      case ProgressEvent.FileSkipped:
+        this.logger.info(`${skippedFiles.pop()} did not need to be updated`);
+        break;
+
+      case ProgressEvent.GitCommit:
+        this.logger.success("Git commit");
+        break;
+
+      case ProgressEvent.GitTag:
+        this.logger.success("Git tag");
+        break;
+
+      case ProgressEvent.GitPush:
+        this.logger.success("Git push");
+        break;
+
+      case ProgressEvent.NpmScript:
+        this.logger.success(`Npm run ${script}`);
+        break;
+    }
   }
 }
