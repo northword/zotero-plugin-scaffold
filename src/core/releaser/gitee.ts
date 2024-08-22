@@ -1,4 +1,3 @@
-import glob from "fast-glob";
 import type { Context } from "../../types/index.js";
 import { ReleaseBase } from "./base.js";
 
@@ -17,11 +16,8 @@ export default class Gitee extends ReleaseBase {
    *    then, create or update release (tag is "release"), update `update.json`.
    */
   async run() {
-    const { dist } = this.ctx;
+    this.checkFiles();
 
-    if (glob.globSync(`${dist}/*.xpi`).length === 0) {
-      throw new Error("No xpi file found, are you sure you have run build?");
-    }
     this.logger.info("Uploading XPI...");
 
     this.logger.info("Uploading update manifest...");

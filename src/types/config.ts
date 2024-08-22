@@ -85,7 +85,7 @@ export interface Config {
   server: ServerConfig;
 
   /**
-   * TODO: 使用 addonLint 检查 XPI
+   * @todo Use addonLint package to lint XPI
    */
   addonLint: object;
 
@@ -96,7 +96,7 @@ export interface Config {
   release: ReleaseConfig;
 
   /**
-   * 日志级别
+   * Log level
    *
    * @default "info"
    */
@@ -174,6 +174,8 @@ export interface BuildConfig {
     /**
      * template of manifest
      *
+     * @deprecated
+     *
      * @default
      *
      * ```json
@@ -234,10 +236,25 @@ export interface BuildConfig {
 
 export interface ReleaseConfig {
   /**
-   * bumpp 配置
+   * Config of bumpp
    */
-  bumpp: VersionBumpOptions;
+  bumpp: Pick<
+    VersionBumpOptions,
+    "release"
+    | "confirm"
+    | "preid"
+    | "execute"
+    | "commit"
+    | "all"
+    | "noVerify"
+    | "tag"
+  >;
 
+  /**
+   * Changelog
+   *
+   * @default "git log"
+   */
   changelog: string;
 
   /**
@@ -245,19 +262,30 @@ export interface ReleaseConfig {
    */
   github: {
     /**
-     * Upload XPI asset to GitHub release
+     * Enable release to GitHub
+     *
+     * Include uploading XPI asset to GitHub release and all following steps.
+     *
+     * - "ci" to only enable in ci
+     * - "local" to only enable in non-ci
+     * - "always" to always enable
+     * - "false" to always disable
+     *
+     * @default "ci"
      */
-    release: boolean;
+    enable: "ci" | "local" | "always" | "false";
     /**
      * Upload update.json to release
      *
-     * @default 'release'
+     * @default "release"
      */
     updater: string | false;
     /**
      * Comment to issues and prs inlcuded in release
      *
-     * TODO: Not implemented yet
+     * @todo Not implemented yet
+     *
+     * @default false
      */
     comment: boolean;
     releaseNote: (ctx: Context) => string;
@@ -266,10 +294,10 @@ export interface ReleaseConfig {
   /**
    * Release to Gitee
    *
-   * TODO: Not implemented yet
+   * @todo Not implemented yet
    */
   gitee: {
-    release: boolean;
+    enable: "ci" | "local" | "always" | "false";
     updater: string | false;
     comment: boolean;
     releaseNote: (ctx: Context) => string;
@@ -305,7 +333,7 @@ interface ServeHooks {
 
 interface ReleaseHooks {
   "release:init": (ctx: Context) => void | Promise<void>;
-  "release:version": (ctx: Context) => void | Promise<void>;
+  // "release:version": (ctx: Context) => void | Promise<void>;
   "release:push": (ctx: Context) => void | Promise<void>;
   // "release:handleRelease": (ctx: Context) => void | Promise<void>;
   // "release:handleUpdater": (ctx: Context) => void | Promise<void>;

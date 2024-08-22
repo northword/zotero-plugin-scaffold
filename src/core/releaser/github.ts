@@ -1,37 +1,25 @@
 import { basename, join } from "node:path";
 import { env } from "node:process";
-import glob from "fast-glob";
+import { globSync } from "fast-glob";
 import fs from "fs-extra";
 import mime from "mime";
 import { Octokit } from "octokit";
-import { isCI } from "std-env";
 import type { Context } from "../../types/index.js";
 import { ReleaseBase } from "./base.js";
 
 export default class GitHub extends ReleaseBase {
-  isCI: boolean;
   client: Octokit;
   constructor(ctx: Context) {
     super(ctx);
-    this.isCI = isCI;
     this.client = this.getClient();
   }
 
-  /**
-   * Runs release
-   *
-   * if is not CI，bump version, git add (package.json), git commit, git tag, git push;
-   * if is CI, do not bump version, do not run git, create release (tag is `v${version}`) and upload xpi,
-   *    then, create or update release (tag is "release"), update `update.json`.
-   */
   async run() {
-    const { dist } = this.ctx;
+    this.checkFiles();
 
-    if (glob.globSync(`${dist}/*.xpi`).length === 0) {
-      throw new Error("No xpi file found, are you sure you have run build?");
-    }
-    this.logger.info("Uploading XPI...");
+    this.logger.info("Uploading XPI to GitHub...");
     await this.uploadXPI();
+
     this.logger.info("Uploading update manifest...");
     await this.refreshUpdateManifest();
 
@@ -43,18 +31,6 @@ export default class GitHub extends ReleaseBase {
    */
   async uploadXPI() {
     const { version, dist, xpiName } = this.ctx;
-
-    // const releaseItConfig: ReleaseItConfig = {
-    //   increment: false,
-    //   git: { commit: false, tag: false, push: false },
-    //   github: {
-    //     release: true,
-    //   },
-    //   verbose: 2,
-    //   ci: true,
-    // };
-
-    // releaseIt(_.defaultsDeep(releaseItConfig, this.config.release.releaseIt));
 
     const release = await this.createRelease({
       owner: this.owner,
@@ -84,7 +60,7 @@ export default class GitHub extends ReleaseBase {
         tag,
       })
       .catch((e) => {
-        this.logger.log(`Release with tag ${tag} not found. ${e}`);
+        this.logger.debug(`Release with tag ${tag} not found. ${e}`);
         return undefined;
       })
       .then((res) => {
@@ -112,6 +88,7 @@ export default class GitHub extends ReleaseBase {
   }
 
   async uploadAsset(releaseID: number, asset: string) {
+    this.logger.debug(`Uploading ${asset} to release ${releaseID}`);
     return await this.client.rest.repos
       .uploadReleaseAsset({
         owner: this.owner,
@@ -130,16 +107,24 @@ export default class GitHub extends ReleaseBase {
   }
 
   async refreshUpdateManifest() {
-    const { dist, version } = this.ctx;
+    const updater = this.ctx.release.github.updater;
+    if (!updater) {
+      this.logger.debug(`Skip refresh update.json because release.github.updater = false`);
+      return;
+    }
 
-    const assets = glob.globSync(`${dist}/*.json`).map(p => basename(p));
+    const { dist, version } = this.ctx;
+    this.logger.info(`Uploading update.json to ${updater}...`);
+
+    const assets = globSync(`${dist}/update*.json`)
+      .map(p => basename(p));
 
     const release
-      = (await this.getReleaseByTag("release"))
+      = (await this.getReleaseByTag(updater))
       ?? (await this.createRelease({
         owner: this.owner,
         repo: this.repo,
-        tag_name: "release",
+        tag_name: updater,
         prerelease: true,
         make_latest: "false",
       }));
@@ -160,6 +145,7 @@ export default class GitHub extends ReleaseBase {
     if (existAssets) {
       for (const existAsset of existAssets) {
         if (assets.includes(existAsset.name)) {
+          this.logger.debug(`Delete existed asset ${existAsset} in release ${updater}`);
           await this.client.rest.repos.deleteReleaseAsset({
             owner: this.owner,
             repo: this.repo,
@@ -200,13 +186,5 @@ export default class GitHub extends ReleaseBase {
     });
 
     return client;
-  }
-
-  get owner(): string {
-    return this.ctx.templateDate.owner;
-  }
-
-  get repo(): string {
-    return this.ctx.templateDate.repo;
   }
 }

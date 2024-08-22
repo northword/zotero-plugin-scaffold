@@ -1,3 +1,4 @@
+import { isCI } from "std-env";
 import type { Context } from "../../types/index.js";
 import { Base } from "../base.js";
 import Bump from "./bump.js";
@@ -25,15 +26,25 @@ export default class Release extends Base {
     this.ctx = await new Bump(this.ctx).run();
     await this.ctx.hooks.callHook("release:push", this.ctx);
 
-    if (release.github.release)
+    if (this.isEnabled(release.github.enable))
       await new GitHub(this.ctx).run();
 
-    if (release.gitee.release)
+    if (this.isEnabled(release.gitee.enable))
       await new Gitee(this.ctx).run();
 
     await this.ctx.hooks.callHook("release:done", this.ctx);
     this.logger.success(
       `Done in ${(new Date().getTime() - t.getTime()) / 1000} s.`,
     );
+  }
+
+  private isEnabled(enable: string) {
+    if (enable === "always")
+      return true;
+    if (enable === "ci" && isCI)
+      return true;
+    if (enable === "local" && !isCI)
+      return true;
+    return false;
   }
 }
