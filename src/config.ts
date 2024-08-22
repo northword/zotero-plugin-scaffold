@@ -137,12 +137,8 @@ const defaultConfig = {
     hooks: {},
   },
   server: {
-    startArgs: [
-      "--start-debugger-server",
-      "--jsdebugger",
-      "--debugger",
-      "--purgecaches",
-    ],
+    devtools: true,
+    startArgs: [],
     asProxy: false,
     hooks: {},
   },

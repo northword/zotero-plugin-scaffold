@@ -1,6 +1,6 @@
 import type { ChildProcess } from "node:child_process";
 import { execSync, spawn } from "node:child_process";
-import path from "node:path";
+import { join, resolve } from "node:path";
 import fs from "fs-extra";
 import type { Context } from "../../types/index.js";
 import { ServeBase } from "./base.js";
@@ -22,13 +22,19 @@ export default class RunnerProxy extends ServeBase {
    * Starts zotero with plugins pre-installed as proxy file
    */
   start() {
+    const { server } = this.ctx;
+
+    const startArgs = [
+      ...server.startArgs,
+      "--purgecaches",
+    ];
+    if (server.devtools)
+      startArgs.push("--jsdebugger");
+
     const zoteroProcess = spawn(this.zoteroBinPath, [
       // Do not disable remote, or the debug bridge command will not run.
       // "--no-remote",
-      "--jsdebugger",
-      //   "--start-debugger-server",
-      //   "--debugger",
-      "--purgecaches",
+      ...startArgs,
       "-profile",
       this.profilePath,
     ]);
@@ -54,8 +60,8 @@ export default class RunnerProxy extends ServeBase {
   prepareDevEnv() {
     const { id } = this.ctx;
     // Create a proxy file
-    const addonProxyFilePath = path.join(this.profilePath, `extensions/${id}`);
-    const buildPath = path.resolve("build/addon");
+    const addonProxyFilePath = join(this.profilePath, `extensions/${id}`);
+    const buildPath = resolve("build/addon");
     if (
       !fs.existsSync(addonProxyFilePath)
       || fs.readFileSync(addonProxyFilePath, "utf-8") !== buildPath
@@ -69,14 +75,14 @@ export default class RunnerProxy extends ServeBase {
     }
 
     // Delete XPI file
-    const addonXpiFilePath = path.join(this.profilePath, `extensions/${id}.xpi`);
+    const addonXpiFilePath = join(this.profilePath, `extensions/${id}.xpi`);
     if (fs.existsSync(addonXpiFilePath)) {
       fs.removeSync(addonXpiFilePath);
       this.logger.debug(`XPI file found, removed.`);
     }
 
     // Force Zotero to load the plugin from the proxy file
-    const prefsPath = path.join(this.profilePath, "prefs.js");
+    const prefsPath = join(this.profilePath, "prefs.js");
     if (fs.existsSync(prefsPath)) {
       const PrefsLines = fs.readFileSync(prefsPath, "utf-8").split("\n");
       const filteredLines = PrefsLines.map((line: string) => {
@@ -97,7 +103,7 @@ export default class RunnerProxy extends ServeBase {
     }
 
     // Force enable plugin in extensions.json
-    const addonInfoFilePath = path.join(this.profilePath, "extensions.json");
+    const addonInfoFilePath = join(this.profilePath, "extensions.json");
     if (fs.existsSync(addonInfoFilePath)) {
       const content = fs.readJSONSync(addonInfoFilePath);
       content.addons = content.addons.map((addon: any) => {
@@ -136,7 +142,7 @@ export default class RunnerProxy extends ServeBase {
     const url = `zotero://ztoolkit-debug/?run=${encodeURIComponent(
       reloadScript,
     )}`;
-    const startZoteroCmd = `"${this.zoteroBinPath}" --debugger --purgecaches -profile "${this.profilePath}"`;
+    const startZoteroCmd = `"${this.zoteroBinPath}" --purgecaches -profile "${this.profilePath}"`;
     const command = `${startZoteroCmd} -url "${url}"`;
     execSync(command);
   }

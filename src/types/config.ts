@@ -234,6 +234,56 @@ export interface BuildConfig {
   hooks: Partial<BuildHooks>;
 }
 
+interface BuildHooks {
+  "build:init": (ctx: Context) => void | Promise<void>;
+  "build:mkdir": (ctx: Context) => void | Promise<void>;
+  "build:copyAssets": (ctx: Context) => void | Promise<void>;
+  "build:makeManifest": (ctx: Context) => void | Promise<void>;
+  "build:fluent": (ctx: Context) => void | Promise<void>;
+  "build:replace": (ctx: Context) => void | Promise<void>;
+  "build:bundle": (ctx: Context) => void | Promise<void>;
+  "build:pack": (ctx: Context) => void | Promise<void>;
+  "build:makeUpdateJSON": (ctx: Context) => void | Promise<void>;
+  "build:done": (ctx: Context) => void | Promise<void>;
+}
+
+export interface ServerConfig {
+  /**
+   * Open devtool on Zotero start
+   *
+   * @default true
+   */
+  devtools: boolean;
+  /**
+   * 启动 Zotero 时附加的命令行参数
+   *
+   * @default ["--purgecaches"]
+   */
+  startArgs: string[];
+  /**
+   * 以 Proxy File 方式载入插件
+   *
+   * @default false
+   */
+  asProxy: boolean;
+  /**
+   * The lifecycle hook.
+   */
+  hooks: Partial<ServeHooks>;
+}
+
+interface ServeHooks {
+  "serve:init": (ctx: Context) => void | Promise<void>;
+  "serve:prebuild": (ctx: Context) => void | Promise<void>;
+  "serve:ready": (ctx: Context) => void | Promise<void>;
+  "serve:onChanged": (ctx: Context, path: string) => void | Promise<void>;
+  /**
+   * asProxy=true 时无效
+   */
+  "serve:onReloaded": (ctx: Context) => void | Promise<void>;
+  "serve:exit": (ctx: Context) => void;
+}
+
 export interface ReleaseConfig {
   /**
    * Config of bumpp
@@ -306,31 +356,6 @@ export interface ReleaseConfig {
   hooks: Partial<ReleaseHooks>;
 };
 
-interface BuildHooks {
-  "build:init": (ctx: Context) => void | Promise<void>;
-  "build:mkdir": (ctx: Context) => void | Promise<void>;
-  "build:copyAssets": (ctx: Context) => void | Promise<void>;
-  "build:makeManifest": (ctx: Context) => void | Promise<void>;
-  "build:fluent": (ctx: Context) => void | Promise<void>;
-  "build:replace": (ctx: Context) => void | Promise<void>;
-  "build:bundle": (ctx: Context) => void | Promise<void>;
-  "build:pack": (ctx: Context) => void | Promise<void>;
-  "build:makeUpdateJSON": (ctx: Context) => void | Promise<void>;
-  "build:done": (ctx: Context) => void | Promise<void>;
-}
-
-interface ServeHooks {
-  "serve:init": (ctx: Context) => void | Promise<void>;
-  "serve:prebuild": (ctx: Context) => void | Promise<void>;
-  "serve:ready": (ctx: Context) => void | Promise<void>;
-  "serve:onChanged": (ctx: Context, path: string) => void | Promise<void>;
-  /**
-   * asProxy=true 时无效
-   */
-  "serve:onReloaded": (ctx: Context) => void | Promise<void>;
-  "serve:exit": (ctx: Context) => void;
-}
-
 interface ReleaseHooks {
   "release:init": (ctx: Context) => void | Promise<void>;
   // "release:version": (ctx: Context) => void | Promise<void>;
@@ -341,22 +366,3 @@ interface ReleaseHooks {
 }
 
 export interface Hooks extends BuildHooks, ServeHooks, ReleaseHooks {}
-
-export interface ServerConfig {
-  /**
-   * 启动 Zotero 时附加的命令行参数
-   *
-   * @default ["--debugger", "--purgecaches"]
-   */
-  startArgs: string[];
-  /**
-   * 以 Proxy File 方式载入插件
-   *
-   * @default false
-   */
-  asProxy: boolean;
-  /**
-   * The lifecycle hook.
-   */
-  hooks: Partial<ServeHooks>;
-}
