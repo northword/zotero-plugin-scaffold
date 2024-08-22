@@ -55,29 +55,7 @@ export default class Serve extends Base {
       persistent: true,
     });
 
-    const onChange = debounce(async (path: string) => {
-      try {
-        await this.ctx.hooks.callHook("serve:onChanged", this.ctx, path);
-
-        if (path.endsWith(".ts") || path.endsWith(".tsx")) {
-          await this.builder.esbuild();
-        }
-        else {
-          await this.builder.run();
-        }
-
-        if (this.ctx.server.asProxy) {
-          this.runner?.reload();
-          this.logger.info("Reloaded done.");
-          await this.ctx.hooks.callHook("serve:onReloaded", this.ctx);
-        }
-      }
-      catch (err) {
-        // Do not abort the watcher when errors occur
-        // in builds triggered by the watcher.
-        this.logger.error(err);
-      }
-    }, 500);
+    const onChange = debounce(this.onChange, 500);
 
     watcher
       .on("ready", async () => {
@@ -86,20 +64,37 @@ export default class Serve extends Base {
         this.logger.ready("Server Ready! \n");
       })
       .on("change", async (path) => {
-        if (this.ctx.server.asProxy) {
-          this.logger.clear();
-          this.logger.log(`${path} changed`);
-        }
-        else {
-          // 从 web-ext 的 reload 日志上换行
-          this.logger.newLine();
-        }
+        this.logger.clear();
+        this.logger.log(`${path} changed`);
 
-        onChange(path);
+        onChange(path).catch((err) => {
+          // Do not abort the watcher when errors occur
+          // in builds triggered by the watcher.
+          this.logger.error(err);
+        });
       })
       .on("error", (err) => {
         this.logger.error("Server start failed!", err);
       });
+  }
+
+  async onChange(path: string) {
+    await this.ctx.hooks.callHook("serve:onChanged", this.ctx, path);
+
+    if (path.endsWith(".ts") || path.endsWith(".tsx")) {
+      await this.builder.esbuild();
+    }
+    else {
+      await this.builder.run();
+    }
+
+    await this.reload();
+  }
+
+  async reload() {
+    this.logger.info("Reloading...");
+    this.runner?.reload();
+    await this.ctx.hooks.callHook("serve:onReloaded", this.ctx);
   }
 
   exit() {
