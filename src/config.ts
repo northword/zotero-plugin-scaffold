@@ -4,7 +4,7 @@ import fs from "fs-extra";
 import { createHooks } from "hookable";
 import { kebabCase, mapValues } from "es-toolkit";
 import type { Config, Context, OverrideConfig, UserConfig } from "./types/index.js";
-import { Log, bumppProgress } from "./utils/log.js";
+import { Log } from "./utils/log.js";
 import { dateFormat, template } from "./utils/string.js";
 
 /**
@@ -157,7 +157,6 @@ const defaultConfig = {
       commit: "chore(publish): release v%s",
       tag: "v%s",
       push: true,
-      progress: bumppProgress,
     },
     changelog: "",
     github: {
