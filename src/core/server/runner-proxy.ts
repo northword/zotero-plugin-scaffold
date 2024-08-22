@@ -1,6 +1,7 @@
 import type { ChildProcess } from "node:child_process";
 import { execSync, spawn } from "node:child_process";
 import { join, resolve } from "node:path";
+import { exit } from "node:process";
 import fs from "fs-extra";
 import type { Context } from "../../types/index.js";
 import { ServeBase } from "./base.js";
@@ -44,6 +45,7 @@ export default class RunnerProxy extends ServeBase {
 
     zoteroProcess.on("close", (code) => {
       this.logger.info(`Zotero terminated with code ${code}.`);
+      exit();
     });
 
     this._process = zoteroProcess;
@@ -68,9 +70,11 @@ export default class RunnerProxy extends ServeBase {
     ) {
       fs.outputFileSync(addonProxyFilePath, buildPath);
       this.logger.debug(
-        `Addon proxy file has been updated. 
-          File path: ${addonProxyFilePath} 
-          Addon path: ${buildPath} `,
+        [
+        `Addon proxy file has been updated.`,
+        `  File path: ${addonProxyFilePath}`,
+        `  Addon path: ${buildPath}`,
+        ].join("\n"),
       );
     }
 
@@ -148,7 +152,6 @@ export default class RunnerProxy extends ServeBase {
   }
 
   exit() {
-    this.logger.info("Server shutdown by user request.");
     this._process?.kill();
   }
 }
