@@ -2,7 +2,7 @@ import path from "node:path";
 import { env } from "node:process";
 import chalk from "chalk";
 import { build as buildAsync } from "esbuild";
-import glob from "fast-glob";
+import { globbySync } from "globby";
 import fs from "fs-extra";
 import { toMerged } from "es-toolkit";
 import { replaceInFileSync } from "replace-in-file";
@@ -85,7 +85,7 @@ export default class Build extends Base {
     const { source, dist, build } = this.ctx;
     const { assets } = build;
 
-    const files = glob.sync(assets);
+    const files = globbySync(assets);
     files.forEach((file) => {
       const newPath = `${dist}/addon/${file.replace(new RegExp(toArray(source).join("|")), "")}`;
       this.logger.debug(`Copy ${file} to ${newPath}`);
@@ -169,16 +169,14 @@ export default class Build extends Base {
     const { dist, namespace, build } = this.ctx;
 
     // Walk the sub folders of `build/addon/locale`
-    const localeNames = glob
-      .sync(`${dist}/addon/locale/**`, { onlyDirectories: true })
+    const localeNames = globbySync(`${dist}/addon/locale/**`, { onlyDirectories: true })
       .map(locale => path.basename(locale));
     this.logger.debug("locale names: ", localeNames);
 
     for (const localeName of localeNames) {
       // rename *.ftl to addonRef-*.ftl
       if (build.fluent.prefixLocaleFiles === true) {
-        glob
-          .sync(`${dist}/addon/locale/${localeName}/**/*.ftl`, {})
+        globbySync(`${dist}/addon/locale/${localeName}/**/*.ftl`, {})
           .forEach((f) => {
             fs.moveSync(
               f,
