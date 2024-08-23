@@ -1,4 +1,4 @@
-import path from "node:path";
+import { resolve } from "node:path";
 import { env } from "node:process";
 import type { WebExtRunInstance } from "web-ext";
 import webext from "web-ext";
@@ -25,7 +25,7 @@ export default class RunnerWebExt extends ServeBase {
       {
         firefox: this.zoteroBinPath,
         firefoxProfile: this.profilePath,
-        sourceDir: path.resolve(`${dist}/addon`),
+        sourceDir: resolve(`${dist}/addon`),
         keepProfileChanges: true,
         args: this.startArgs,
         pref: { "extensions.experiments.enabled": true },
@@ -33,6 +33,7 @@ export default class RunnerWebExt extends ServeBase {
         browserConsole: false,
         devtools: false,
         noInput: true,
+        // Scaffold handles reloads, so disable auto-reload behaviors in web-ext
         noReload: true,
       },
       {
