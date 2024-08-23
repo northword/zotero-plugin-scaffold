@@ -23,10 +23,7 @@ export default async function main() {
     .command("build")
     .description("Build the plugin.")
     .option("--dev", "Builds the plugin in dev mode.")
-    .option(
-      "--dist <dir>",
-      "the full path for the new output directory, relative to the current workspace (default: build)",
-    )
+    .option("--dist <dir>", "The relative path for the new output directory (default: build)")
     .action(async (options: any) => {
       env.NODE_ENV = options.dev ? "development" : "production";
       const config = await Config.loadConfig({

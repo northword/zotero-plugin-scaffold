@@ -59,8 +59,6 @@ export default class Build extends Base {
     await this.esbuild();
     await this.ctx.hooks.callHook("build:bundle", this.ctx);
 
-    this.logger.info("Addon prepare OK.");
-
     /** ======== build resolved =========== */
 
     if (env.NODE_ENV === "production") {
@@ -301,7 +299,7 @@ export default class Build extends Base {
     if (!this.isPreRelease)
       fs.writeJsonSync(`${dist}/update.json`, data, { spaces: 2 });
 
-    this.logger.tip(
+    this.logger.debug(
       `Prepare Update.json for ${
         this.isPreRelease
           ? "\u001B[31m Prerelease \u001B[0m"
