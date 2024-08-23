@@ -40,33 +40,34 @@ export default class Build extends Base {
 
     fs.emptyDirSync(dist);
     await this.ctx.hooks.callHook("build:mkdir", this.ctx);
+
+    this.logger.tip("Preparing static assets");
     this.copyAssets();
     await this.ctx.hooks.callHook("build:copyAssets", this.ctx);
 
-    this.logger.info("Preparing manifest");
+    this.logger.debug("Preparing manifest");
     this.makeManifest();
     await this.ctx.hooks.callHook("build:makeManifest", this.ctx);
 
-    this.logger.info("Preparing locale files");
+    this.logger.debug("Preparing locale files");
     this.prepareLocaleFiles();
     await this.ctx.hooks.callHook("build:fluent", this.ctx);
 
-    this.logger.info("Replacing");
+    this.logger.debug("Replacing placeholders");
     this.replaceString();
     await this.ctx.hooks.callHook("build:replace", this.ctx);
 
-    this.logger.info("Running esbuild");
+    this.logger.tip("Bundling scripts");
     await this.esbuild();
     await this.ctx.hooks.callHook("build:bundle", this.ctx);
 
     /** ======== build resolved =========== */
 
     if (env.NODE_ENV === "production") {
-      this.logger.info("Packing Addon");
+      this.logger.tip("Packing plugin");
       await this.pack();
       await this.ctx.hooks.callHook("build:pack", this.ctx);
 
-      this.logger.info("Preparing update.json");
       this.makeUpdateJson();
       await this.ctx.hooks.callHook("build:makeUpdateJSON", this.ctx);
     }
