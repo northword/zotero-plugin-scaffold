@@ -44,7 +44,7 @@ export class Log {
   }
 
   private logArgs(level: LOG_LEVEL, ...args: any[]) {
-    if (this.logLevel >= level)
+    if (this.logLevel > level)
       return;
 
     args = args.map(arg => this.formatArgs(arg));
