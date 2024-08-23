@@ -7,7 +7,7 @@ import type { Config } from "../types/index.js";
  * Log level
  */
 enum LOG_LEVEL {
-  all = 0,
+  trace = 0,
   debug = 1,
   info = 2,
   warn = 3,
@@ -21,7 +21,7 @@ export class Log {
   private logLevel: number;
   constructor(config?: Config) {
     if (!config || isCI || isDebug) {
-      this.logLevel = LOG_LEVEL.all;
+      this.logLevel = LOG_LEVEL.trace;
     }
     else {
       this.logLevel = LOG_LEVEL[config.logLevel];
