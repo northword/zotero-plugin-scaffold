@@ -100,7 +100,7 @@ export interface Config {
    *
    * @default "info"
    */
-  logLevel: "all" | "debug" | "info" | "warn" | "error";
+  logLevel: "trace" | "debug" | "info" | "warn" | "error";
 }
 
 export interface BuildConfig {
