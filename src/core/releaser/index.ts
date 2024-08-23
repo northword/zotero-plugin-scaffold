@@ -18,18 +18,46 @@ export default class Release extends Base {
    *    then, create or update release (tag is "release"), update `update.json`.
    */
   async run() {
-    const { release } = this.ctx;
     const t = new Date();
+
+    const { release, version } = this.ctx;
+
+    // Parse release config
+    if (release.bumpp.release === "prompt" && isCI) {
+      this.logger.warn("Config `release.bumpp.release == 'prompt'` will do nothing because in CI enviroment.");
+      this.ctx.release.bumpp.release = version;
+    }
+
+    if (release.bumpp.confirm && isCI) {
+      this.logger.warn("Config `release.bumpp.confirm` will do nothing because in CI enviroment.");
+      this.ctx.release.bumpp.confirm = false;
+    }
+
+    const isBumpNeeded = this.ctx.release.bumpp.release !== version;
+    const isGitHubEnabled = this.isEnabled(release.github.enable);
+    const isGiteeEnabled = this.isEnabled(release.gitee.enable);
+    const isPublishNeeded = isGitHubEnabled || isGiteeEnabled;
+
+    if (isBumpNeeded && isPublishNeeded && !!release.bumpp.execute) {
+      this.logger.warn("The current release needs to run the build after bumping the version number, please configure the build script in config.release.bumpp.execute.");
+      this.ctx.release.bumpp.execute ||= "npm run build";
+    }
+
+    this.logger.debug("Release config: ", this.ctx.release);
 
     await this.ctx.hooks.callHook("release:init", this.ctx);
 
-    this.ctx = await new Bump(this.ctx).run();
-    await this.ctx.hooks.callHook("release:push", this.ctx);
+    // Bump version and Git
+    if (isBumpNeeded) {
+      this.ctx = await new Bump(this.ctx).run();
+      await this.ctx.hooks.callHook("release:push", this.ctx);
+    }
 
-    if (this.isEnabled(release.github.enable))
+    // Publish to GitHub, Gitee
+    if (isGitHubEnabled)
       await new GitHub(this.ctx).run();
 
-    if (this.isEnabled(release.gitee.enable))
+    if (isGiteeEnabled)
       await new Gitee(this.ctx).run();
 
     await this.ctx.hooks.callHook("release:done", this.ctx);

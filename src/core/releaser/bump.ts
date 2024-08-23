@@ -31,18 +31,6 @@ export default class Bump extends ReleaseBase {
    * if is CI, do not bump version, do git add, git commit, git tag, and git push.
    */
   async bump() {
-    const { release, version } = this.ctx;
-
-    if (release.bumpp.release === "prompt" && this.isCI) {
-      this.logger.warn("Config `release.bumpp.release == 'prompt'` will do nothing because in CI enviroment.");
-      this.ctx.release.bumpp.release = version;
-    }
-
-    if (release.bumpp.confirm && this.isCI) {
-      this.logger.warn("Config `release.bumpp.confirm` will do nothing because in CI enviroment.");
-      this.ctx.release.bumpp.confirm = false;
-    }
-
     const bumppConfig = {
       ...this.ctx.release.bumpp,
       push: true,
