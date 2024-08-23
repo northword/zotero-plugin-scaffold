@@ -8,11 +8,7 @@ import { Log } from "./utils/log.js";
 import { dateFormat, template } from "./utils/string.js";
 
 /**
- * Define the configuration.
- *
- * Defines the configuration in the parameters of this function to provide type checking for user configurations.
- * @param [userConfig]
- * @returns Config with userDefined.
+ * Helper for user define configuration.
  */
 export function defineConfig(userConfig: UserConfig): UserConfig {
   return userConfig;
