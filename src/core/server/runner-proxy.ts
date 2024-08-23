@@ -1,7 +1,6 @@
 import type { ChildProcess } from "node:child_process";
 import { execSync, spawn } from "node:child_process";
 import { join, resolve } from "node:path";
-import { exit } from "node:process";
 import fs from "fs-extra";
 import type { Context } from "../../types/index.js";
 import { ServeBase } from "./base.js";
@@ -23,19 +22,10 @@ export default class RunnerProxy extends ServeBase {
    * Starts zotero with plugins pre-installed as proxy file
    */
   start() {
-    const { server } = this.ctx;
-
-    const startArgs = [
-      ...server.startArgs,
-      "--purgecaches",
-    ];
-    if (server.devtools)
-      startArgs.push("--jsdebugger");
-
     const zoteroProcess = spawn(this.zoteroBinPath, [
       // Do not disable remote, or the debug bridge command will not run.
       // "--no-remote",
-      ...startArgs,
+      ...this.startArgs,
       "-profile",
       this.profilePath,
     ]);
@@ -43,10 +33,7 @@ export default class RunnerProxy extends ServeBase {
     // Necessary on macOS
     zoteroProcess.stdout?.on("data", (_data) => {});
 
-    zoteroProcess.on("close", (code) => {
-      this.logger.info(`Zotero terminated with code ${code}.`);
-      exit();
-    });
+    zoteroProcess.on("close", this.onZoteroExit);
 
     this._process = zoteroProcess;
     return zoteroProcess;
@@ -123,8 +110,6 @@ export default class RunnerProxy extends ServeBase {
   }
 
   reload() {
-    this.logger.debug("Reloading...");
-
     const { id, name, version } = this.ctx;
 
     const reloadScript = `
