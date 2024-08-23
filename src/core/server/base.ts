@@ -13,7 +13,7 @@ export abstract class ServeBase extends Base {
 
   abstract run(): void;
   abstract start(): any;
-  abstract reload(): void;
+  abstract reload(): void | Promise<void>;
   abstract exit(): void;
 
   get startArgs() {

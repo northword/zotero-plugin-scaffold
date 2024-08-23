@@ -66,12 +66,12 @@ export default class Serve extends Base {
     watcher
       .on("ready", async () => {
         await this.ctx.hooks.callHook("serve:ready", this.ctx);
-        this.logger.newLine();
-        this.logger.ready("Server Ready! \n");
+        this.logger.clear();
+        this.logger.ready("Server Ready!");
       })
       .on("change", async (path) => {
         this.logger.clear();
-        this.logger.tip(`${path} changed`);
+        this.logger.info(`${path} changed`);
         await onChangeDebounced(path);
       })
       .on("error", (err) => {
@@ -93,8 +93,8 @@ export default class Serve extends Base {
   }
 
   async reload() {
-    this.logger.info("Reloading...");
-    this.runner?.reload();
+    this.logger.tip("Reloading...");
+    await this.runner?.reload();
     await this.ctx.hooks.callHook("serve:onReloaded", this.ctx);
   }
 

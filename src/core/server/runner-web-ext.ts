@@ -47,8 +47,8 @@ export default class RunnerWebExt extends ServeBase {
     this._runner.registerCleanup(this.onZoteroExit);
   }
 
-  reload() {
-    this._runner?.reloadAllExtensions();
+  async reload() {
+    await this._runner?.reloadAllExtensions();
     // "Last extension reload: ..." log doesn't print a newline, so we need to add one.
     this.logger.newLine();
   }

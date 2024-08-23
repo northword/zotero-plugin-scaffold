@@ -1,3 +1,5 @@
+import readline from "node:readline";
+import process from "node:process";
 import chalk from "chalk";
 import { isCI, isDebug } from "std-env";
 import { isPlainObject } from "es-toolkit";
@@ -53,40 +55,52 @@ export class Log {
   }
 
   error(...args: any[]) {
-    this.logArgs(LOG_LEVEL.error, chalk.red("ERROR"), ...args);
+    this.logArgs(LOG_LEVEL.error, chalk.bgRed(" ERROR "), ...args);
   }
 
   warn(...args: any[]) {
-    this.logArgs(LOG_LEVEL.warn, chalk.yellow("WARNING"), ...args);
+    this.newLine();
+    this.logArgs(LOG_LEVEL.warn, chalk.bgYellow(" WARN "), ...args);
+    this.newLine();
   }
 
   tip(...args: any[]) {
-    this.logArgs(LOG_LEVEL.info, chalk.blue("TIP"), ...args);
+    this.logArgs(LOG_LEVEL.info, chalk.blue("→"), ...args);
   }
 
   info(...args: any[]) {
-    this.logArgs(LOG_LEVEL.info, chalk.green("INFO"), ...args);
+    this.logArgs(LOG_LEVEL.info, chalk.blue("ℹ"), ...args);
   }
 
   debug(...args: any[]) {
-    this.logArgs(LOG_LEVEL.debug, chalk.grey("DEBUG"), ...args);
+    this.logArgs(LOG_LEVEL.debug, chalk.grey("⚙"), ...args);
   }
 
   ready(...args: any[]) {
-    this.logArgs(LOG_LEVEL.info, chalk.green("√", ...args));
+    this.newLine();
+    this.logArgs(LOG_LEVEL.info, chalk.green("✔", ...args));
+    this.newLine();
   }
 
   success(...args: any[]) {
-    this.logArgs(LOG_LEVEL.info, chalk.green("√"), ...args);
+    this.logArgs(LOG_LEVEL.info, chalk.green("✔"), ...args);
   }
 
   fail(...args: any[]) {
-    this.logArgs(LOG_LEVEL.error, chalk.red("×"), ...args);
+    this.logArgs(LOG_LEVEL.error, chalk.red("✖"), ...args);
   }
 
   clear() {
+    // // eslint-disable-next-line no-console
+    // console.clear();
+
+    // Modified from https://github.com/vitejs/vite/blob/561b940f6f963fbb78058a6e23b4adad53a2edb9/packages/vite/src/node/logger.ts#L40-L46
+    const repeatCount = process.stdout.rows - 2;
+    const blank = repeatCount > 0 ? "\n".repeat(repeatCount) : "";
     // eslint-disable-next-line no-console
-    console.clear();
+    console.log(blank);
+    readline.cursorTo(process.stdout, 0, 0);
+    readline.clearScreenDown(process.stdout);
   }
 
   newLine() {
