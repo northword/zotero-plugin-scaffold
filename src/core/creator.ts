@@ -5,7 +5,7 @@ import { Base } from "./base.js";
 export default class Create extends Base {
   async run() {
     const answers = await this.prompting();
-    this.logger.log(answers);
+    this.logger.debug(answers);
   }
 
   async prompting() {

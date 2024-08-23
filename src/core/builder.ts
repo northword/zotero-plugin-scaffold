@@ -300,7 +300,7 @@ export default class Build extends Base {
     if (!this.isPreRelease)
       fs.writeJsonSync(`${dist}/update.json`, data, { spaces: 2 });
 
-    this.logger.log(
+    this.logger.tip(
       `Prepare Update.json for ${
         this.isPreRelease
           ? "\u001B[31m Prerelease \u001B[0m"

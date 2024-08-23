@@ -65,7 +65,7 @@ export default class Serve extends Base {
       })
       .on("change", async (path) => {
         this.logger.clear();
-        this.logger.log(`${path} changed`);
+        this.logger.tip(`${path} changed`);
 
         onChange(path).catch((err) => {
           // Do not abort the watcher when errors occur
