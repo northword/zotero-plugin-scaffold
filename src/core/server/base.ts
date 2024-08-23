@@ -1,5 +1,4 @@
-import { env } from "node:process";
-import type { ChildProcess, ChildProcessWithoutNullStreams } from "node:child_process";
+import { env, exit } from "node:process";
 import { existsSync } from "node:fs";
 import type { Context } from "../../types/index.js";
 import { Base } from "../base.js";
@@ -13,9 +12,29 @@ export abstract class ServeBase extends Base {
   }
 
   abstract run(): void;
-  abstract start(): ChildProcess | Promise<ChildProcessWithoutNullStreams>;
+  abstract start(): any;
   abstract reload(): void;
   abstract exit(): void;
+
+  get startArgs() {
+    const { server } = this.ctx;
+
+    const startArgs = [
+      ...server.startArgs,
+      "--purgecaches",
+    ];
+    if (server.devtools)
+      startArgs.push("--jsdebugger");
+
+    return startArgs;
+  }
+
+  get onZoteroExit() {
+    return (_code?: number | null, _signal?: any) => {
+      this.logger.info(`Zotero terminated.`);
+      exit();
+    };
+  }
 
   get zoteroBinPath() {
     if (this._zoteroBinPath)

@@ -4,10 +4,10 @@ import { debounce } from "es-toolkit";
 import type { Context } from "../../types/index.js";
 import { Base } from "../base.js";
 import Build from "../builder.js";
-import { killZotero } from "./kill-zotero.js";
 import type { ServeBase } from "./base.js";
 import RunnerProxy from "./runner-proxy.js";
 import RunnerWebExt from "./runner-web-ext.js";
+import { killZotero } from "./kill-zotero.js";
 
 export default class Serve extends Base {
   private builder: Build;
@@ -55,7 +55,13 @@ export default class Serve extends Base {
       persistent: true,
     });
 
-    const onChange = debounce(this.onChange, 500);
+    const onChangeDebounced = debounce(async (path: string) => {
+      await this.onChange(path).catch((err) => {
+        // Do not abort the watcher when errors occur
+        // in builds triggered by the watcher.
+        this.logger.error(err);
+      });
+    }, 500);
 
     watcher
       .on("ready", async () => {
@@ -66,12 +72,7 @@ export default class Serve extends Base {
       .on("change", async (path) => {
         this.logger.clear();
         this.logger.tip(`${path} changed`);
-
-        onChange(path).catch((err) => {
-          // Do not abort the watcher when errors occur
-          // in builds triggered by the watcher.
-          this.logger.error(err);
-        });
+        await onChangeDebounced(path);
       })
       .on("error", (err) => {
         this.logger.error("Server start failed!", err);
@@ -100,7 +101,9 @@ export default class Serve extends Base {
   exit() {
     this.logger.info("Server shutdown by user request.");
     this.runner?.exit();
-    // killZotero();
+    // Sometimes `runner.exit()` cannot kill the Zotero,
+    // so we force kill it.
+    killZotero();
     this.ctx.hooks.callHook("serve:exit", this.ctx);
     process.exit();
   }
