@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import { isCI, isDebug } from "std-env";
 import { isPlainObject } from "es-toolkit";
-import type { Config } from "../types/index.js";
+import type { Config, Context } from "../types/index.js";
 
 /**
  * Log level
@@ -93,4 +93,34 @@ export class Log {
     // eslint-disable-next-line no-console
     console.log("");
   }
+}
+
+/**
+ * Patch web-ext's logger with scaffold's logger.
+ *
+ * Modified from https://github.com/wxt-dev/wxt/blob/45809c0198af3da66efd3579f042ec81fdba6ff4/packages/wxt/src/core/runners/web-ext.ts#L26-L31
+ */
+export async function patchWebExtLogger(ctx: Context) {
+  const { logger } = ctx;
+
+  // https://github.com/mozilla/web-ext/blob/e37e60a2738478f512f1255c537133321f301771/src/util/logger.js#L12
+  // const DEBUG_LOG_LEVEL = 20;
+  const INFO_LOG_LEVEL = 30;
+  const WARN_LOG_LEVEL = 40;
+  const ERROR_LOG_LEVEL = 50;
+
+  // Use the scaffold's logger instead of web-ext's built-in one.
+  const webExtLogger = await import("web-ext/util/logger");
+  webExtLogger.consoleStream.write = ({ level, msg, name }) => {
+    if (level >= ERROR_LOG_LEVEL)
+      logger.error(name, msg);
+    if (level >= WARN_LOG_LEVEL)
+      logger.warn(msg);
+    if (level >= INFO_LOG_LEVEL)
+    // Discard web-ext's debug log becaule web-ext's debug have firefox's stdout and stderr,
+    // and set web-ext's info to scaffold' debug
+      logger.debug(msg);
+  };
+
+  return webExtLogger;
 }
