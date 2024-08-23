@@ -12,6 +12,7 @@ import type { Manifest } from "../types/manifest.js";
 import type { UpdateJSON } from "../types/update-json.js";
 import { generateHashSync } from "../utils/crypto.js";
 import { dateFormat, toArray } from "../utils/string.js";
+import { patchWebExtLogger } from "../utils/log.js";
 import { Base } from "./base.js";
 
 export default class Build extends Base {
@@ -310,6 +311,8 @@ export default class Build extends Base {
   }
 
   async pack() {
+    await patchWebExtLogger(this.ctx);
+
     const { dist, xpiName } = this.ctx;
 
     await webext.cmd.build({
