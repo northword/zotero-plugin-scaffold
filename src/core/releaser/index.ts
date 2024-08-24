@@ -106,7 +106,18 @@ export default class Release extends Base {
     }
     else {
       // Otherwise, get log between this tag and previous one
-      const previousTag = tags[currentTagIndex - 1];
+      // Find the last non-pre-release tag
+      let previousTagIndex = currentTagIndex - 1;
+      while (previousTagIndex >= 0 && tags[previousTagIndex].includes("-")) {
+        previousTagIndex--;
+      }
+
+      if (previousTagIndex < 0) {
+        // If no previous official release is found, get all logs up to the currentTag
+        return execSync(`git log ${currentTag} --pretty=format:"* %s (%h)"`).toString().trim();
+      }
+
+      const previousTag = tags[previousTagIndex];
       return execSync(`git log ${previousTag}..${currentTag} --pretty=format:"* %s (%h)"`).toString().trim();
     }
   }
