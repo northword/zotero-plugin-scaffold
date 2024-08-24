@@ -157,16 +157,16 @@ const defaultConfig = {
       enable: "ci",
       updater: "release",
       comment: false,
-      releaseNote(ctx) {
-        return ctx.release.changelog;
+      releaseNote: (ctx) => {
+        return ctx.release.changelog as string;
       },
     },
     gitee: {
       enable: "false",
       updater: "release",
       comment: false,
-      releaseNote(ctx) {
-        return ctx.release.changelog;
+      releaseNote: (ctx) => {
+        return ctx.release.changelog as string;
       },
     },
     hooks: {},

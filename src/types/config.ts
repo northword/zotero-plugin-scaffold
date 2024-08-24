@@ -280,9 +280,6 @@ interface ServeHooks {
   "serve:prebuild": (ctx: Context) => void | Promise<void>;
   "serve:ready": (ctx: Context) => void | Promise<void>;
   "serve:onChanged": (ctx: Context, path: string) => void | Promise<void>;
-  /**
-   * asProxy=true 时无效
-   */
   "serve:onReloaded": (ctx: Context) => void | Promise<void>;
   "serve:exit": (ctx: Context) => void;
 }
@@ -327,6 +324,13 @@ export interface ReleaseConfig {
      * @default "v%s"
      */
     tag: string;
+    /**
+     * Indicates whether the git commit should include ALL files (`git commit --all`)
+     * rather than just the files that were modified by `versionBump()`.
+     *
+     * Defaults to `false`.
+     */
+    all?: boolean;
     /**
      * Prompt for confirmation
      *
