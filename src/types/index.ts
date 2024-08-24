@@ -7,18 +7,12 @@ type RecursivePartial<T> = {
   [P in keyof T]?: T[P] extends object ? RecursivePartial<T[P]> : T[P];
 };
 
-interface OverrideConfig extends RecursivePartial<Config> {}
-
 /**
  * User config
- *
- * 用户输入的配置，总配置全可选基础上添加部分为必填
  */
-interface UserConfig extends RecursivePartial<Config> {
-  name: string;
-  id: string;
-  namespace: string;
-}
+interface UserConfig extends RecursivePartial<Config> {}
+
+interface OverrideConfig extends RecursivePartial<Config> {}
 
 interface Context extends Config {
   pkgUser: any;
@@ -28,4 +22,4 @@ interface Context extends Config {
   templateDate: { [placeholder: string]: string };
 }
 
-export { OverrideConfig, UserConfig, Config, Context };
+export { UserConfig, OverrideConfig, Config, Context, Hooks };

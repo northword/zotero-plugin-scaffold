@@ -37,12 +37,16 @@ export interface Config {
    *
    * 插件名
    *
+   * @default package-json.name
+   *
    */
   name: string;
   /**
    * The ID of plugin
    *
    * 插件 ID
+   *
+   * @default package-json.name
    */
   id: string;
   /**
@@ -50,14 +54,14 @@ export interface Config {
    *
    * 插件命名空间
    *
-   * @default _.dash(name)
+   * @default kebabCase(name)
    */
   namespace: string;
 
   /**
    * XPI filename
    *
-   * @default _.dash(name)
+   * @default kebabCase(name)
    */
   xpiName: string;
 

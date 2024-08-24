@@ -38,3 +38,14 @@ export function template(str: string, data: Record<string, any>, regex = /\{\{(.
     return acc.replace(match[0], data[match[1]]);
   }, str);
 }
+export function parseRepoUrl(url?: string) {
+  if (!url)
+    throw new Error("Parse repository URL failed.");
+
+  const match = (url).match(/:\/\/.+com\/([^/]+)\/([^.]+)\.git$/);
+  if (!match) {
+    throw new Error("Parse repository URL failed.");
+  }
+  const [, owner, repo] = match;
+  return { owner, repo };
+}
