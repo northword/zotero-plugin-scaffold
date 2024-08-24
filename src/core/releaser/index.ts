@@ -94,6 +94,24 @@ export default class Release extends Base {
   }
 
   getGitLog(currentTag: string) {
+    /**
+     * Get all git tags
+     *
+     * @example
+     *
+     * ```bash
+     * $ git tag -l --sort=v:refname
+     * v2.0.9
+     * v2.0.10
+     * v2.0.11
+     * v2.0.12
+     * v2.0.13
+     * v2.0.13-beta.1
+     * v2.0.13-beta.2
+     * v2.0.13-beta.3
+     * v2.0.14
+     * ```
+     */
     const tags = execSync("git tag -l --sort=v:refname").toString().trim().split("\n");
 
     const currentTagIndex = tags.indexOf(currentTag);
@@ -105,7 +123,7 @@ export default class Release extends Base {
       return execSync(`git log ${currentTag} --pretty=format:"* %s (%h)"`).toString().trim();
     }
     else {
-      // Otherwise, get log between this tag and previous one
+      // Otherwise, get log between this tag and previous official (not pre-release) one
       // Find the last non-pre-release tag
       let previousTagIndex = currentTagIndex - 1;
       while (previousTagIndex >= 0 && tags[previousTagIndex].includes("-")) {

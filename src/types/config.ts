@@ -260,7 +260,7 @@ export interface ServerConfig {
   /**
    * 启动 Zotero 时附加的命令行参数
    *
-   * @default ["--purgecaches"]
+   * @default []
    */
   startArgs: string[];
   /**
