@@ -20,7 +20,7 @@ export default class GitHub extends ReleaseBase {
     this.logger.info("Uploading XPI to GitHub...");
     await this.uploadXPI();
 
-    this.logger.info("Uploading update manifest...");
+    this.logger.info("Refreshing update manifest...");
     await this.refreshUpdateManifest();
 
     return this.ctx;
@@ -65,6 +65,7 @@ export default class GitHub extends ReleaseBase {
       })
       .then((res) => {
         if (res && res.status === 200) {
+          this.logger.debug(`Found release with tag "${tag}", id=${res.data.id}.`);
           return res.data;
         }
       });
@@ -82,6 +83,7 @@ export default class GitHub extends ReleaseBase {
       })
       .then((res) => {
         if (res.status === 201) {
+          this.logger.debug(`Create release "${res.data.tag_name}" success, id: ${res.data.id}.`);
           return res.data;
         }
       });
@@ -102,6 +104,7 @@ export default class GitHub extends ReleaseBase {
         name: basename(asset),
       })
       .then((res) => {
+        this.logger.debug(`Upload "${res.data.name}" success, assetId: ${res.data.id}`);
         return res.data;
       });
   }
@@ -114,7 +117,6 @@ export default class GitHub extends ReleaseBase {
     }
 
     const { dist, version } = this.ctx;
-    this.logger.info(`Uploading update.json to ${updater}...`);
 
     const assets = globbySync(`${dist}/update*.json`)
       .map(p => basename(p));
@@ -145,7 +147,7 @@ export default class GitHub extends ReleaseBase {
     if (existAssets) {
       for (const existAsset of existAssets) {
         if (assets.includes(existAsset.name)) {
-          this.logger.debug(`Delete existed asset ${existAsset} in release ${updater}`);
+          this.logger.debug(`Delete existed asset ${existAsset.name} in release ${updater}`);
           await this.client.rest.repos.deleteReleaseAsset({
             owner: this.owner,
             repo: this.repo,

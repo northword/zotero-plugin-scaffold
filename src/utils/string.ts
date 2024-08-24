@@ -38,6 +38,36 @@ export function template(str: string, data: Record<string, any>, regex = /\{\{(.
     return acc.replace(match[0], data[match[1]]);
   }, str);
 }
+
+/**
+ * Escapes the `RegExp` special characters "^", "$", "\", ".", "*", "+",
+ * "?", "(", ")", "[", "]", "{", "}", and "|" in `string`.
+ *
+ * @since 3.0.0
+ * @category String
+ * @param {string} [string] The string to escape.
+ * @returns {string} Returns the escaped string.
+ * @see escape, escapeRegExp, unescape
+ * @example
+ *
+ * escapeRegExp('[lodash](https://lodash.com/)')
+ * // => '\[lodash\]\(https://lodash\.com/\)'
+ *
+ * Copy from https://github.com/lodash/lodash/blob/main/src/escapeRegExp.ts
+ */
+export function escapeRegExp(string: string) {
+  /**
+   * Used to match `RegExp`
+   * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
+   */
+  const reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
+  const reHasRegExpChar = RegExp(reRegExpChar.source);
+
+  return string && reHasRegExpChar.test(string)
+    ? string.replace(reRegExpChar, "\\$&")
+    : string || "";
+}
+
 export function parseRepoUrl(url?: string) {
   if (!url)
     throw new Error("Parse repository URL failed.");

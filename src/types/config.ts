@@ -1,4 +1,3 @@
-import type { VersionBumpOptions } from "bumpp";
 import type { BuildOptions } from "esbuild";
 import type { Manifest } from "./manifest.js";
 import type { UpdateJSON } from "./update-json.js";
@@ -292,24 +291,66 @@ export interface ReleaseConfig {
   /**
    * Config of bumpp
    */
-  bumpp: Pick<
-    VersionBumpOptions,
-    "release"
-    | "confirm"
-    | "preid"
-    | "execute"
-    | "commit"
-    | "all"
-    | "noVerify"
-    | "tag"
-  >;
+  bumpp: {
+    /**
+     * The release version or type. Can be one of the following:
+     *
+     * - A release type (e.g. "major", "minor", "patch", "prerelease", etc.)
+     * - "prompt" to prompt the user for the version number
+     *
+     * @default "prompt".
+     */
+    release: string;
+    /**
+     * The prerelease type (e.g. "alpha", "beta", "next").
+     *
+     * @default "beta".
+     */
+    preid: string;
+    /**
+     * The commit message.
+     *
+     * Any `%s` placeholders in the message string will be replaced with the new version number.
+     * If the message string does _not_ contain any `%s` placeholders,
+     * then the new version number will be appended to the message.
+     *
+     * @default "chore(publish): release %s"
+     */
+    commit: string;
+    /**
+     * The tag template.
+     *
+     * Any `%s` placeholders in the tag string will be replaced with the new version number.
+     * If the tag string does _not_ contain any `%s` placeholders,
+     * then the new version number will be appended to the tag.
+     *
+     * @default "v%s"
+     */
+    tag: string;
+    /**
+     * Prompt for confirmation
+     *
+     * @default true
+     */
+    confirm?: boolean;
+    /**
+     * Indicates whether to bypass git commit hooks (`git commit --no-verify`).
+     *
+     * Defaults to `false`.
+     */
+    noVerify?: boolean;
+    /**
+     * Excute additional command after bumping and before commiting
+     */
+    execute?: string;
+  };
 
   /**
    * Changelog
    *
-   * @default "git log"
+   * @default "git log {{previousTag}}..{{currentTag}}"
    */
-  changelog: string;
+  changelog: string | ((ctx: Context) => string);
 
   /**
    * Release to GitHub
