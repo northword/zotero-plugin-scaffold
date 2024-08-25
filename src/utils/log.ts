@@ -55,7 +55,9 @@ export class Log {
   }
 
   error(...args: any[]) {
+    this.newLine();
     this.logArgs(LOG_LEVEL.error, chalk.bgRed(" ERROR "), ...args);
+    this.newLine();
   }
 
   warn(...args: any[]) {

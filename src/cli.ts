@@ -75,8 +75,6 @@ export default async function main() {
 }
 
 main().catch((err) => {
-  logger.newLine();
   logger.error(err);
-  logger.newLine();
   exit(1);
 });
