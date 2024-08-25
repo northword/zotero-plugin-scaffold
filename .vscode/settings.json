@@ -45,5 +45,10 @@
     "scss",
     "pcss",
     "postcss"
-  ]
+  ],
+
+  // markdownlint
+  "markdownlint.config": {
+    "no-inline-html": false
+  }
 }

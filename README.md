@@ -1,14 +1,23 @@
 # Zotero Plugin Development Scaffold
 
-Working in progress.
+[![NPM Version](https://img.shields.io/npm/v/zotero-plugin-scaffold)](https://www.npmjs.com/package/zotero-plugin-scaffold)
+[![NPM Downloads](https://img.shields.io/npm/dm/zotero-plugin-scaffold)](https://www.npmjs.com/package/zotero-plugin-scaffold)
+![NPM Unpacked Size](https://img.shields.io/npm/unpacked-size/zotero-plugin-scaffold)
+![GitHub License](https://img.shields.io/github/license/northword/zotero-plugin-scaffold)
 
-Create a standalone npm package for scripts in the zotero-plugin-template repository, so that downstream developers can follow along.
+This is an npm package designed to assist in the development of Zotero plugins. It provides features such as compiling plugins, starting Zotero and installing plugins from source code, reloading plugins when the source code changes, and releasing plugins, and so on.
 
-This repository serves only as a proof-of-concept for the above.
+Initially, the code of this package was part of the [zotero-plugin-template](https://github.com/windingwind/zotero-plugin-template) repository. To allow downstream developers to easily stay up-to-date, we have abstracted these scripts into a standalone npm package.
+
+This project is under active development, and some APIs may change. However, it is ready for production and has been [used in several projects](https://github.com/northword/zotero-plugin-scaffold/network/dependents).
+
+For best practices regarding this package, please refer to [zotero-plugin-template](https://github.com/windingwind/zotero-plugin-template).
 
 ## Using in a blank project
 
-> WIP: Not yet implemented
+<details>
+
+<summary>WIP: Not yet implemented</summary>
 
 ```bash
 # npm
@@ -16,6 +25,8 @@ npx zotero-plugin create
 # pnpm
 pnpm dlx zotero-plugin create
 ```
+
+</details>
 
 ## Using in an existing project
 
@@ -49,28 +60,25 @@ pnpm link ../zotero-plugin-scaffold
 
 ### 02. Create a config file
 
-The configuration file needs to be stored in the following location. If the configuration file is not found, an error will be thrown.
+The configuration file needs to be stored in the following location.
 
 ```bash
 zotero-plugin.config.ts  # also avaliable in *.js  *.mjs  *.cjs  *.ts
 ```
 
-You can import `defineConfig` in js module to get type hints. If no value is specified for an optional property, the default value will be used.
+You can import helper `defineConfig` to get type hints. If no value is specified for an optional property, the default value will be used.
 
 ```ts
 import { defineConfig } from "zotero-plugin-scaffold";
 
 export default defineConfig({
-  name: pkg.config.addonName,
-  id: pkg.config.addonID,
-  namespace: pkg.config.addonRef,
+  name: "the plugin name",
+  id: "the plugin id",
+  namespace: "the plugin namespace",
   build: {
     esbuildOptions: [
       {
         entryPoints: ["src/index.ts"],
-        define: {
-          __env__: `"${process.env.NODE_ENV}"`,
-        },
         bundle: true,
         target: "firefox115",
       },
@@ -93,8 +101,7 @@ NOTE: Do not check-in this file to the repository!
 
 ```ini
 # The path of the Zotero binary file.
-# The path delimiter should be escaped as `\\` for win32.
-# The path is `*/Zotero.app/Contents/MacOS/zotero` for MacOS.
+# The path is `*/Zotero.app/Contents/MacOS/zotero` for macOS.
 ZOTERO_PLUGIN_ZOTERO_BIN_PATH = /path/to/zotero.exe
 
 # The path of the profile used for development.
@@ -144,13 +151,14 @@ cd zotero-plugin-scaffold/
 pnpm install
 
 # Development Mode
-# This command creates a js runtime using jiti, and the modified code does not need to be built again.
+# This command creates a typescript runtime using jiti,
+# and the modified code does not need to be built again.
 pnpm run dev
 
 # Build
 pnpm run build
 
-# Lint and Prettier
+# ES Lint
 pnpm run lint:fix
 ```
 
