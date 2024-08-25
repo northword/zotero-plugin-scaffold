@@ -118,26 +118,35 @@ export default class Release extends Base {
     if (currentTagIndex === -1)
       throw new Error(`Tag "${currentTag}" not found.`);
 
+    let previousTagIndex = currentTagIndex - 1;
+    let previousTag: string | false;
+
     if (currentTagIndex === 0) {
       // If the current tag is the first tag, get all logs before this one
-      return execSync(`git log ${currentTag} --pretty=format:"* %s (%h)"`).toString().trim();
+      previousTag = false;
+    }
+    // Otherwise, get log between this tag and previous one
+    else if (currentTag.includes("-")) {
+      // If current tag is pre-release, previous one should be any (include prerelease and official)
+      previousTag = tags[previousTagIndex];
     }
     else {
-      // Otherwise, get log between this tag and previous official (not pre-release) one
+      // If current tag is official release, previous one should be official too
       // Find the last non-pre-release tag
-      let previousTagIndex = currentTagIndex - 1;
       while (previousTagIndex >= 0 && tags[previousTagIndex].includes("-")) {
         previousTagIndex--;
       }
-
-      if (previousTagIndex < 0) {
+      if (previousTagIndex < 0)
         // If no previous official release is found, get all logs up to the currentTag
-        return execSync(`git log ${currentTag} --pretty=format:"* %s (%h)"`).toString().trim();
-      }
-
-      const previousTag = tags[previousTagIndex];
-      return execSync(`git log ${previousTag}..${currentTag} --pretty=format:"* %s (%h)"`).toString().trim();
+        previousTag = false;
+      else
+        previousTag = tags[previousTagIndex];
     }
+
+    if (previousTag)
+      return execSync(`git log --pretty=format:"* %s (%h)" ${previousTag}..${currentTag}`).toString().trim();
+    else
+      return execSync(`git log --pretty=format:"* %s (%h)" ${currentTag}`).toString().trim();
   }
 
   getFilteredChangelog(rawLog: string, commitMessage: string) {
@@ -170,7 +179,7 @@ export default class Release extends Base {
       const resolvedCommitMessage = this.ctx.release.bumpp.commit;
       changelog = this.getFilteredChangelog(rawLog, resolvedCommitMessage);
     }
-    this.logger.debug(`Got changelog:\n`, changelog, "\n");
+    this.logger.debug(`Got changelog:\n${changelog}\n`);
     return changelog;
   }
 
