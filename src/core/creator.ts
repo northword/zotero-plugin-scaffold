@@ -1,11 +1,13 @@
 // npx 创建模板
 import { input } from "@inquirer/prompts";
-import { Base } from "./base.js";
+import { Log } from "../utils/log.js";
 
-export default class Create extends Base {
+const logger = new Log();
+
+export default class Create {
   async run() {
     const answers = await this.prompting();
-    this.logger.debug(answers);
+    logger.debug(answers);
   }
 
   async prompting() {
