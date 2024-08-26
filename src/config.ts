@@ -145,11 +145,12 @@ const defaultConfig = {
   release: {
     bumpp: {
       release: "prompt",
-      confirm: true,
       preid: "beta",
-      // execute: "npm run build",
+      confirm: true,
+      execute: "",
       all: false,
       commit: "chore(publish): release v%s",
+      noVerify: false,
       tag: "v%s",
     },
     changelog: "",

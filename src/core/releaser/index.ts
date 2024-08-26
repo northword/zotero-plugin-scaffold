@@ -42,8 +42,8 @@ export default class Release extends Base {
     const isGiteeEnabled = this.isEnabled(release.gitee.enable);
     const isPublishNeeded = isGitHubEnabled || isGiteeEnabled;
 
-    if (isBumpNeeded && isPublishNeeded && !!release.bumpp.execute) {
-      this.logger.warn("The current release needs to run the build after bumping the version number, please configure the build script in config.release.bumpp.execute.");
+    if (isPublishNeeded && !release.bumpp.execute) {
+      this.logger.warn(`The current release needs to run the build after bumping the version number, please configure the build script in 'config.release.bumpp.execute'${isBumpNeeded ? "" : " or run build before run release"}.`);
       this.ctx.release.bumpp.execute ||= "npm run build";
     }
 
