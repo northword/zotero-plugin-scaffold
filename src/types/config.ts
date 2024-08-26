@@ -32,74 +32,103 @@ export interface Config {
   dist: string;
 
   /**
-   * The name of plugin
+   * The name of plugin.
    *
-   * 插件名
+   * 插件名。
    *
    * @default package-json.name
    *
    */
   name: string;
   /**
-   * The ID of plugin
+   * The ID of plugin.
    *
-   * 插件 ID
+   * Usually in the form of an email address or UUID.
+   *
+   * 插件 ID。
+   *
+   * 通常是邮箱地址或UUID的形式。
    *
    * @default package-json.name
    */
   id: string;
   /**
-   * namespace of plugin
+   * namespace of plugin.
    *
-   * 插件命名空间
+   * This attribute is also used to prevent plugin conflicts,
+   * it may be used for plugin HTML element ids, preference prefixes,
+   * fluent filename prefixes, fluent message prefixes, etc.
+   *
+   * Unlike the plugin id, this value should be HTML ID and Fluent Message compliant,
+   * i.e.: contain at least one character and only letters and dashes.
+   *
+   * 插件命名空间。
+   *
+   * 这个属性也用于防止插件冲突，它可能被用于插件的 HTML 元素 id，
+   * 首选项前缀，Fluent 文件名前缀、Fluent message 前缀等。
+   *
+   * 与插件 ID 不同的是，这个值应是符合 HTML ID 和 Fluent Message 规范的，
+   * 即：至少包含一个字符，仅包含字母和短横线。
    *
    * @default kebabCase(name)
    */
   namespace: string;
 
   /**
-   * XPI filename
+   * XPI filename.
+   *
+   * XPI 文件名。
    *
    * @default kebabCase(name)
    */
   xpiName: string;
-
   /**
-   * XPI 文件的地址
+   * The download link of XPI.
+   *
+   * XPI 文件的地址。
    *
    * @default `https://github.com/{{owner}}/{{repo}}/release/download/v{{version}}/{{xpiName}}.xpi`
    */
   xpiDownloadLink: string;
   /**
-   * update.json 文件的地址
+   * The uri of update.json.
+   *
+   * update.json 文件的地址。
    *
    * @default `https://github.com/{{owner}}/{{repo}}/release/download/release/update.json`
    */
   updateURL: string;
 
   /**
-   * 构建所需的配置
+   * Configurations required to run the build.
+   *
+   * 构建所需的配置。
    */
   build: BuildConfig;
 
   /**
-   * serve 所需的配置
+   * Configurations required to run the server.
+   *
+   * serve 所需的配置。
    */
   server: ServerConfig;
 
   /**
-   * @todo Use addonLint package to lint XPI
+   * @todo Use addonLint package to lint XPI.
    */
   addonLint: object;
 
   /**
-   * 发布相关配置
+   * Configurations required to run the release.
    *
+   * 发布相关配置。
    */
   release: ReleaseConfig;
 
   /**
-   * Log level
+   * Level of the log.
+   *
+   * 日志等级。
    *
    * @default "info"
    */
@@ -108,7 +137,11 @@ export interface Config {
 
 export interface BuildConfig {
   /**
-   * glob list of static assets
+   * The static assets.
+   *
+   * - Typically includes icons, ftl files, 3rd party JavaScript files, CSS files, XHTML files, etc.
+   * - is an array of `glob` modes and supports negation modes.
+   * - Do not add an entire directory unless it has no files to exclude.
    *
    * 静态资源文件。
    *
@@ -124,7 +157,10 @@ export interface BuildConfig {
    */
   assets: string | string[];
   /**
-   * placeholders to replace in static assets
+   * The placeholders to replace in static assets.
+   *
+   * - At build time, scaffolding uses the key of the placeholder to build the regular pattern `/__${key}__/g` and replaces matches with `value`.
+   * - Replacement happens for all files under `assets`.
    *
    * 静态资源文本占位符。
    *
@@ -134,48 +170,55 @@ export interface BuildConfig {
   define: {
     [key: string]: string;
   };
-
   fluent: {
     /**
-     * 为所有 FTL 文件添加插件前缀以避免冲突
+     * Add plugin namespace prefixes to all FTL files to avoid conflicts.
      *
-     * 默认前缀为 `${namespace}-`
+     * The default prefix is `${namespace}-`.
+     *
+     * 为所有 FTL 文件添加插件前缀以避免冲突。
+     *
+     * 默认前缀为 `${namespace}-`。
      *
      * @default true
      */
     prefixLocaleFiles: boolean;
     /**
-     * 为所有 FTL message 添加插件前缀以避免冲突
+     * Add plugin namespace prefixes to all FTL messages to avoid conflicts.
      *
-     * 默认前缀为 `${namespace}-`
+     * The default prefix is `${namespace}-`.
+     *
+     * 为所有 FTL message 添加插件前缀以避免冲突。
+     *
+     * 默认前缀为 `${namespace}-`。
      *
      * @default true
      */
     prefixFluentMessages: boolean;
   };
   /**
-   * The config of esbuild
+   * Configurations of esbuild.
    *
-   * esbuild 配置
+   * esbuild 配置。
    *
    * @default []
    *
    */
   esbuildOptions: BuildOptions[];
   /**
-   * Make manifest.json
+   * Make manifest.json.
    *
    */
   makeManifest: {
     /**
      * 是否自动管理 manifest.json。
-     * 如果此项为 false，则开发者应自行准备 manifest.json
+     * 如果此项为 false，则开发者应自行准备 manifest.json。
      *
      * @default true
      */
     enable: boolean;
     /**
-     * template of manifest
+     * template of manifest.
      *
      * @deprecated
      *
@@ -205,31 +248,37 @@ export interface BuildConfig {
     template: Manifest;
   };
   /**
-   * Make update manifest
+   * Make update manifest.
    *
-   * 生成 `update.json`
+   * 生成 `update.json`。
    *
    */
   makeUpdateJson: {
     /**
-     * Enable make update.json
+     * Historical update data.
      *
-     * @default true
-     */
-    enable: boolean | "only-production";
-    /**
-     * 已有的更新数据
+     * This can be useful if you need to distribute different plugin versions
+     * for different versions of Zotero.
+     *
+     * 已有的更新数据。
+     *
+     * 如果你需要为不同版本的 Zotero 分发不同的插件版本，这可能会很有用。
+     *
+     * @see {@link https://www.zotero.org/support/dev/zotero_7_for_developers#updaterdf_updatesjson | Zotero 7 for developers}
+     * @see {@link https://extensionworkshop.com/documentation/manage/updating-your-extension/ | Updating your extension}
+     * @see {@link https://zotero-chinese.com/plugin-dev-guide/reference/update | 更新清单 (In chinese)}
      *
      * @default []
      */
     updates: UpdateJSON["addons"][string]["updates"];
     /**
-     * 是否向 update.json 中写入 xpi 文件的 hash
+     * Whether or not to write the hash of the xpi file to update.json.
+     *
+     * 是否向 update.json 中写入 xpi 文件的 hash。
      *
      * @default true
      */
     hash: boolean;
-    // tagName: "release" | "updater" | string;
   };
   /**
    * The lifecycle hooks.
@@ -252,18 +301,24 @@ interface BuildHooks {
 
 export interface ServerConfig {
   /**
-   * Open devtool on Zotero start
+   * Open devtool on Zotero start.
+   *
+   * 在 Zotero 启动时打开 devtool。
    *
    * @default true
    */
   devtools: boolean;
   /**
-   * 启动 Zotero 时附加的命令行参数
+   * Additional command line arguments when starting Zotero.
+   *
+   * 启动 Zotero 时附加的命令行参数。
    *
    * @default []
    */
   startArgs: string[];
   /**
+   * Install the plugin as a Proxy File mode.
+   *
    * 以 Proxy File 方式载入插件
    *
    * @default false
@@ -286,7 +341,9 @@ interface ServeHooks {
 
 export interface ReleaseConfig {
   /**
-   * Config of bumpp
+   * Configurations of bumpp
+   *
+   * bumpp 包的部分配置。
    */
   bumpp: {
     /**
@@ -295,13 +352,27 @@ export interface ReleaseConfig {
      * - A release type (e.g. "major", "minor", "patch", "prerelease", etc.)
      * - "prompt" to prompt the user for the version number
      *
-     * @default "prompt".
+     * In general, it is recommended to set this to “prompt”.
+     * If you need a command that always releases a certain type,
+     * you can override this option on the command line.
+     *
+     * 发布的类型，可以是以下其中之一：
+     *
+     * - 版本类型（如 “major”、“minor”、“patch”、“prerelease”等）
+     * - “prompt” 以选择版本号
+     *
+     * 通常来说，建议将此项设置为“prompt”。
+     * 如果需要一个始终发布某类型的命令，可以在命令行中覆盖该选项。
+     *
+     * @default "prompt"
      */
     release: string;
     /**
      * The prerelease type (e.g. "alpha", "beta", "next").
      *
-     * @default "beta".
+     * 预发布的类型，如 alpha，beta，next 等。
+     *
+     * @default "beta"
      */
     preid: string;
     /**
@@ -310,6 +381,11 @@ export interface ReleaseConfig {
      * Any `%s` placeholders in the message string will be replaced with the new version number.
      * If the message string does _not_ contain any `%s` placeholders,
      * then the new version number will be appended to the message.
+     *
+     * 提交说明模板。
+     *
+     * 模板中的 `%s` 占位符将被替换为新版本号。
+     * 如果模板中不包含任何 `%s` 占位符，则新版本号将附加到模板末端。
      *
      * @default "chore(publish): release %s"
      */
@@ -321,6 +397,11 @@ export interface ReleaseConfig {
      * If the tag string does _not_ contain any `%s` placeholders,
      * then the new version number will be appended to the tag.
      *
+     * 标签模板。
+     *
+     * 模板中的 `%s` 占位符将被替换为新版本号。
+     * 如果模板中不包含任何 `%s` 占位符，则新版本号将附加到模板末端。
+     *
      * @default "v%s"
      */
     tag: string;
@@ -328,40 +409,58 @@ export interface ReleaseConfig {
      * Indicates whether the git commit should include ALL files (`git commit --all`)
      * rather than just the files that were modified by `versionBump()`.
      *
-     * Defaults to `false`.
+     * 表示 git 提交是否应包括所有文件（`git commit --all`)，
+     * 而不是只包含被 `versionBump()` 修改过的文件。
+     *
+     * @default false
+     *
      */
-    all?: boolean;
+    all: boolean;
     /**
-     * Prompt for confirmation
+     * Prompt for confirmation.
+     *
+     * 选择版本号后是否要求二次确认。
      *
      * @default true
      */
-    confirm?: boolean;
+    confirm: boolean;
     /**
      * Indicates whether to bypass git commit hooks (`git commit --no-verify`).
      *
-     * Defaults to `false`.
+     * 表示是否绕过 git commit hooks（`git commit --no-verify` ）。
+     *
+     * @default false
      */
-    noVerify?: boolean;
+    noVerify: boolean;
     /**
-     * Excute additional command after bumping and before commiting
+     * Excute additional command after bumping and before commiting.
+     *
+     * 在提升版本号之后，提交之前运行的额外命令。
+     *
+     * @default "npm run build"
+     *
      */
-    execute?: string;
+    execute: string;
   };
 
   /**
-   * Changelog
+   * Changelog.
+   *
+   * If a string is provided, it must be command line
+   * and with changelog output to stdout.
+   *
+   * 如果提供了字符串，则必须为命令行，且变更日志输出到stdout
    *
    * @default "git log {{previousTag}}..{{currentTag}}"
    */
   changelog: string | ((ctx: Context) => string);
 
   /**
-   * Release to GitHub
+   * Release to GitHub.
    */
   github: {
     /**
-     * Enable release to GitHub
+     * Enable release to GitHub.
      *
      * Include uploading XPI asset to GitHub release and all following steps.
      *
@@ -374,13 +473,19 @@ export interface ReleaseConfig {
      */
     enable: "ci" | "local" | "always" | "false";
     /**
-     * Upload update.json to release
+     * Upload update.json to release.
+     *
+     * This is the tagName of the release when the value is a string.
+     *
+     * 将 update.json 上传到指定的 GitHub release。
+     *
+     * 当值为字符串时，其为 release 的tagName。
      *
      * @default "release"
      */
     updater: string | false;
     /**
-     * Comment to issues and prs inlcuded in release
+     * Comment to issues and prs inlcuded in release.
      *
      * @todo Not implemented yet
      *

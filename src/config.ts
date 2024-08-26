@@ -129,7 +129,6 @@ const defaultConfig = {
       },
     },
     makeUpdateJson: {
-      enable: true,
       updates: [],
       hash: true,
     },
