@@ -21,8 +21,8 @@ export default async function main() {
 
   cli
     .command("build")
-    .description("Build the plugin.")
-    .option("--dev", "Builds the plugin in dev mode.")
+    .description("Build the plugin")
+    .option("--dev", "Builds the plugin in dev mode")
     .option("--dist <dir>", "The relative path for the new output directory (default: build)")
     .action(async (options: any) => {
       env.NODE_ENV = options.dev ? "development" : "production";
@@ -34,7 +34,7 @@ export default async function main() {
 
   cli
     .command("serve")
-    .description("Start development server.")
+    .description("Start development server")
     // .option(
     //   "--skip-build",
     //   "skip building website before deploy it (default: false)",
@@ -50,7 +50,7 @@ export default async function main() {
 
   cli
     .command("create")
-    .description("Create the plugin template.")
+    .description("Create the plugin template")
     .action((_options: any) => {
       logger.error("The create not yet implemented");
       // new Create().run();
@@ -58,16 +58,27 @@ export default async function main() {
 
   cli
     .command("release")
-    .description("Release.")
-    .action(async (_options: any) => {
+    .description("Release the plugin")
+    .option("-v, --version <version>", "Target version: major, minor, patch, prerelease, or specify version")
+    .option("--preid <preid>", "ID for prerelease")
+    .option("-y, --yes", "Skip confirmation")
+    .action(async (options) => {
       env.NODE_ENV = "production";
-      const config = await Config.loadConfig({});
+      const config = await Config.loadConfig({
+        release: {
+          bumpp: {
+            release: options.version,
+            preid: options.preid,
+            confirm: !options.yes,
+          },
+        },
+      });
       new Release(config).run();
     });
 
   cli.arguments("<command>").action((cmd) => {
     cli.outputHelp();
-    logger.error(`Unknown command name=${cmd}.`);
+    logger.error(`Unknown command name "${cmd}".`);
   });
 
   cli.parse();
