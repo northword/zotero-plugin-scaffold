@@ -1,13 +1,18 @@
 #!/usr/bin/env node
 
 import { env, exit } from "node:process";
-import { Command } from "commander";
+import { Command } from "@commander-js/extra-typings";
 import updateNotifier from "update-notifier";
 import { name, version } from "../package.json";
 import { Log } from "./utils/log.js";
 import { Build, Config, Release, Serve } from "./index.js";
 
 const logger = new Log();
+// let globalOpts: {
+//   configCwd?: string;
+// } = {
+//   configCwd: cwd(),
+// };
 
 export default async function main() {
   updateNotifier({ pkg: { name, version } }).notify();
@@ -17,23 +22,27 @@ export default async function main() {
   env.NODE_ENV ??= "development";
 
   const cli = new Command();
-  cli.version(version).usage("<command> [options]");
+
+  cli
+    .version(version)
+    .usage("<command> [options]");
+  // .option("--config-cwd <config>", "The cwd for search configuration file");
 
   cli
     .command("build")
     .description("Build the plugin")
     .option("--dev", "Builds the plugin in dev mode")
     .option("--dist <dir>", "The relative path for the new output directory (default: build)")
-    .action(async (options: any) => {
+    .action((options) => {
       env.NODE_ENV = options.dev ? "development" : "production";
-      const config = await Config.loadConfig({
+      Config.loadConfig({
         dist: options.dist,
-      });
-      new Build(config).run();
+      }).then(ctx => new Build(ctx).run());
     });
 
   cli
     .command("serve")
+    .alias("dev")
     .description("Start development server")
     // .option(
     //   "--skip-build",
@@ -43,9 +52,8 @@ export default async function main() {
     //   "--only-start",
     //   "skip building website before deploy it (default: false)",
     // )
-    .action(async (_options: any) => {
-      const config = await Config.loadConfig({});
-      new Serve(config).run();
+    .action((_options) => {
+      Config.loadConfig({}).then(ctx => new Serve(ctx).run());
     });
 
   cli
@@ -59,21 +67,20 @@ export default async function main() {
   cli
     .command("release")
     .description("Release the plugin")
-    .option("-v, --version <version>", "Target version: major, minor, patch, prerelease, or specify version")
+    .argument("[version]", "Target version: major, minor, patch, pre*, or specify version")
     .option("--preid <preid>", "ID for prerelease")
     .option("-y, --yes", "Skip confirmation")
-    .action(async (options) => {
+    .action(async (version, options) => {
       env.NODE_ENV = "production";
-      const config = await Config.loadConfig({
+      Config.loadConfig({
         release: {
           bumpp: {
-            release: options.version,
+            release: version,
             preid: options.preid,
             confirm: !options.yes,
           },
         },
-      });
-      new Release(config).run();
+      }).then(ctx => new Release(ctx).run());
     });
 
   cli.arguments("<command>").action((cmd) => {
@@ -82,6 +89,7 @@ export default async function main() {
   });
 
   cli.parse();
+  // globalOpts = cli.optsWithGlobals();
 }
 
 main().catch((err) => {
