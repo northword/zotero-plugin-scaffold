@@ -21,9 +21,7 @@ export default class Serve extends Base {
   async run() {
     // Handle interrupt signal (Ctrl+C) to gracefully terminate Zotero process
     // Must be placed at the top to prioritize registration of events to prevent web-ext interference
-    process.on("SIGINT", () => {
-      this.exit();
-    });
+    process.on("SIGINT", this.exit);
 
     await this.ctx.hooks.callHook("serve:init", this.ctx);
 
@@ -98,7 +96,8 @@ export default class Serve extends Base {
     await this.ctx.hooks.callHook("serve:onReloaded", this.ctx);
   }
 
-  exit() {
+  // Use arrow functions to keep `this`
+  exit = () => {
     this.logger.info("Server shutdown by user request.");
     this.runner?.exit();
     // Sometimes `runner.exit()` cannot kill the Zotero,
@@ -106,5 +105,5 @@ export default class Serve extends Base {
     killZotero();
     this.ctx.hooks.callHook("serve:exit", this.ctx);
     process.exit();
-  }
+  };
 }
