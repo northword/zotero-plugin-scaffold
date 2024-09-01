@@ -9,6 +9,7 @@ permissions:
   contents: write
   issues: write
   pull-requests: write
+  id-token: write
 
 jobs:
   release:
@@ -45,6 +46,8 @@ jobs:
           pnpm publish --no-git-checks
           pnpx changelogithub
           # sleep 1s
+        env: 
+          NPM_CONFIG_PROVENANCE: true
 
       # - name: Notify release
       #   uses: apexskier/github-release-commenter@v1
