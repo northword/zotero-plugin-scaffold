@@ -21,10 +21,10 @@ export abstract class ReleaseBase extends Base {
   }
 
   get owner(): string {
-    return this.ctx.templateDate.owner;
+    return this.ctx.templateData.owner;
   }
 
   get repo(): string {
-    return this.ctx.templateDate.repo;
+    return this.ctx.templateData.repo;
   }
 }

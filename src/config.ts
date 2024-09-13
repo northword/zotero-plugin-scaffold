@@ -49,7 +49,7 @@ function resolveConfig(config: Config): Context {
 
   // Parse template strings in config
   const isPreRelease = version.includes("-");
-  const templateDate = {
+  const templateData = {
     owner,
     repo,
     version,
@@ -58,9 +58,9 @@ function resolveConfig(config: Config): Context {
     xpiName: config.xpiName,
     buildTime: dateFormat("YYYY-mm-dd HH:MM:SS", new Date()),
   };
-  config.updateURL = template(config.updateURL, templateDate);
-  config.xpiDownloadLink = template(config.xpiDownloadLink, templateDate);
-  config.build.define = mapValues(config.build.define, v => template(v, templateDate));
+  config.updateURL = template(config.updateURL, templateData);
+  config.xpiDownloadLink = template(config.xpiDownloadLink, templateData);
+  config.build.define = mapValues(config.build.define, v => template(v, templateData));
 
   const hooks = createHooks<Hooks>();
   hooks.addHooks(config.build.hooks);
@@ -73,7 +73,7 @@ function resolveConfig(config: Config): Context {
     version,
     hooks,
     logger,
-    templateDate,
+    templateData,
   };
 
   return ctx;

@@ -19,7 +19,7 @@ interface Context extends Config {
   version: string;
   hooks: Hookable<Hooks>;
   logger: InstanceType<typeof Log>;
-  templateDate: { [placeholder: string]: string };
+  templateData: { [placeholder: string]: string };
 }
 
 export { UserConfig, OverrideConfig, Config, Context, Hooks };
