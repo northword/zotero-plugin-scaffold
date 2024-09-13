@@ -2,9 +2,9 @@ import { execSync } from "node:child_process";
 import { isCI } from "std-env";
 // @ts-expect-error no types
 import conventionalChangelog from "conventional-changelog";
+import { escapeRegExp } from "es-toolkit";
 import type { Context } from "../../types/index.js";
 import { Base } from "../base.js";
-import { escapeRegExp } from "../../utils/string.js";
 import Bump from "./bump.js";
 import GitHub from "./github.js";
 import Gitee from "./gitee.js";
