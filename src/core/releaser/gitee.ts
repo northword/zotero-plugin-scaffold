@@ -10,9 +10,9 @@ export default class Gitee extends ReleaseBase {
 
   async run() {
     OpenAPI.TOKEN = env.GITEE_TOKEN;
-
     if (!OpenAPI.TOKEN)
       throw new Error("No GITEE_TOKEN provided!");
+
     this.checkFiles();
 
     this.logger.info("Uploading XPI to Gitee...");
@@ -105,14 +105,14 @@ export default class Gitee extends ReleaseBase {
             attachFileId: asset.id!,
           })
           // "eat" all exceptions
-          .catch(console.error);
+          .catch(e => this.logger.error(e));
       }
     }
     this.client.postV5ReposOwnerRepoReleasesReleaseIdAttachFiles({
       owner: this.owner,
       repo: this.repo,
       releaseId,
-      file: new Blob([fileBuffer], { type: "application/octet-stream" }),
+      file: new File([fileBuffer], basename(file), { type: "application/octet-stream" }),
     });
   }
 }
