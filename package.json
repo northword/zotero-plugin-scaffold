@@ -61,8 +61,8 @@
     "doc": "docs"
   },
   "dependencies": {
-    "@gitee/typescript-sdk-v5": "^5.4.85",
     "@commander-js/extra-typings": "^12.1.0",
+    "@gitee/typescript-sdk-v5": "^5.4.85",
     "@inquirer/prompts": "^5.5.0",
     "bumpp": "^9.5.2",
     "c12": "^1.11.2",
