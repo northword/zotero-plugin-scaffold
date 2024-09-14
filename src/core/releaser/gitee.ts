@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import { basename, join } from "node:path";
 import { env } from "node:process";
-import { globbySync } from "globby";
 import { OpenAPI, RepositoriesService } from "@gitee/typescript-sdk-v5";
+import { globbySync } from "globby";
 import { ReleaseBase } from "./base.js";
 
 export default class Gitee extends ReleaseBase {
