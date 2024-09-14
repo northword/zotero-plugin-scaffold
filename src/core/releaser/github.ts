@@ -1,10 +1,10 @@
+import type { Context } from "../../types/index.js";
 import { basename, join } from "node:path";
 import { env } from "node:process";
-import { globbySync } from "globby";
 import fs from "fs-extra";
+import { globbySync } from "globby";
 import mime from "mime";
 import { Octokit } from "octokit";
-import type { Context } from "../../types/index.js";
 import { ReleaseBase } from "./base.js";
 
 export default class GitHub extends ReleaseBase {
@@ -36,8 +36,7 @@ export default class GitHub extends ReleaseBase {
       owner: this.owner,
       repo: this.repo,
       tag_name: this.ctx.release.bumpp
-        .tag!.toString()
-        .replaceAll("%s", version),
+        .tag!.toString().replaceAll("%s", version),
       name: `Release v${version}`,
       body: await this.getChangelog(),
       prerelease: version.includes("-"),

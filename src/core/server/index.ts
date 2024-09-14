@@ -1,13 +1,13 @@
+import type { Context } from "../../types/index.js";
+import type { ServeBase } from "./base.js";
 import process from "node:process";
 import chokidar from "chokidar";
 import { debounce } from "es-toolkit";
-import type { Context } from "../../types/index.js";
 import { Base } from "../base.js";
 import Build from "../builder.js";
-import type { ServeBase } from "./base.js";
+import { killZotero } from "./kill-zotero.js";
 import RunnerProxy from "./runner-proxy.js";
 import RunnerWebExt from "./runner-web-ext.js";
-import { killZotero } from "./kill-zotero.js";
 
 export default class Serve extends Base {
   private builder: Build;

@@ -1,7 +1,7 @@
 import type { BuildOptions } from "esbuild";
+import type { Context } from "./index.js";
 import type { Manifest } from "./manifest.js";
 import type { UpdateJSON } from "./update-json.js";
-import type { Context } from "./index.js";
 
 export interface Config {
   /**

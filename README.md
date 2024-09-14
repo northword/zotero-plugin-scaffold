@@ -4,6 +4,7 @@
 [![NPM Downloads](https://img.shields.io/npm/dm/zotero-plugin-scaffold)](https://www.npmjs.com/package/zotero-plugin-scaffold)
 ![NPM Unpacked Size](https://img.shields.io/npm/unpacked-size/zotero-plugin-scaffold)
 ![GitHub License](https://img.shields.io/github/license/northword/zotero-plugin-scaffold)
+[![code style](https://antfu.me/badge-code-style.svg)](https://github.com/antfu/eslint-config)
 
 This is an npm package designed to assist in the development of Zotero plugins. It provides features such as compiling plugins, starting Zotero and installing plugins from source code, reloading plugins when the source code changes, and releasing plugins, and so on.
 

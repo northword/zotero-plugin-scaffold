@@ -1,9 +1,9 @@
-import readline from "node:readline";
-import process from "node:process";
-import chalk from "chalk";
-import { isCI, isDebug } from "std-env";
-import { isPlainObject } from "es-toolkit";
 import type { Config, Context } from "../types/index.js";
+import process from "node:process";
+import readline from "node:readline";
+import chalk from "chalk";
+import { isPlainObject } from "es-toolkit";
+import { isCI, isDebug } from "std-env";
 
 /**
  * Log level

@@ -1,18 +1,18 @@
-import path from "node:path";
-import { env } from "node:process";
-import chalk from "chalk";
-import { build as buildAsync } from "esbuild";
-import { globbySync } from "globby";
-import fs from "fs-extra";
-import { toMerged } from "es-toolkit";
-import { replaceInFileSync } from "replace-in-file";
-import webext from "web-ext";
 import type { Context } from "../types/index.js";
 import type { Manifest } from "../types/manifest.js";
 import type { UpdateJSON } from "../types/update-json.js";
+import path from "node:path";
+import { env } from "node:process";
+import chalk from "chalk";
+import { toMerged } from "es-toolkit";
+import { build as buildAsync } from "esbuild";
+import fs from "fs-extra";
+import { globbySync } from "globby";
+import { replaceInFileSync } from "replace-in-file";
+import webext from "web-ext";
 import { generateHashSync } from "../utils/crypto.js";
-import { dateFormat, toArray } from "../utils/string.js";
 import { patchWebExtLogger } from "../utils/log.js";
+import { dateFormat, toArray } from "../utils/string.js";
 import { Base } from "./base.js";
 
 export default class Build extends Base {

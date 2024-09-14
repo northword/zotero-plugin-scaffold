@@ -1,8 +1,8 @@
+import type { WebExtRunInstance } from "web-ext";
+import type { Context } from "../../types/index.js";
 import { resolve } from "node:path";
 import { env } from "node:process";
-import type { WebExtRunInstance } from "web-ext";
 import webext from "web-ext";
-import type { Context } from "../../types/index.js";
 import { patchWebExtLogger } from "../../utils/log.js";
 import { ServeBase } from "./base.js";
 

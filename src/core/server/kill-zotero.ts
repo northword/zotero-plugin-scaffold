@@ -1,8 +1,8 @@
 import { execSync } from "node:child_process";
 import { env } from "node:process";
 import { isLinux, isMacOS, isWindows } from "std-env";
-import { isRunning } from "../../utils/process.js";
 import { Log } from "../../utils/log.js";
+import { isRunning } from "../../utils/process.js";
 
 export function killZotero() {
   const logger = new Log();

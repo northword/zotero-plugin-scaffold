@@ -22,4 +22,4 @@ interface Context extends Config {
   templateData: { [placeholder: string]: string };
 }
 
-export { UserConfig, OverrideConfig, Config, Context, Hooks };
+export { Config, Context, Hooks, OverrideConfig, UserConfig };

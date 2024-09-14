@@ -1,8 +1,8 @@
 import type { ChildProcess } from "node:child_process";
+import type { Context } from "../../types/index.js";
 import { execSync, spawn } from "node:child_process";
 import { join, resolve } from "node:path";
 import fs from "fs-extra";
-import type { Context } from "../../types/index.js";
 import { ServeBase } from "./base.js";
 
 export default class RunnerProxy extends ServeBase {
@@ -58,9 +58,9 @@ export default class RunnerProxy extends ServeBase {
       fs.outputFileSync(addonProxyFilePath, buildPath);
       this.logger.debug(
         [
-        `Addon proxy file has been updated.`,
-        `  File path: ${addonProxyFilePath}`,
-        `  Addon path: ${buildPath}`,
+          `Addon proxy file has been updated.`,
+          `  File path: ${addonProxyFilePath}`,
+          `  Addon path: ${buildPath}`,
         ].join("\n"),
       );
     }

@@ -46,7 +46,7 @@ jobs:
           pnpm publish --no-git-checks
           pnpx changelogithub
           # sleep 1s
-        env: 
+        env:
           NPM_CONFIG_PROVENANCE: true
 
       # - name: Notify release
