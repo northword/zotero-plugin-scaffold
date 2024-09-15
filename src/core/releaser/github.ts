@@ -33,8 +33,8 @@ export default class GitHub extends ReleaseBase {
     const { version, dist, xpiName } = this.ctx;
 
     const release = await this.createRelease({
-      owner: this.owner,
-      repo: this.repo,
+      owner: this.ctx.release.github.owner || this.owner,
+      repo: this.ctx.release.github.repo || this.repo,
       tag_name: this.ctx.release.bumpp
         .tag!.toString().replaceAll("%s", version),
       name: `Release v${version}`,
@@ -54,8 +54,8 @@ export default class GitHub extends ReleaseBase {
   async getReleaseByTag(tag: string) {
     return await this.client.rest.repos
       .getReleaseByTag({
-        owner: this.owner,
-        repo: this.repo,
+        owner: this.ctx.release.github.owner || this.owner,
+        repo: this.ctx.release.github.repo || this.repo,
         tag,
       })
       .catch((e) => {
@@ -92,8 +92,8 @@ export default class GitHub extends ReleaseBase {
     this.logger.debug(`Uploading ${asset} to release ${releaseID}`);
     return await this.client.rest.repos
       .uploadReleaseAsset({
-        owner: this.owner,
-        repo: this.repo,
+        owner: this.ctx.release.github.owner || this.owner,
+        repo: this.ctx.release.github.repo || this.repo,
         release_id: releaseID,
         data: fs.readFileSync(asset) as unknown as string,
         headers: {
@@ -123,8 +123,8 @@ export default class GitHub extends ReleaseBase {
     const release
       = (await this.getReleaseByTag(updater))
       ?? (await this.createRelease({
-        owner: this.owner,
-        repo: this.repo,
+        owner: this.ctx.release.github.owner || this.owner,
+        repo: this.ctx.release.github.repo || this.repo,
         tag_name: updater,
         prerelease: true,
         make_latest: "false",
@@ -135,8 +135,8 @@ export default class GitHub extends ReleaseBase {
 
     const existAssets = await this.client.rest.repos
       .listReleaseAssets({
-        owner: this.owner,
-        repo: this.repo,
+        owner: this.ctx.release.github.owner || this.owner,
+        repo: this.ctx.release.github.repo || this.repo,
         release_id: release.id,
       })
       .then((res) => {
@@ -148,8 +148,8 @@ export default class GitHub extends ReleaseBase {
         if (assets.includes(existAsset.name)) {
           this.logger.debug(`Delete existed asset ${existAsset.name} in release ${updater}`);
           await this.client.rest.repos.deleteReleaseAsset({
-            owner: this.owner,
-            repo: this.repo,
+            owner: this.ctx.release.github.owner || this.owner,
+            repo: this.ctx.release.github.repo || this.repo,
             asset_id: existAsset.id,
           });
         }
@@ -161,8 +161,8 @@ export default class GitHub extends ReleaseBase {
     }
 
     await this.client.rest.repos.updateRelease({
-      owner: this.owner,
-      repo: this.repo,
+      owner: this.ctx.release.github.owner || this.owner,
+      repo: this.ctx.release.github.repo || this.repo,
       release_id: release.id,
       name: "Release Manifest",
       body: `This release is used to host \`update.json\`, please do not delete or modify it! \n Updated in UTC ${new Date().toISOString()} for version ${version}`,

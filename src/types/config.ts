@@ -473,6 +473,12 @@ export interface ReleaseConfig {
      */
     enable: "ci" | "local" | "always" | "false";
     /**
+     * If null, the repository will be extracted from the `package.json`.
+     * @default null
+     */
+    owner: string | null;
+    repo: string | null;
+    /**
      * Upload update.json to release.
      *
      * This is the tagName of the release when the value is a string.
@@ -500,12 +506,7 @@ export interface ReleaseConfig {
    *
    * @todo Not implemented yet
    */
-  gitee: {
-    enable: "ci" | "local" | "always" | "false";
-    updater: string | false;
-    comment: boolean;
-    releaseNote: (ctx: Context) => string;
-  };
+  gitee: ReleaseConfig["github"];
 
   hooks: Partial<ReleaseHooks>;
 };

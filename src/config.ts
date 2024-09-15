@@ -155,6 +155,8 @@ const defaultConfig = {
     changelog: "",
     github: {
       enable: "ci",
+      owner: null,
+      repo: null,
       updater: "release",
       comment: false,
       releaseNote: (ctx) => {
@@ -163,6 +165,8 @@ const defaultConfig = {
     },
     gitee: {
       enable: "false",
+      owner: null,
+      repo: null,
       updater: "release",
       comment: false,
       releaseNote: (ctx) => {
