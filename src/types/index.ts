@@ -19,7 +19,24 @@ interface Context extends Config {
   version: string;
   hooks: Hookable<Hooks>;
   logger: InstanceType<typeof Log>;
-  templateData: { [placeholder: string]: string };
+  templateData: TemplateData;
+}
+
+export interface TemplateData {
+  [placeholder: string]: string;
+  /**
+   * `owner` and `repo` will be extracted from the `repository` property in `package.json`.
+   *
+   * Note: Please distinguish between here and ReleaseConfig.github.owner,
+   * which is only used for API requests and does not override the value here.
+   */
+  owner: string;
+  repo: string;
+  version: string;
+  isPreRelease: string;
+  updateJson: "update-beta.json" | "update.json" | string;
+  xpiName: string;
+  buildTime: string;
 }
 
 export { Config, Context, Hooks, OverrideConfig, UserConfig };

@@ -46,6 +46,10 @@ function resolveConfig(config: Config): Context {
   config.id ||= config.name;
   config.namespace ||= config.name;
   config.xpiName ||= kebabCase(config.name);
+  config.release.github.owner ||= owner;
+  config.release.github.repo ||= repo;
+  config.release.gitee.owner ||= owner;
+  config.release.gitee.repo ||= repo;
 
   // Parse template strings in config
   const isPreRelease = version.includes("-");
@@ -155,8 +159,8 @@ const defaultConfig = {
     changelog: "",
     github: {
       enable: "ci",
-      owner: null,
-      repo: null,
+      owner: "",
+      repo: "",
       updater: "release",
       comment: false,
       releaseNote: (ctx) => {
@@ -165,8 +169,8 @@ const defaultConfig = {
     },
     gitee: {
       enable: "false",
-      owner: null,
-      repo: null,
+      owner: "",
+      repo: "",
       updater: "release",
       comment: false,
       releaseNote: (ctx) => {

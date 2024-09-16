@@ -20,11 +20,5 @@ export abstract class ReleaseBase extends Base {
     }
   }
 
-  get owner(): string {
-    return this.ctx.templateData.owner;
-  }
-
-  get repo(): string {
-    return this.ctx.templateData.repo;
-  }
+  abstract get remote(): { owner: string; repo: string };
 }

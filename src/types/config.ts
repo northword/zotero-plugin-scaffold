@@ -85,17 +85,29 @@ export interface Config {
   /**
    * The download link of XPI.
    *
+   * Some placeholders are available, see Context.templateData.
+   *
    * XPI 文件的地址。
    *
+   * 一些可用的占位符请参阅 Context.templateData。
+   *
    * @default `https://github.com/{{owner}}/{{repo}}/release/download/v{{version}}/{{xpiName}}.xpi`
+   *
+   * @see {@link Context.templateData | Context.templateData}
    */
   xpiDownloadLink: string;
   /**
    * The uri of update.json.
    *
+   * Some placeholders are available, see Context.templateData.
+   *
    * update.json 文件的地址。
    *
+   * 一些可用的占位符请参阅 Context.templateData。
+   *
    * @default `https://github.com/{{owner}}/{{repo}}/release/download/release/update.json`
+   *
+   * @see {@link Context.templateData | Context.templateData}
    */
   updateURL: string;
 
@@ -166,6 +178,8 @@ export interface BuildConfig {
    *
    * - 在构建时，脚手架使用占位符的 key 建立正则模式 `/__${key}__/g`，并将匹配到的内容替换为 `value`。
    * - 替换发生在 `assets` 下的所有文件。
+   *
+   * @see {@link Context.templateData | Context.templateData}
    */
   define: {
     [key: string]: string;
@@ -473,11 +487,14 @@ export interface ReleaseConfig {
      */
     enable: "ci" | "local" | "always" | "false";
     /**
-     * If null, the repository will be extracted from the `package.json`.
-     * @default null
+     * The information of remote repository.
+     *
+     * Will be extracted from the `repository` property in `package.json` by default.
+     *
+     * @default package_json.repository
      */
-    owner: string | null;
-    repo: string | null;
+    owner: string;
+    repo: string;
     /**
      * Upload update.json to release.
      *
@@ -503,8 +520,6 @@ export interface ReleaseConfig {
 
   /**
    * Release to Gitee
-   *
-   * @todo Not implemented yet
    */
   gitee: ReleaseConfig["github"];
 
