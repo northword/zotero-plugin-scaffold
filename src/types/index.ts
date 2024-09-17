@@ -23,7 +23,6 @@ interface Context extends Config {
 }
 
 export interface TemplateData {
-  [placeholder: string]: string;
   /**
    * `owner` and `repo` will be extracted from the `repository` property in `package.json`.
    *
