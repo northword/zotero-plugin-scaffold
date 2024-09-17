@@ -19,7 +19,20 @@ interface Context extends Config {
   version: string;
   hooks: Hookable<Hooks>;
   logger: InstanceType<typeof Log>;
-  templateData: { [placeholder: string]: string };
+  templateData: TemplateData;
+}
+
+export interface TemplateData {
+  /**
+   * `owner` and `repo` will be extracted from the `repository` property in `package.json`.
+   */
+  owner: string;
+  repo: string;
+  version: string;
+  isPreRelease: string;
+  updateJson: "update-beta.json" | "update.json" | string;
+  xpiName: string;
+  buildTime: string;
 }
 
 export { Config, Context, Hooks, OverrideConfig, UserConfig };

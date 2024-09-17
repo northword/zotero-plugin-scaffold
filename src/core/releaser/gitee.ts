@@ -60,14 +60,12 @@ export default class Gitee extends ReleaseBase {
     prerelease = false,
   ) {
     const old = await this.client.getV5ReposOwnerRepoReleasesTagsTag({
-      owner: this.owner,
-      repo: this.repo,
+      ...this.remote,
       tag,
     });
     if (old?.id) {
       return this.client.patchV5ReposOwnerRepoReleasesId({
-        owner: this.owner,
-        repo: this.repo,
+        ...this.remote,
         name,
         body,
         prerelease,
@@ -76,8 +74,7 @@ export default class Gitee extends ReleaseBase {
       });
     }
     return this.client.postV5ReposOwnerRepoReleases({
-      owner: this.owner,
-      repo: this.repo,
+      ...this.remote,
       name,
       body,
       prerelease,
@@ -89,8 +86,7 @@ export default class Gitee extends ReleaseBase {
   async refreshAttach(releaseId: number, file: string) {
     const assets
         = await this.client.getV5ReposOwnerRepoReleasesReleaseIdAttachFiles({
-          owner: this.owner,
-          repo: this.repo,
+          ...this.remote,
           releaseId,
         });
     const fileBuffer = fs.readFileSync(file);
@@ -99,8 +95,7 @@ export default class Gitee extends ReleaseBase {
       if (asset.name === basename(file)) {
         await this.client
           .deleteV5ReposOwnerRepoReleasesReleaseIdAttachFilesAttachFileId({
-            owner: this.owner,
-            repo: this.repo,
+            ...this.remote,
             releaseId,
             attachFileId: asset.id!,
           })
@@ -109,10 +104,17 @@ export default class Gitee extends ReleaseBase {
       }
     }
     this.client.postV5ReposOwnerRepoReleasesReleaseIdAttachFiles({
-      owner: this.owner,
-      repo: this.repo,
+      ...this.remote,
       releaseId,
       file: new File([fileBuffer], basename(file), { type: "application/octet-stream" }),
     });
+  }
+
+  get remote() {
+    const [owner, repo] = this.ctx.release.gitee.repository.split("/");
+    return {
+      owner,
+      repo,
+    };
   }
 }

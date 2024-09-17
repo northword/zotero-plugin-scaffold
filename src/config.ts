@@ -61,6 +61,8 @@ function resolveConfig(config: Config): Context {
   config.updateURL = template(config.updateURL, templateData);
   config.xpiDownloadLink = template(config.xpiDownloadLink, templateData);
   config.build.define = mapValues(config.build.define, v => template(v, templateData));
+  config.release.github.repository = template(config.release.github.repository, templateData);
+  config.release.gitee.repository = template(config.release.gitee.repository, templateData);
 
   const hooks = createHooks<Hooks>();
   hooks.addHooks(config.build.hooks);
@@ -155,6 +157,7 @@ const defaultConfig = {
     changelog: "",
     github: {
       enable: "ci",
+      repository: "{{owner}}/{{repo}}",
       updater: "release",
       comment: false,
       releaseNote: (ctx) => {
@@ -163,6 +166,7 @@ const defaultConfig = {
     },
     gitee: {
       enable: "false",
+      repository: "{{owner}}/{{repo}}",
       updater: "release",
       comment: false,
       releaseNote: (ctx) => {
