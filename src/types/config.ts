@@ -93,7 +93,7 @@ export interface Config {
    *
    * @default `https://github.com/{{owner}}/{{repo}}/release/download/v{{version}}/{{xpiName}}.xpi`
    *
-   * @see {@link Context.templateData | Context.templateData}
+   * @see {@link Context.templateData}
    */
   xpiDownloadLink: string;
   /**
@@ -107,7 +107,7 @@ export interface Config {
    *
    * @default `https://github.com/{{owner}}/{{repo}}/release/download/release/update.json`
    *
-   * @see {@link Context.templateData | Context.templateData}
+   * @see {@link Context.templateData}
    */
   updateURL: string;
 
@@ -179,7 +179,7 @@ export interface BuildConfig {
    * - 在构建时，脚手架使用占位符的 key 建立正则模式 `/__${key}__/g`，并将匹配到的内容替换为 `value`。
    * - 替换发生在 `assets` 下的所有文件。
    *
-   * @see {@link Context.templateData | Context.templateData}
+   * @see {@link Context.templateData}
    */
   define: {
     [key: string]: string;
@@ -491,10 +491,10 @@ export interface ReleaseConfig {
      *
      * Will be extracted from the `repository` property in `package.json` by default.
      *
-     * @default package_json.repository
+     * @default {{owner}}/{{repo}}
+     * @see {@link Context.templateData}
      */
-    owner: string;
-    repo: string;
+    repository: string;
     /**
      * Upload update.json to release.
      *

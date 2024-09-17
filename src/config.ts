@@ -46,10 +46,6 @@ function resolveConfig(config: Config): Context {
   config.id ||= config.name;
   config.namespace ||= config.name;
   config.xpiName ||= kebabCase(config.name);
-  config.release.github.owner ||= owner;
-  config.release.github.repo ||= repo;
-  config.release.gitee.owner ||= owner;
-  config.release.gitee.repo ||= repo;
 
   // Parse template strings in config
   const isPreRelease = version.includes("-");
@@ -65,6 +61,8 @@ function resolveConfig(config: Config): Context {
   config.updateURL = template(config.updateURL, templateData);
   config.xpiDownloadLink = template(config.xpiDownloadLink, templateData);
   config.build.define = mapValues(config.build.define, v => template(v, templateData));
+  config.release.github.repository = template(config.release.github.repository, templateData);
+  config.release.gitee.repository = template(config.release.gitee.repository, templateData);
 
   const hooks = createHooks<Hooks>();
   hooks.addHooks(config.build.hooks);
@@ -159,8 +157,7 @@ const defaultConfig = {
     changelog: "",
     github: {
       enable: "ci",
-      owner: "",
-      repo: "",
+      repository: "{{owner}}/{{repo}}",
       updater: "release",
       comment: false,
       releaseNote: (ctx) => {
@@ -169,8 +166,7 @@ const defaultConfig = {
     },
     gitee: {
       enable: "false",
-      owner: "",
-      repo: "",
+      repository: "{{owner}}/{{repo}}",
       updater: "release",
       comment: false,
       releaseNote: (ctx) => {

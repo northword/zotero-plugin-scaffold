@@ -111,9 +111,10 @@ export default class Gitee extends ReleaseBase {
   }
 
   get remote() {
+    const [owner, repo] = this.ctx.release.gitee.repository.split("/");
     return {
-      owner: this.ctx.release.gitee.owner,
-      repo: this.ctx.release.gitee.repo,
+      owner,
+      repo,
     };
   }
 }

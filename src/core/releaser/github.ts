@@ -183,9 +183,10 @@ export default class GitHub extends ReleaseBase {
   }
 
   get remote() {
+    const [owner, repo] = this.ctx.release.github.repository.split("/");
     return {
-      owner: this.ctx.release.github.owner,
-      repo: this.ctx.release.github.repo,
+      owner,
+      repo,
     };
   }
 }
