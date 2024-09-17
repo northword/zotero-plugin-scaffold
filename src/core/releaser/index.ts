@@ -6,8 +6,6 @@ import { escapeRegExp } from "es-toolkit";
 import { isCI } from "std-env";
 import { Base } from "../base.js";
 import Bump from "./bump.js";
-import Gitee from "./gitee.js";
-import GitHub from "./github.js";
 
 export default class Release extends Base {
   constructor(ctx: Context) {
@@ -60,11 +58,15 @@ export default class Release extends Base {
     this.ctx.release.changelog = this.getChangelog();
 
     // Publish to GitHub, Gitee
-    if (isGitHubEnabled)
+    if (isGitHubEnabled) {
+      const { default: GitHub } = await import("./github.js");
       await new GitHub(this.ctx).run();
+    }
 
-    if (isGiteeEnabled)
+    if (isGiteeEnabled) {
+      const { default: Gitee } = await import("./gitee.js");
       await new Gitee(this.ctx).run();
+    }
 
     // TODO: Publish to Zotero's official market
 
