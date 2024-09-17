@@ -25,9 +25,6 @@ interface Context extends Config {
 export interface TemplateData {
   /**
    * `owner` and `repo` will be extracted from the `repository` property in `package.json`.
-   *
-   * Note: Please distinguish between here and ReleaseConfig.github.owner,
-   * which is only used for API requests and does not override the value here.
    */
   owner: string;
   repo: string;
