@@ -96,7 +96,11 @@ export default async function main() {
   // globalOpts = cli.optsWithGlobals();
 }
 
-main().catch((err) => {
+main().catch(onError);
+
+process.on("uncaughtException", onError);
+
+function onError(err: Error) {
   logger.error(err);
   exit(1);
-});
+}
