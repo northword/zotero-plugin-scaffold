@@ -12,6 +12,7 @@ import { replaceInFileSync } from "replace-in-file";
 import webext from "web-ext";
 import { generateHashSync } from "../utils/crypto.js";
 import { patchWebExtLogger } from "../utils/log.js";
+import { getValidatedManifest } from "../utils/manifest.js";
 import { dateFormat, toArray } from "../utils/string.js";
 import { Base } from "./base.js";
 
@@ -118,11 +119,6 @@ export default class Build extends Base {
         zotero: {
           id,
           update_url: updateURL,
-        },
-        gecko: {
-          id,
-          update_url: updateURL,
-          strict_min_version: "102",
         },
       },
     };
@@ -319,6 +315,8 @@ export default class Build extends Base {
       artifactsDir: dist,
       filename: `${xpiName}.xpi`,
       overwriteDest: true,
+    }, {
+      manifestData: getValidatedManifest(),
     });
   }
 }

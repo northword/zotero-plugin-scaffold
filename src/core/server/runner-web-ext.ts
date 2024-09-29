@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import { env } from "node:process";
 import webext from "web-ext";
 import { patchWebExtLogger } from "../../utils/log.js";
+import { getValidatedManifest } from "../../utils/manifest.js";
 import { ServeBase } from "./base.js";
 
 export default class RunnerWebExt extends ServeBase {
@@ -41,6 +42,7 @@ export default class RunnerWebExt extends ServeBase {
         // You need to specify this one so that your NodeJS application
         // can continue running after web-ext is finished.
         shouldExitProgram: false,
+        getValidatedManifest,
       },
     );
     this._runner = runner;
