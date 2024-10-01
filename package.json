@@ -63,7 +63,7 @@
   "dependencies": {
     "@commander-js/extra-typings": "^12.1.0",
     "@gitee/typescript-sdk-v5": "^5.4.85",
-    "@inquirer/prompts": "^5.5.0",
+    "@inquirer/prompts": "^6.0.0",
     "bumpp": "^9.6.1",
     "c12": "^1.11.2",
     "chalk": "^5.3.0",
