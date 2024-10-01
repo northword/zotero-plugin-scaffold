@@ -71,7 +71,7 @@
     "commander": "^12.1.0",
     "conventional-changelog": "^6.0.0",
     "es-toolkit": "^1.22.0",
-    "esbuild": "^0.23.1",
+    "esbuild": "^0.24.0",
     "fs-extra": "^11.2.0",
     "globby": "^14.0.2",
     "hookable": "^5.5.3",
