@@ -1,7 +1,5 @@
 import type { Context } from "../../types/index.js";
 import { execSync } from "node:child_process";
-// @ts-expect-error no types
-import conventionalChangelog from "conventional-changelog";
 import { escapeRegExp } from "es-toolkit";
 import { isCI } from "std-env";
 import { Base } from "../base.js";
@@ -55,7 +53,7 @@ export default class Release extends Base {
     await this.ctx.hooks.callHook("release:push", this.ctx);
 
     // Get changelog
-    this.ctx.release.changelog = this.getChangelog();
+    this.ctx.release.changelog = await this.getChangelog();
 
     // Publish to GitHub, Gitee
     if (isGitHubEnabled) {
@@ -76,18 +74,24 @@ export default class Release extends Base {
     );
   }
 
-  getConventionalChangelog(): Promise<string> {
+  async getConventionalChangelog(): Promise<string> {
     const { version } = this.ctx;
+    // @ts-expect-error no types
+    const { default: conventionalChangelog } = await import("conventional-changelog");
 
     return new Promise((resolve, reject) => {
       let changelog = "";
-      conventionalChangelog({ releaseCount: 2 }, { version })
+      conventionalChangelog({ releaseCount: 2, preset: "angular" }, { version })
         .on("data", (chunk: any) => {
           changelog += chunk.toString();
         })
         .on("end", () => {
-          this.logger.debug("changelog:", changelog.trim());
-          resolve(changelog.trim());
+          changelog = changelog
+            .split("\n")
+            .filter(line => !line.match(/^## .*/))
+            .join("\n")
+            .trim();
+          resolve(changelog);
         })
         .on("error", (err: any) => {
           reject(err);
@@ -95,7 +99,9 @@ export default class Release extends Base {
     });
   }
 
-  getGitLog(currentTag: string) {
+  getGitLog() {
+    const currentTag = this.ctx.release.bumpp.tag;
+
     /**
      * Get all git tags
      *
@@ -151,7 +157,8 @@ export default class Release extends Base {
       return execSync(`git log --pretty=format:"* %s (%h)" ${currentTag}`).toString().trim();
   }
 
-  getFilteredChangelog(rawLog: string, commitMessage: string) {
+  getFilteredChangelog(rawLog: string) {
+    const commitMessage = this.ctx.release.bumpp.commit;
     const filterRegex = new RegExp(escapeRegExp(commitMessage));
 
     const filteredLog = rawLog
@@ -165,21 +172,22 @@ export default class Release extends Base {
     return filteredLog;
   }
 
-  getChangelog() {
+  async getChangelog() {
     let changelog: string;
     const changelogConfig = this.ctx.release.changelog;
     if (typeof changelogConfig == "function") {
       changelog = changelogConfig(this.ctx);
     }
+    else if (!!changelogConfig && changelogConfig === "conventional-changelog") {
+      const rawLog = await this.getConventionalChangelog();
+      changelog = this.getFilteredChangelog(rawLog);
+    }
     else if (!!changelogConfig && typeof changelogConfig == "string") {
       changelog = execSync(changelogConfig).toString().trim();
     }
     else {
-      const resolvedCurrentTag = this.ctx.release.bumpp.tag;
-      const rawLog = this.getGitLog(resolvedCurrentTag);
-
-      const resolvedCommitMessage = this.ctx.release.bumpp.commit;
-      changelog = this.getFilteredChangelog(rawLog, resolvedCommitMessage);
+      const rawLog = this.getGitLog();
+      changelog = this.getFilteredChangelog(rawLog);
     }
     this.logger.debug(`Got changelog:\n${changelog}\n`);
     return changelog;
