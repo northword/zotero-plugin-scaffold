@@ -60,6 +60,14 @@
     "lib": "dist",
     "doc": "docs"
   },
+  "peerDependencies": {
+    "@gitee/typescript-sdk-v5": "^5.4.85"
+  },
+  "peerDependenciesMeta": {
+    "@gitee/typescript-sdk-v5": {
+      "optional": true
+    }
+  },
   "dependencies": {
     "@commander-js/extra-typings": "^12.1.0",
     "@inquirer/prompts": "^6.0.0",
@@ -76,6 +84,7 @@
     "hookable": "^5.5.3",
     "mime": "^4.0.4",
     "octokit": "^4.0.2",
+    "ofetch": "^1.4.1",
     "replace-in-file": "^8.2.0",
     "std-env": "^3.7.0",
     "update-notifier": "^7.3.1",
