@@ -460,10 +460,15 @@ export interface ReleaseConfig {
   /**
    * Changelog.
    *
-   * If a string is provided, it must be command line
-   * and with changelog output to stdout.
+   * - "conventional-changelog": use conventional-changelog with angular preset,
+   *    you must install "conventional-changelog" as an peer dependency.
+   * - string: a command line with changelog output to stdout.
    *
-   * 如果提供了字符串，则必须为命令行，且变更日志输出到stdout
+   * 变更日志。
+   *
+   * - "conventional-changelog": 使用约定式变更日志，使用 angular 预设，
+   *   你需要手动安装 conventional-changelog 作为依赖项。
+   * - string: 命令行，变更日志输出到 stdout
    *
    * @default "git log {{previousTag}}..{{currentTag}}"
    */
