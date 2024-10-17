@@ -520,6 +520,8 @@ export interface ReleaseConfig {
 
   /**
    * Release to Gitee
+   *
+   * @todo Not implemented yet
    */
   gitee: ReleaseConfig["github"];
 
