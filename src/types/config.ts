@@ -467,7 +467,7 @@ export interface ReleaseConfig {
    *
    * @default "git log {{previousTag}}..{{currentTag}}"
    */
-  changelog: string | ((ctx: Context) => string);
+  changelog: "conventional-changelog" | string | ((ctx: Context) => string);
 
   /**
    * Release to GitHub.
