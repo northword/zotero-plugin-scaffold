@@ -5,6 +5,7 @@
 ![NPM Unpacked Size](https://img.shields.io/npm/unpacked-size/zotero-plugin-scaffold)
 ![GitHub License](https://img.shields.io/github/license/northword/zotero-plugin-scaffold)
 [![code style](https://antfu.me/badge-code-style.svg)](https://github.com/antfu/eslint-config)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fnorthword%2Fzotero-plugin-scaffold.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fnorthword%2Fzotero-plugin-scaffold?ref=badge_shield)
 
 This is an npm package designed to assist in the development of Zotero plugins. It provides features such as compiling plugins, starting Zotero and installing plugins from source code, reloading plugins when the source code changes, and releasing plugins, and so on.
 
@@ -166,6 +167,9 @@ pnpm run lint:fix
 ## License
 
 GNU Affero General Public License Version 3.
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fnorthword%2Fzotero-plugin-scaffold.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fnorthword%2Fzotero-plugin-scaffold?ref=badge_large)
 
 ## Acknowledgements
 
