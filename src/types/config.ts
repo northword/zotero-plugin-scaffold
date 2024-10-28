@@ -105,7 +105,7 @@ export interface Config {
    *
    * 一些可用的占位符请参阅 Context.templateData。
    *
-   * @default `https://github.com/{{owner}}/{{repo}}/release/download/release/update.json`
+   * @default `https://github.com/{{owner}}/{{repo}}/releaser/download/release/{{updateJson}}`
    *
    * @see {@link Context.templateData}
    */
