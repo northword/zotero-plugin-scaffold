@@ -62,8 +62,8 @@ export default class Release extends Base {
     }
 
     if (isGiteeEnabled) {
-      // const { default: Gitee } = await import("./gitee.js");
-      // await new Gitee(this.ctx).run();
+      const { default: Gitee } = await import("./gitee.js");
+      await new Gitee(this.ctx).run();
     }
 
     // TODO: Publish to Zotero's official market
