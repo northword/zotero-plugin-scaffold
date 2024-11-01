@@ -91,7 +91,7 @@
   "devDependencies": {
     "@antfu/eslint-config": "^3.8.0",
     "@types/fs-extra": "^11.0.4",
-    "@types/node": "^20.16.12",
+    "@types/node": "^22.0.0",
     "@types/update-notifier": "^6.0.8",
     "eslint": "^9.12.0",
     "eslint-plugin-format": "^0.1.2",
