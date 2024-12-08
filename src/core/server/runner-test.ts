@@ -13,7 +13,6 @@ import { clearDir, recursiveFindFiles, saveResource } from "../../utils/file.js"
 import { patchWebExtLogger } from "../../utils/log.js";
 import { getValidatedManifest } from "../../utils/manifest.js";
 import { ServeBase } from "./base.js";
-import { killZotero } from "./kill-zotero.js";
 
 export default class RunnerTest extends ServeBase {
   private _runner?: WebExtRunInstance;
@@ -310,6 +309,11 @@ function Reporter(runner) {
       type: "end",
       data: { passed: passed, failed: failed, aborted: aborted, str },
     });
+
+    // Must exit on Zotero side, otherwise the exit code will not be 0 and CI will fail
+    if (${this.ctx.test.exitOnFinish ? "true" : "false"}) {
+      Zotero.Utilities.Internal.quit(0);
+    }
   });
 }
 `;
@@ -461,8 +465,6 @@ mocha.run();
   async exit(status = 0) {
     this._server?.close();
     await this._runner?.exit();
-
-    killZotero();
 
     this.ctx.hooks.callHook("serve:exit", this.ctx);
 
