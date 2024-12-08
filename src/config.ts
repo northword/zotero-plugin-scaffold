@@ -175,6 +175,14 @@ const defaultConfig = {
     },
     hooks: {},
   },
+  test: {
+    resourceDir: "test/",
+    entries: "test/",
+    prefs: {},
+    port: 9876,
+    abortOnFail: false,
+    exitOnFinish: false,
+  },
   logLevel: "info",
 } satisfies Config;
 

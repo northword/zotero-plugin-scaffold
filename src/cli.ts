@@ -60,6 +60,13 @@ export default async function main() {
       Config.loadConfig({}).then(ctx => new Serve(ctx).run());
     });
 
+  cli.command("test")
+    .description("Run tests")
+    .action((_options: any) => {
+      env.NODE_ENV = "test";
+      Config.loadConfig({}).then(ctx => new Serve(ctx).run());
+    });
+
   cli
     .command("create")
     .description("Create the plugin template")

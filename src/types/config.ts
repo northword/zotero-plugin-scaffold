@@ -138,6 +138,15 @@ export interface Config {
   release: ReleaseConfig;
 
   /**
+   * Configurations required to run the test.
+   *
+   * 测试相关配置。
+   *
+   * Test is a variant of server, so it is not a separate hooks.
+   */
+  test: TestConfig;
+
+  /**
    * Level of the log.
    *
    * 日志等级。
@@ -540,6 +549,66 @@ interface ReleaseHooks {
   // "release:handleRelease": (ctx: Context) => void | Promise<void>;
   // "release:handleUpdater": (ctx: Context) => void | Promise<void>;
   "release:done": (ctx: Context) => void | Promise<void>;
+}
+
+export interface TestConfig {
+  /**
+   * Relative path to the test directory, starting from the `${dist}/addon` directory, ending with `/`.
+   *
+   * 测试目录的相对路径，从 `${dist}/addon` 目录开始，以 `/` 结尾。
+   *
+   * @default "test/"
+   */
+  resourceDir: string;
+
+  /**
+   * The test source code directories, starting from the root directory of the project.
+   * All `*.spec.js` files in these directories will be executed.
+   * The files will be sorted by alphabetical order.
+   *
+   * 测试源码目录，从项目的根目录开始。
+   * 这些目录中的所有 `*.spec.js` 文件将被执行。
+   * 文件将按字母顺序排序。
+   *
+   * @default "test/"
+   */
+  entries: string | string[];
+
+  /**
+   * The default preferences for the test.
+   * These preferences will be set before the test starts.
+   *
+   * 测试的默认首选项。
+   * 这些首选项将在测试开始前设置。
+   */
+  prefs: Record<string, string | boolean | number>;
+
+  /**
+   * Port for the test server.
+   *
+   * 测试服务器的端口。
+   *
+   * @default 9876
+   */
+  port: number;
+
+  /**
+   * Abort the test when the first test fails.
+   *
+   * 当第一个测试失败时中止测试。
+   *
+   * @default false
+   */
+  abortOnFail: boolean;
+
+  /**
+   * Exit Zotero when the test is finished.
+   *
+   * 测试完成后退出 Zotero。
+   *
+   * @default false
+   */
+  exitOnFinish: boolean;
 }
 
 export interface Hooks extends BuildHooks, ServeHooks, ReleaseHooks {}

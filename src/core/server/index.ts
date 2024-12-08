@@ -7,6 +7,7 @@ import { Base } from "../base.js";
 import Build from "../builder.js";
 import { killZotero } from "./kill-zotero.js";
 import RunnerProxy from "./runner-proxy.js";
+import RunnerTest from "./runner-test.js";
 import RunnerWebExt from "./runner-web-ext.js";
 
 export default class Serve extends Base {
@@ -23,6 +24,18 @@ export default class Serve extends Base {
     // Must be placed at the top to prioritize registration of events to prevent web-ext interference
     process.on("SIGINT", this.exit);
 
+    const isTest = process.env.NODE_ENV === "test";
+
+    if (isTest) {
+      this.runner = new RunnerTest(this.ctx);
+    }
+    else if (this.ctx.server.asProxy) {
+      this.runner = new RunnerProxy(this.ctx);
+    }
+    else {
+      this.runner = new RunnerWebExt(this.ctx);
+    }
+
     await this.ctx.hooks.callHook("serve:init", this.ctx);
 
     // prebuild
@@ -30,16 +43,12 @@ export default class Serve extends Base {
     await this.ctx.hooks.callHook("serve:prebuild", this.ctx);
 
     // start Zotero
-    if (this.ctx.server.asProxy) {
-      this.runner = new RunnerProxy(this.ctx);
-    }
-    else {
-      this.runner = new RunnerWebExt(this.ctx);
-    }
     await this.runner.run();
 
     // watch
-    await this.watch();
+    if (!isTest) {
+      await this.watch();
+    }
   }
 
   /**
