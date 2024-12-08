@@ -1,5 +1,5 @@
 import type { WebExtRunInstance } from "web-ext";
-import type { Context } from "../../types/index.js";
+import type { Context } from "../types/index.js";
 import fs from "node:fs/promises";
 import http from "node:http";
 import { resolve } from "node:path";
@@ -8,13 +8,16 @@ import generate from "@babel/generator";
 import { parse } from "@babel/parser";
 import traverse from "@babel/traverse";
 import * as t from "@babel/types";
+import fsExtra from "fs-extra/esm";
 import webext from "web-ext";
-import { clearDir, recursiveFindFiles, saveResource } from "../../utils/file.js";
-import { patchWebExtLogger } from "../../utils/log.js";
-import { getValidatedManifest } from "../../utils/manifest.js";
-import { ServeBase } from "./base.js";
+import { saveResource } from "../utils/file.js";
+import { patchWebExtLogger } from "../utils/log.js";
+import { getValidatedManifest } from "../utils/manifest.js";
+import { Base } from "./base.js";
+import Build from "./builder.js";
 
-export default class RunnerTest extends ServeBase {
+export default class Test extends Base {
+  private builder: Build;
   private _runner?: WebExtRunInstance;
   private _profileDir?: string;
   private _dataDir?: string;
@@ -22,20 +25,57 @@ export default class RunnerTest extends ServeBase {
   private _server?: http.Server;
 
   get startArgs() {
-    const args = super.startArgs;
-    if (args.includes("--dataDir") || !this._dataDir) {
+    const args = [
+      "--purgecaches",
+      "--jsdebugger",
+      "--no-remote",
+    ];
+    if (!this._dataDir) {
       return args;
     }
-    return [...args, "--dataDir", this._dataDir];
+    args.push("--dataDir", this._dataDir);
+    return args;
   }
 
   constructor(ctx: Context) {
     super(ctx);
+    this.builder = new Build(ctx);
     env.NODE_ENV ??= "test";
   }
 
   async run() {
+    // Handle interrupt signal (Ctrl+C) to gracefully terminate Zotero process
+    // Must be placed at the top to prioritize registration of events to prevent web-ext interference
+    process.on("SIGINT", this.exit);
+
+    await this.ctx.hooks.callHook("test:init", this.ctx);
+
+    // prebuild
+    await this.builder.run();
+    await this.ctx.hooks.callHook("test:prebuild", this.ctx);
+
+    await patchWebExtLogger(this.ctx);
+
+    await this.startTestServer();
+    await this.ctx.hooks.callHook("test:listen", this.ctx);
+
+    await this.prepareDir();
+
+    await this.ctx.hooks.callHook("test:mkdir", this.ctx);
+
+    await this.modifyBootstrap();
+
+    await this.injectTestResources();
+
+    await this.ctx.hooks.callHook("test:copyAssets", this.ctx);
+
+    await this.injectTests();
+
+    await this.ctx.hooks.callHook("test:bundleTests", this.ctx);
+
     await this.start();
+
+    await this.ctx.hooks.callHook("test:run", this.ctx);
   }
 
   async prepareDir() {
@@ -45,8 +85,8 @@ export default class RunnerTest extends ServeBase {
     this._dataDir = resolve(`${dist}/testTmp/data`);
     this._resourceDir = resolve(`${this.ctx.dist}/addon/${this.ctx.test.resourceDir}`);
 
-    await clearDir(this._profileDir);
-    await clearDir(this._dataDir);
+    await fsExtra.emptyDir(this._profileDir);
+    await fsExtra.emptyDir(this._dataDir);
     await fs.mkdir(this._resourceDir, { recursive: true });
 
     this.logger.success(`Prepared test directories: profile=${this._profileDir}, data=${this._dataDir}, resource=${this._resourceDir}`);
@@ -174,7 +214,9 @@ export default class RunnerTest extends ServeBase {
     const testDirs = typeof this.ctx.test.entries === "string" ? [this.ctx.test.entries] : this.ctx.test.entries;
     const testFiles: string[] = [];
     for (const testDir of testDirs) {
-      testFiles.push(...await recursiveFindFiles(resolve(testDir), ".spec.js"));
+      for await (const file of fs.glob(resolve(`${testDir}/**/*.spec.js`))) {
+        testFiles.push(file);
+      }
     }
     // Sort the test files to ensure consistent test order
     testFiles.sort();
@@ -413,22 +455,10 @@ mocha.run();
   }
 
   async start() {
-    await patchWebExtLogger(this.ctx);
     const { dist } = this.ctx;
-
-    await this.startTestServer();
-
-    await this.prepareDir();
-
-    await this.modifyBootstrap();
-
-    await this.injectTestResources();
-
-    await this.injectTests();
-
     const runner = await webext.cmd.run(
       {
-        firefox: this.zoteroBinPath,
+        firefox: env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH,
         firefoxProfile: this._profileDir,
         profileCreateIfMissing: true,
         sourceDir: resolve(`${dist}/addon`),
@@ -455,18 +485,14 @@ mocha.run();
       },
     );
     this._runner = runner;
-    this._runner.registerCleanup(this.onZoteroExit);
-  }
-
-  async reload() {
-    this.logger.info("Reloading is not supported in test mode.");
+    this._runner.registerCleanup(() => this.exit());
   }
 
   async exit(status = 0) {
     this._server?.close();
     await this._runner?.exit();
 
-    this.ctx.hooks.callHook("serve:exit", this.ctx);
+    await this.ctx.hooks.callHook("test:done", this.ctx);
 
     if (status === 0) {
       this.logger.success("Test run completed successfully");

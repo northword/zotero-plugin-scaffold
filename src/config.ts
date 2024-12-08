@@ -68,6 +68,7 @@ function resolveConfig(config: Config): Context {
   hooks.addHooks(config.build.hooks);
   hooks.addHooks(config.server.hooks);
   hooks.addHooks(config.release.hooks);
+  hooks.addHooks(config.test.hooks);
 
   const ctx: Context = {
     ...config,
@@ -182,6 +183,7 @@ const defaultConfig = {
     port: 9876,
     abortOnFail: false,
     exitOnFinish: false,
+    hooks: {},
   },
   logLevel: "info",
 } satisfies Config;

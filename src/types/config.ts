@@ -609,6 +609,19 @@ export interface TestConfig {
    * @default false
    */
   exitOnFinish: boolean;
+
+  hooks: Partial<TestHooks>;
 }
 
-export interface Hooks extends BuildHooks, ServeHooks, ReleaseHooks {}
+interface TestHooks {
+  "test:init": (ctx: Context) => void | Promise<void>;
+  "test:prebuild": (ctx: Context) => void | Promise<void>;
+  "test:listen": (ctx: Context) => void | Promise<void>;
+  "test:mkdir": (ctx: Context) => void | Promise<void>;
+  "test:copyAssets": (ctx: Context) => void | Promise<void>;
+  "test:bundleTests": (ctx: Context) => void | Promise<void>;
+  "test:run": (ctx: Context) => void | Promise<void>;
+  "test:done": (ctx: Context) => void | Promise<void>;
+}
+
+export interface Hooks extends BuildHooks, ServeHooks, ReleaseHooks, TestHooks {}

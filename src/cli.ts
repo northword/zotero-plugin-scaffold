@@ -4,7 +4,7 @@ import process, { env, exit } from "node:process";
 import { Command } from "@commander-js/extra-typings";
 import updateNotifier from "update-notifier";
 import packageConfig from "../package.json" assert { type: "json" };
-import { Build, Config, Release, Serve } from "./index.js";
+import { Build, Config, Release, Serve, Test } from "./index.js";
 import { Log } from "./utils/log.js";
 
 const logger = new Log();
@@ -75,7 +75,7 @@ export default async function main() {
         if (options.exitOnFinish) {
           ctx.test.exitOnFinish = true;
         }
-        new Serve(ctx).run();
+        new Test(ctx).run();
       });
     });
 
