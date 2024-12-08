@@ -19,7 +19,7 @@ export function killZotero() {
         execSync("kill -9 $(ps -x | grep zotero)");
       }
       else if (isLinux) {
-        execSync("kill -9 $(ps -x | grep zotero)");
+        execSync("pkill -9 zotero");
       }
       else {
         logger.error("No commands found for this operating system.");

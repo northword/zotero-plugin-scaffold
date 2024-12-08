@@ -3,8 +3,8 @@
 import process, { env, exit } from "node:process";
 import { Command } from "@commander-js/extra-typings";
 import updateNotifier from "update-notifier";
-import { name, version } from "../package.json";
-import { Build, Config, Release, Serve } from "./index.js";
+import packageConfig from "../package.json" assert { type: "json" };
+import { Build, Config, Release, Serve, Test } from "./index.js";
 import { Log } from "./utils/log.js";
 
 const logger = new Log();
@@ -15,6 +15,7 @@ const logger = new Log();
 // };
 
 export default async function main() {
+  const { name, version } = packageConfig;
   updateNotifier({ pkg: { name, version } }).notify();
   // Remove SIGINT listeners registered by other programs to
   // ensure that Scaffold-registered listeners take effect.
@@ -58,6 +59,24 @@ export default async function main() {
     // )
     .action((_options) => {
       Config.loadConfig({}).then(ctx => new Serve(ctx).run());
+    });
+
+  cli.command("test")
+    .description("Run tests")
+    .option("--abort-on-fail", "Abort the test suite on first failure")
+    .option("--exit-on-finish", "Exit the test suite after all tests have run")
+    .action((options) => {
+      env.NODE_ENV = "test";
+
+      Config.loadConfig({}).then((ctx) => {
+        if (options.abortOnFail) {
+          ctx.test.abortOnFail = true;
+        }
+        if (options.exitOnFinish) {
+          ctx.test.exitOnFinish = true;
+        }
+        new Test(ctx).run();
+      });
     });
 
   cli
