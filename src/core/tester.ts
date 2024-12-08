@@ -2,13 +2,14 @@ import type { WebExtRunInstance } from "web-ext";
 import type { Context } from "../types/index.js";
 import fs from "node:fs/promises";
 import http from "node:http";
-import { resolve } from "node:path";
+import { basename, resolve } from "node:path";
 import process, { env } from "node:process";
 import generate from "@babel/generator";
 import { parse } from "@babel/parser";
 import traverse from "@babel/traverse";
 import * as t from "@babel/types";
 import fsExtra from "fs-extra/esm";
+import { globbySync } from "globby";
 import webext from "web-ext";
 import { saveResource } from "../utils/file.js";
 import { patchWebExtLogger } from "../utils/log.js";
@@ -212,14 +213,17 @@ export default class Test extends Base {
   async injectTests() {
     // TODO: support TS tests
     const testDirs = typeof this.ctx.test.entries === "string" ? [this.ctx.test.entries] : this.ctx.test.entries;
-    const testFiles: string[] = [];
-    for (const testDir of testDirs) {
-      for await (const file of fs.glob(resolve(`${testDir}/**/*.spec.js`))) {
-        testFiles.push(file);
-      }
-    }
+    const testFiles = globbySync(testDirs.map(dir => `${dir}/**/*.spec.js`));
     // Sort the test files to ensure consistent test order
-    testFiles.sort();
+    testFiles.sort((a, b) => {
+      const aName = basename(a);
+      const bName = basename(b);
+      if (aName < bName)
+        return -1;
+      if (aName > bName)
+        return 1;
+      return 0;
+    });
 
     // Concatenate all test files into a single file
     let testCode = `
