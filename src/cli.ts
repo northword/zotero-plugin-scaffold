@@ -3,7 +3,7 @@
 import process, { env, exit } from "node:process";
 import { Command } from "@commander-js/extra-typings";
 import updateNotifier from "update-notifier";
-import { name, version } from "../package.json";
+import { name, version } from "../package.json" assert { type: "json" };
 import { Build, Config, Release, Serve } from "./index.js";
 import { Log } from "./utils/log.js";
 
