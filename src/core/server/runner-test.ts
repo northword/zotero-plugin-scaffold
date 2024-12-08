@@ -13,6 +13,7 @@ import { clearDir, recursiveFindFiles, saveResource } from "../../utils/file.js"
 import { patchWebExtLogger } from "../../utils/log.js";
 import { getValidatedManifest } from "../../utils/manifest.js";
 import { ServeBase } from "./base.js";
+import { killZotero } from "./kill-zotero.js";
 
 export default class RunnerTest extends ServeBase {
   private _runner?: WebExtRunInstance;
@@ -457,13 +458,17 @@ mocha.run();
     this.logger.info("Reloading is not supported in test mode.");
   }
 
-  exit(status = 0) {
-    if (this._server) {
-      this._server.close();
-    }
+  async exit(status = 0) {
+    this._server?.close();
+    await this._runner?.exit();
+
+    killZotero();
+
+    this.ctx.hooks.callHook("serve:exit", this.ctx);
+
     if (status === 0) {
       this.logger.success("Test run completed successfully");
-      this._runner?.exit();
+      process.exit(0);
     }
     else {
       this.logger.error("Test run failed");
