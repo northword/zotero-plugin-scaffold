@@ -62,9 +62,20 @@ export default async function main() {
 
   cli.command("test")
     .description("Run tests")
-    .action((_options: any) => {
+    .option("--abortOnFail", "Abort the test suite on first failure")
+    .option("--exitOnFinish", "Exit the test suite after all tests have run")
+    .action((options) => {
       env.NODE_ENV = "test";
-      Config.loadConfig({}).then(ctx => new Serve(ctx).run());
+
+      Config.loadConfig({}).then((ctx) => {
+        if (options.abortOnFail) {
+          ctx.test.abortOnFail = true;
+        }
+        if (options.exitOnFinish) {
+          ctx.test.exitOnFinish = true;
+        }
+        new Serve(ctx).run();
+      });
     });
 
   cli
