@@ -3,7 +3,7 @@ import type { Context } from "../../types/index.js";
 import fs from "node:fs/promises";
 import http from "node:http";
 import { resolve } from "node:path";
-import { env } from "node:process";
+import process, { env } from "node:process";
 import generate from "@babel/generator";
 import { parse } from "@babel/parser";
 import traverse from "@babel/traverse";
@@ -392,7 +392,7 @@ mocha.run();
       if (this.ctx.test.abortOnFail) {
         this.logger.error("Aborting test run due to failure");
         if (this.ctx.test.exitOnFinish)
-          this.exit();
+          this.exit(1);
       }
     }
     else if (body.data?.str) {
@@ -457,7 +457,17 @@ mocha.run();
     this.logger.info("Reloading is not supported in test mode.");
   }
 
-  exit() {
-    this._runner?.exit();
+  exit(status = 0) {
+    if (this._server) {
+      this._server.close();
+    }
+    if (status === 0) {
+      this.logger.success("Test run completed successfully");
+      this._runner?.exit();
+    }
+    else {
+      this.logger.error("Test run failed");
+      process.exit(status);
+    }
   }
 }
