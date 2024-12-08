@@ -8,6 +8,7 @@ import generate from "@babel/generator";
 import { parse } from "@babel/parser";
 import traverse from "@babel/traverse";
 import * as t from "@babel/types";
+import { build } from "esbuild";
 import fsExtra from "fs-extra/esm";
 import { globbySync } from "globby";
 import webext from "web-ext";
@@ -23,6 +24,7 @@ export default class Test extends Base {
   private _profileDir?: string;
   private _dataDir?: string;
   private _resourceDir?: string;
+  private _testBuildDir?: string;
   private _server?: http.Server;
 
   get startArgs() {
@@ -84,10 +86,12 @@ export default class Test extends Base {
 
     this._profileDir = resolve(`${dist}/testTmp/profile`);
     this._dataDir = resolve(`${dist}/testTmp/data`);
+    this._testBuildDir = resolve(`${dist}/testTmp/build`);
     this._resourceDir = resolve(`${this.ctx.dist}/addon/${this.ctx.test.resourceDir}`);
 
     await fsExtra.emptyDir(this._profileDir);
     await fsExtra.emptyDir(this._dataDir);
+    await fsExtra.emptyDir(this._testBuildDir);
     await fs.mkdir(this._resourceDir, { recursive: true });
 
     this.logger.success(`Prepared test directories: profile=${this._profileDir}, data=${this._dataDir}, resource=${this._resourceDir}`);
@@ -211,9 +215,25 @@ export default class Test extends Base {
   }
 
   async injectTests() {
-    // TODO: support TS tests
     const testDirs = typeof this.ctx.test.entries === "string" ? [this.ctx.test.entries] : this.ctx.test.entries;
-    const testFiles = globbySync(testDirs.map(dir => `${dir}/**/*.spec.js`));
+
+    // Bundle all test files, including both JavaScript and TypeScript
+    for (const dir of testDirs) {
+      let tsconfigPath: string | undefined = resolve(`${dir}/tsconfig.json`);
+      if (!await fsExtra.pathExists(tsconfigPath)) {
+        tsconfigPath = undefined;
+      }
+      await build({
+        entryPoints:
+          [resolve(`${dir}/**/*.spec.js`), resolve(`${dir}/**/*.spec.ts`)],
+        outdir: this._testBuildDir,
+        bundle: true,
+        target: "firefox115",
+        tsconfig: tsconfigPath || undefined,
+      });
+    }
+
+    const testFiles = globbySync(resolve(`${this._testBuildDir}/**/*.spec.js`));
     // Sort the test files to ensure consistent test order
     testFiles.sort((a, b) => {
       const aName = basename(a);
