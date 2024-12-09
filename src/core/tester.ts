@@ -344,6 +344,31 @@ mocha.setup({ ui: "bdd", reporter: Reporter, timeout: ${this.ctx.test.mocha.time
 window.expect = chai.expect;
 window.assert = chai.assert;
 
+async function send(data) {
+  console.log("Sending data to server", data);
+  const req = await Zotero.HTTP.request(
+    "POST",
+    "http://localhost:${this.ctx.test.port || 9876}/update",
+    {
+      body: JSON.stringify(data),
+    }
+  );
+
+  if (req.status !== 200) {
+    dump("Error sending data to server" + req.responseText);
+    return null;
+  } else {
+    const result = JSON.parse(req.responseText);
+    return result;
+  }
+}
+
+window.debug = function (...data) {
+  const str = data.join("\\n");
+  Zotero.debug(str);
+  send({ type: "debug", data: { str } });
+};
+
 // Inherit the default test settings from Zotero
 function Reporter(runner) {
   var indents = 0,
@@ -358,25 +383,6 @@ function Reporter(runner) {
   function dump(str) {
     console.log(str);
     document.querySelector("#mocha").innerText += str;
-  }
-
-  async function send(data) {
-    console.log("Sending data to server", data);
-    const req = await Zotero.HTTP.request(
-      "POST",
-      "http://localhost:${this.ctx.test.port || 9876}/update",
-      {
-        body: JSON.stringify(data),
-      }
-    );
-
-    if (req.status !== 200) {
-      dump("Error sending data to server" + req.responseText);
-      return null;
-    } else {
-      const result = JSON.parse(req.responseText);
-      return result;
-    }
   }
 
   runner.on("start", async function () {
@@ -544,9 +550,15 @@ mocha.run();
   }
 
   async handleTestUpdate(body: {
-    type: "start" | "suite" | "suite end" | "pending" | "pass" | "fail" | "end";
+    type: "start" | "suite" | "suite end" | "pending" | "pass" | "fail" | "end" | "debug";
     data?: { title: string; str: string; duration?: number; stack?: string };
   }) {
+    if (body.type === "debug" && body.data?.str) {
+      for (const line of body.data?.str.split("\n")) {
+        this.logger.log(line);
+        this.logger.newLine();
+      }
+    }
     const str = body.data?.str.replaceAll("\n", "");
     if (body.type === "start") {
       this.logger.newLine();
