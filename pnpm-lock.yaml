@@ -8,24 +8,12 @@ importers:
 
   .:
     dependencies:
-      '@babel/generator':
-        specifier: ^7.26.3
-        version: 7.26.3
       '@babel/helper-string-parser':
         specifier: ^7.25.9
         version: 7.25.9
       '@babel/helper-validator-identifier':
         specifier: ^7.25.9
         version: 7.25.9
-      '@babel/parser':
-        specifier: ^7.26.3
-        version: 7.26.3
-      '@babel/traverse':
-        specifier: ^7.26.4
-        version: 7.26.4
-      '@babel/types':
-        specifier: ^7.26.3
-        version: 7.26.3
       '@commander-js/extra-typings':
         specifier: ^12.1.0
         version: 12.1.0(commander@12.1.0)
