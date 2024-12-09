@@ -45,6 +45,12 @@ export default class Test extends Base {
     this._testPluginRef = `${ctx.namespace}-test`;
     this._testPluginID = `${this._testPluginRef}@only-for-testing.com`;
     env.NODE_ENV ??= "test";
+
+    if (isCI) {
+      this.ctx.test.abortOnFail = true;
+      this.ctx.test.exitOnFinish = true;
+      this.ctx.test.headless = true;
+    }
   }
 
   async run() {
