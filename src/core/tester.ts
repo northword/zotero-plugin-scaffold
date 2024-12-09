@@ -15,6 +15,7 @@ import webext from "web-ext";
 import { saveResource } from "../utils/file.js";
 import { patchWebExtLogger } from "../utils/log.js";
 import { getValidatedManifest } from "../utils/manifest.js";
+import { toArray } from "../utils/string.js";
 import { Base } from "./base.js";
 import Build from "./builder.js";
 
@@ -215,7 +216,7 @@ export default class Test extends Base {
   }
 
   async injectTests() {
-    const testDirs = typeof this.ctx.test.entries === "string" ? [this.ctx.test.entries] : this.ctx.test.entries;
+    const testDirs = toArray(this.ctx.test.entries);
 
     // Bundle all test files, including both JavaScript and TypeScript
     for (const dir of testDirs) {
