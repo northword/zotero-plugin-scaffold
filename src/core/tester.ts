@@ -264,9 +264,9 @@ function waitUtilAsync(condition, interval = 100, timeout = 1e4) {
     const MOCHA_JS_URL = "https://cdn.jsdelivr.net/npm/mocha/mocha.js";
     // const MOCHA_CSS_URL = "https://cdn.jsdelivr.net/npm/mocha/mocha.css";
     const CHAI_JS_URL = "https://www.chaijs.com/chai.js";
-    saveResource(MOCHA_JS_URL, resolve(`${this._testPluginDir}/content/mocha.js`));
+    await saveResource(MOCHA_JS_URL, resolve(`${this._testPluginDir}/content/mocha.js`));
     // saveResource(MOCHA_CSS_URL, resolve(`${resourceDir}/content/mocha.css`));
-    saveResource(CHAI_JS_URL, resolve(`${this._testPluginDir}/content/chai.js`));
+    await saveResource(CHAI_JS_URL, resolve(`${this._testPluginDir}/content/chai.js`));
     const html = `
 <!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
