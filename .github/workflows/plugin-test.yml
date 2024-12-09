@@ -1,23 +1,23 @@
 name: Test Plugin for Zotero
 
 on:
-    workflow_call:
-        inputs:
-            node-version:
-                type: string
-                description: 'Node.js version'
-                required: false
-                default: "20"
-            init-cmd:
-                type: string
-                description: 'Command to initialize the repository'
-                required: false
-                default: "npm install"
-            test-cmd:
-                type: string
-                description: 'Command to run tests'
-                required: false
-                default: "npm test"
+  workflow_call:
+    inputs:
+      node-version:
+        type: string
+        description: Node.js version
+        required: false
+        default: "20"
+      init-cmd:
+        type: string
+        description: Command to initialize the repository
+        required: false
+        default: npm install
+      test-cmd:
+        type: string
+        description: Command to run tests
+        required: false
+        default: npm test
 
 jobs:
   test:
@@ -54,7 +54,7 @@ jobs:
 
       - name: Initialize Current Repository
         run: |
-            ${{ github.event.inputs.init-cmd }}
+          ${{ github.event.inputs.init-cmd }}
 
       - name: Install Zotero Plugin Scaffold Locally # TEMP: Use the official repository once the PR is merged
         run: |
