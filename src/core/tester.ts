@@ -97,11 +97,11 @@ export default class Test extends Base {
   async prepareDir() {
     const { dist } = this.ctx;
 
-    this._profileDir = resolve(`${dist}/testTmp/profile`);
-    this._dataDir = resolve(`${dist}/testTmp/data`);
-    this._testBuildDir = resolve(`${dist}/testTmp/build`);
+    this._profileDir = `${dist}/testTmp/profile`;
+    this._dataDir = `${dist}/testTmp/data`;
+    this._testBuildDir = `${dist}/testTmp/build`;
     // TODO: when scaffold init is implemented, can use it to create the tester plugin
-    this._testPluginDir = resolve(`${dist}/testTmp/resource`);
+    this._testPluginDir = `${dist}/testTmp/resource`;
 
     await fsExtra.emptyDir(this._profileDir);
     await fsExtra.emptyDir(this._dataDir);
@@ -319,7 +319,7 @@ function waitUtilAsync(condition, interval = 100, timeout = 1e4) {
       });
     }
 
-    const testFiles = globbySync(resolve(`${this._testBuildDir}/**/*.spec.js`));
+    const testFiles = globbySync(`${this._testBuildDir}/**/*.spec.js`);
     // Sort the test files to ensure consistent test order
     testFiles.sort((a, b) => {
       const aName = basename(a);
