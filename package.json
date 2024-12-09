@@ -46,7 +46,7 @@
   "scripts": {
     "dev": "unbuild --stub",
     "build": "tsc --noEmit && unbuild",
-    "lint": "eslint .",
+    "lint:check": "eslint .",
     "lint:fix": "eslint . --fix",
     "release": "bumpp --commit \"chore(release): publish v%s\"",
     "update:deps": "pnpx taze minor -w -f -l",
