@@ -583,7 +583,7 @@ mocha.run();
 
   async installXvfb() {
     try {
-      execSync("which Xvfb", { stdio: "ignore" });
+      execSync("which xvfb", { stdio: "ignore" });
     }
     catch {
       if (isLinux) {
