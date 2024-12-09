@@ -179,6 +179,9 @@ const defaultConfig = {
   test: {
     entries: "test/",
     prefs: {},
+    mocha: {
+      timeout: 10000,
+    },
     port: 9876,
     abortOnFail: false,
     exitOnFinish: false,

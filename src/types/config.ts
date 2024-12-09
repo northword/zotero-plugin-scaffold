@@ -574,6 +574,17 @@ export interface TestConfig {
    */
   prefs: Record<string, string | boolean | number>;
 
+  mocha: {
+    /**
+     * The timeout of the test.
+     *
+     * 测试的超时时间。
+     *
+     * @default 5000
+     */
+    timeout: number;
+  };
+
   /**
    * Port for the test server.
    *

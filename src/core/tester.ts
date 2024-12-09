@@ -339,7 +339,7 @@ function waitUtilAsync(condition, interval = 100, timeout = 1e4) {
 
     // Concatenate all test files into a single file
     let testCode = `
-mocha.setup({ ui: "bdd", reporter: Reporter });
+mocha.setup({ ui: "bdd", reporter: Reporter, timeout: ${this.ctx.test.mocha.timeout} || 10000, });
 
 window.expect = chai.expect;
 window.assert = chai.assert;
@@ -672,6 +672,7 @@ mocha.run();
     }
     else {
       this.logger.error("Test run failed");
+      this._process?.kill();
       process.exit(status);
     }
   }
