@@ -210,6 +210,21 @@ export interface BuildConfig {
      */
     prefixFluentMessages: boolean;
   };
+  prefs: {
+    /**
+     * Add
+     *
+     * @default true
+     */
+    prefixPrefKeys: boolean;
+    /**
+     * Add
+     *
+     * @default 'extensions.zotero.${namespace}'
+     */
+    prefix: string;
+    dts: boolean | string;
+  };
   /**
    * Configurations of esbuild.
    *
