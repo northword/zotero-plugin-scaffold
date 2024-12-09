@@ -553,15 +553,6 @@ interface ReleaseHooks {
 
 export interface TestConfig {
   /**
-   * Relative path to the test directory, starting from the `${dist}/addon` directory, ending with `/`.
-   *
-   * 测试目录的相对路径，从 `${dist}/addon` 目录开始，以 `/` 结尾。
-   *
-   * @default "test/"
-   */
-  resourceDir: string;
-
-  /**
    * The test source code directories, starting from the root directory of the project.
    * All `*.spec.js` files in these directories will be executed.
    * The files will be sorted by alphabetical order.
@@ -609,6 +600,33 @@ export interface TestConfig {
    * @default false
    */
   exitOnFinish: boolean;
+
+  /**
+   * The delay time before running the test. Make sure the plugin is fully loaded before running the test.
+   *
+   * 运行测试前的延迟时间。确保插件在运行测试前完全加载。
+   *
+   * @default 1000
+   */
+  startupDelay: number;
+
+  /**
+   * Function string that returns the initialization status of the plugin.
+   *
+   * If set, the test will wait until the function returns true before running the test.
+   *
+   * 返回插件初始化状态的函数字符串。
+   *
+   * 如果设置，测试将等待函数返回 true 后再运行测试。
+   *
+   * @default "()=>true"
+   *
+   * @example
+   * ```js
+   * () => !!Zotero.BetterNotes.data.initialized
+   * ```
+   */
+  waitForPlugin: string;
 
   hooks: Partial<TestHooks>;
 }

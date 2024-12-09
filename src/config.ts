@@ -177,13 +177,14 @@ const defaultConfig = {
     hooks: {},
   },
   test: {
-    resourceDir: "test/",
     entries: "test/",
     prefs: {},
     port: 9876,
     abortOnFail: false,
     exitOnFinish: false,
     hooks: {},
+    startupDelay: 1000,
+    waitForPlugin: "() => true",
   },
   logLevel: "info",
 } satisfies Config;
