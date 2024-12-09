@@ -601,6 +601,8 @@ export interface TestConfig {
    */
   exitOnFinish: boolean;
 
+  headless: boolean;
+
   /**
    * The delay time before running the test. Make sure the plugin is fully loaded before running the test.
    *

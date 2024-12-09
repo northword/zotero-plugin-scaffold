@@ -1,13 +1,15 @@
 import type { ChildProcess } from "node:child_process";
 import type { Context } from "../types/index.js";
-import { spawn } from "node:child_process";
+import { execSync, spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import http from "node:http";
 import { basename, join, resolve } from "node:path";
-import process, { env } from "node:process";
+import process, { cwd, env } from "node:process";
 import { build } from "esbuild";
 import fsExtra from "fs-extra/esm";
 import { globbySync } from "globby";
+import { isCI, isLinux, isMacOS } from "std-env";
+import { Xvfb } from "xvfb-ts";
 import { saveResource } from "../utils/file.js";
 import { toArray } from "../utils/string.js";
 import { Base } from "./base.js";
@@ -75,7 +77,13 @@ export default class Test extends Base {
 
     await this.ctx.hooks.callHook("test:bundleTests", this.ctx);
 
-    await this.start();
+    if ((isCI || this.ctx.test.headless)) {
+      await this.prepareHeadless();
+      await this.startZoteroHeadless();
+    }
+    else {
+      await this.startZotero();
+    }
 
     await this.ctx.hooks.callHook("test:run", this.ctx);
   }
@@ -550,7 +558,78 @@ mocha.run();
     }
   }
 
-  async start() {
+  async prepareHeadless() {
+    // Ensure xvfb installing
+    await this.installXvfb();
+
+    // Download and Extract Zotero Beta Linux
+    await this.installZoteroLinux();
+
+    // Set Environment Variable for Zotero Bin Path
+    process.env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH = `${cwd}/Zotero_linux-x86_64/zotero`;
+  }
+
+  async installXvfb() {
+    try {
+      execSync("which Xvfb", { stdio: "ignore" });
+    }
+    catch {
+      if (isLinux) {
+        try {
+          const osId = execSync("cat /etc/os-release | grep '^ID='").toString();
+          if (osId.includes("ubuntu") || osId.includes("debian")) {
+            this.logger.debug("Detected Ubuntu/Debian. Installing Xvfb...");
+            execSync("sudo apt-get update && sudo apt-get install -y xvfb", { stdio: "inherit" });
+          }
+          else if (osId.includes("centos") || osId.includes("rhel")) {
+            this.logger.debug("Detected CentOS/RHEL. Installing Xvfb...");
+            execSync("sudo yum install -y xorg-x11-server-Xvfb", { stdio: "inherit" });
+          }
+          else {
+            throw new Error("Unsupported Linux distribution.");
+          }
+          this.logger.debug("Xvfb installation completed.");
+        }
+        catch (error) {
+          console.error("Failed to install Xvfb:", error);
+          process.exit(1);
+        }
+      }
+      else if (isMacOS) {
+        this.logger.debug("Detected macOS. Installing XQuartz...");
+        try {
+          execSync("brew install xquartz", { stdio: "inherit" });
+          this.logger.debug("XQuartz installation completed.");
+        }
+        catch (error) {
+          console.error("Failed to install XQuartz:", error);
+          process.exit(1);
+        }
+      }
+      else {
+        console.error("Unsupported platform. Please install Xvfb manually.");
+        process.exit(1);
+      }
+    }
+  }
+
+  async installZoteroLinux() {
+    try {
+      execSync("wget -O zotero.tar.bz2 'https://www.zotero.org/download/client/dl?platform=linux-x86_64&channel=beta'");
+      execSync("tar -xvf zotero.tar.bz2");
+    }
+    catch {
+      throw new Error("Zotero extracted failed");
+    }
+  }
+
+  async startZoteroHeadless() {
+    const xvfb = new Xvfb();
+    await xvfb.start();
+    await this.startZotero();
+  }
+
+  async startZotero() {
     const zoteroProcess = spawn(env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH!, [
       ...this.startArgs,
     ]);

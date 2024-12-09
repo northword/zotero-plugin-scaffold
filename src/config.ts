@@ -182,9 +182,10 @@ const defaultConfig = {
     port: 9876,
     abortOnFail: false,
     exitOnFinish: false,
-    hooks: {},
+    headless: false,
     startupDelay: 1000,
     waitForPlugin: "() => true",
+    hooks: {},
   },
   logLevel: "info",
 } satisfies Config;

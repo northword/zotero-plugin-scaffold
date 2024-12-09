@@ -86,7 +86,8 @@
     "replace-in-file": "^8.2.0",
     "std-env": "^3.7.0",
     "update-notifier": "^7.3.1",
-    "web-ext": "^8.3.0"
+    "web-ext": "^8.3.0",
+    "xvfb-ts": "^1.1.0"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^3.8.0",
