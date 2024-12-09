@@ -178,45 +178,23 @@ async function startup({ id, version, resourceURI, rootURI }, reason) {
     ["content", "${this._testPluginRef}", rootURI + "content/"],
   ]);
 
-  // Delay to allow plugin to fully load before opening the test page
-  await Zotero.Promise.delay(${this.ctx.test.startupDelay || 1000});
-
-  const waitForPlugin = "${this.ctx.test.waitForPlugin}";
-
-  if (waitForPlugin) {
-    // Wait for a plugin to be installed
-    await waitUtilAsync(() => {
-      try {
-        return !!eval(waitForPlugin)();
-      } catch (error) {
-        return false;
+  launchTests().catch((error) => {
+    Zotero.debug(error);
+    Zotero.HTTP.request(
+      "POST",
+      "http://localhost:${this.ctx.test.port || 9876}/update",
+      {
+        body: JSON.stringify({
+          type: "fail",
+          data: {
+            title: "Internal: Plugin awaiting timeout",
+            stack: "",
+            str: "Plugin awaiting timeout",
+          },
+        }),
       }
-    }).catch(() => {
-      Zotero.HTTP.request(
-        "POST",
-        "http://localhost:${this.ctx.test.port || 9876}/update",
-        {
-          body: JSON.stringify({
-            type: "fail",
-            data: {
-              title: "Internal: Plugin awaiting timeout",
-              stack: "",
-              str: "Plugin awaiting timeout",
-            },
-          }),
-        }
-      );
-      throw new Error("Plugin awaiting timeout");
-    });
-  }
-
-  Services.ww.openWindow(
-    null,
-    "chrome://${this._testPluginRef}/content/index.xhtml",
-    "${this.ctx.namespace}-test",
-    "chrome,centerscreen,resizable=yes",
-    {}
-  );
+    );
+  });
 }
 
 function onMainWindowLoad({ window: win }) {}
@@ -235,6 +213,34 @@ function shutdown({ id, version, resourceURI, rootURI }, reason) {
 }
 
 function uninstall(data, reason) {}
+
+async function launchTests() {
+  // Delay to allow plugin to fully load before opening the test page
+  await Zotero.Promise.delay(${this.ctx.test.startupDelay || 1000});
+
+  const waitForPlugin = "${this.ctx.test.waitForPlugin}";
+
+  if (waitForPlugin) {
+    // Wait for a plugin to be installed
+    await waitUtilAsync(() => {
+      try {
+        return !!eval(waitForPlugin)();
+      } catch (error) {
+        return false;
+      }
+    }).catch(() => {
+      throw new Error("Plugin awaiting timeout");
+    });
+  }
+
+  Services.ww.openWindow(
+    null,
+    "chrome://${this._testPluginRef}/content/index.xhtml",
+    "${this.ctx.namespace}-test",
+    "chrome,centerscreen,resizable=yes",
+    {}
+  );
+}
 
 function waitUtilAsync(condition, interval = 100, timeout = 1e4) {
   return new Promise((resolve, reject) => {
