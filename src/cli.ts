@@ -3,7 +3,7 @@
 import process, { env, exit } from "node:process";
 import { Command } from "@commander-js/extra-typings";
 import updateNotifier from "update-notifier";
-import packageConfig from "../package.json" assert { type: "json" };
+import pkg from "../package.json" with { type: "json" };
 import { Build, Config, Release, Serve, Test } from "./index.js";
 import { Log } from "./utils/log.js";
 
@@ -15,7 +15,7 @@ const logger = new Log();
 // };
 
 export default async function main() {
-  const { name, version } = packageConfig;
+  const { name, version } = pkg;
   updateNotifier({ pkg: { name, version } }).notify();
   // Remove SIGINT listeners registered by other programs to
   // ensure that Scaffold-registered listeners take effect.
