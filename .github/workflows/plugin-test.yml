@@ -54,7 +54,7 @@ jobs:
 
       - name: Initialize Current Repository
         run: |
-          ${{ github.event.inputs.init-cmd }}
+          ${{ inputs.init-cmd }}
 
       - name: Install Zotero Plugin Scaffold Locally # TEMP: Use the official repository once the PR is merged
         run: |
@@ -62,6 +62,6 @@ jobs:
 
       - name: Run Tests
         run: |
-          xvfb-run ${{ github.event.inputs.test-cmd }}
+          xvfb-run ${{ inputs.test-cmd }}
         env:
           ZOTERO_PLUGIN_ZOTERO_BIN_PATH: ${{ env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH }}
