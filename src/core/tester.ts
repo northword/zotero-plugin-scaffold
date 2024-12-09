@@ -97,11 +97,11 @@ export default class Test extends Base {
   async prepareDir() {
     const { dist } = this.ctx;
 
-    this._profileDir = `${dist}/testTmp/profile`;
-    this._dataDir = `${dist}/testTmp/data`;
+    this._profileDir = resolve(`${dist}/testTmp/profile`);
+    this._dataDir = resolve(`${dist}/testTmp/data`);
     this._testBuildDir = `${dist}/testTmp/build`;
     // TODO: when scaffold init is implemented, can use it to create the tester plugin
-    this._testPluginDir = `${dist}/testTmp/resource`;
+    this._testPluginDir = resolve(`${dist}/testTmp/resource`);
 
     await fsExtra.emptyDir(this._profileDir);
     await fsExtra.emptyDir(this._dataDir);
