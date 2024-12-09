@@ -578,7 +578,7 @@ mocha.run();
     await this.installZoteroLinux();
 
     // Set Environment Variable for Zotero Bin Path
-    process.env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH = `${cwd}/Zotero_linux-x86_64/zotero`;
+    process.env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH = `${cwd()}/Zotero_linux-x86_64/zotero`;
   }
 
   async installXvfb() {
