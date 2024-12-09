@@ -69,8 +69,6 @@
     }
   },
   "dependencies": {
-    "@babel/helper-string-parser": "^7.25.9",
-    "@babel/helper-validator-identifier": "^7.25.9",
     "@commander-js/extra-typings": "^12.1.0",
     "@inquirer/prompts": "^7.0.0",
     "bumpp": "^9.7.1",
@@ -92,8 +90,6 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "^3.8.0",
-    "@types/babel__generator": "^7.6.8",
-    "@types/babel__traverse": "^7.20.6",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^22.0.0",
     "@types/update-notifier": "^6.0.8",
