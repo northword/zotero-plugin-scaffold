@@ -54,6 +54,11 @@ export class Log {
     console.log(...args);
   }
 
+  log(...args: any[]) {
+    // eslint-disable-next-line no-console
+    console.log(...args);
+  }
+
   error(...args: any[]) {
     this.newLine();
     this.logArgs(LOG_LEVEL.error, chalk.bgRed(" ERROR "), ...args);

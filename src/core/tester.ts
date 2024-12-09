@@ -541,23 +541,29 @@ mocha.run();
     type: "start" | "suite" | "suite end" | "pending" | "pass" | "fail" | "end";
     data?: { title: string; str: string; duration?: number; stack?: string };
   }) {
-    if (body.type === "pass") {
-      this.logger.success(body.data?.str);
+    const str = body.data?.str.replaceAll("\n", "");
+    if (body.type === "start") {
+      this.logger.newLine();
+    }
+    else if (body.type === "suite" && !!str) {
+      this.logger.tip(str);
+    }
+    if (body.type === "pass" && !!str) {
+      this.logger.log(str);
     }
     else if (body.type === "fail") {
-      this.logger.error(body.data?.str);
+      this.logger.error(str);
       if (this.ctx.test.abortOnFail) {
         this.logger.error("Aborting test run due to failure");
         if (this.ctx.test.exitOnFinish)
           this.exit(1);
       }
     }
-    else if (body.data?.str) {
-      this.logger.info(body.data.str);
+    else if (body.type === "suite end") {
+      this.logger.newLine();
     }
-
-    if (body.type === "end") {
-      this.logger.info("Test run completed");
+    else if (body.type === "end") {
+      this.logger.success("Test run completed");
       this._server?.close();
       if (this.ctx.test.exitOnFinish)
         this.exit();
