@@ -22,7 +22,7 @@ enum LOG_LEVEL {
 export class Log {
   private logLevel: number;
   constructor(config?: Config) {
-    if (!config || isCI || isDebug) {
+    if (!config || isDebug) {
       this.logLevel = LOG_LEVEL.trace;
     }
     else {
