@@ -3,7 +3,7 @@ import process from "node:process";
 import readline from "node:readline";
 import chalk from "chalk";
 import { isPlainObject } from "es-toolkit";
-import { isCI, isDebug } from "std-env";
+import { isDebug } from "std-env";
 
 /**
  * Log level
