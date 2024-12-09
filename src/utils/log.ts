@@ -3,7 +3,7 @@ import process from "node:process";
 import readline from "node:readline";
 import chalk from "chalk";
 import { isPlainObject } from "es-toolkit";
-import { isCI, isDebug } from "std-env";
+import { isDebug } from "std-env";
 
 /**
  * Log level
@@ -22,7 +22,7 @@ enum LOG_LEVEL {
 export class Log {
   private logLevel: number;
   constructor(config?: Config) {
-    if (!config || isCI || isDebug) {
+    if (!config || isDebug) {
       this.logLevel = LOG_LEVEL.trace;
     }
     else {
@@ -50,6 +50,11 @@ export class Log {
       return;
 
     args = args.map(arg => this.formatArgs(arg));
+    // eslint-disable-next-line no-console
+    console.log(...args);
+  }
+
+  log(...args: any[]) {
     // eslint-disable-next-line no-console
     console.log(...args);
   }

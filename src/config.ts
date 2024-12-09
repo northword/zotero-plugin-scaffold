@@ -68,6 +68,7 @@ function resolveConfig(config: Config): Context {
   hooks.addHooks(config.build.hooks);
   hooks.addHooks(config.server.hooks);
   hooks.addHooks(config.release.hooks);
+  hooks.addHooks(config.test.hooks);
 
   const ctx: Context = {
     ...config,
@@ -173,6 +174,17 @@ const defaultConfig = {
         return ctx.release.changelog as string;
       },
     },
+    hooks: {},
+  },
+  test: {
+    entries: "test/",
+    prefs: {},
+    port: 9876,
+    abortOnFail: false,
+    exitOnFinish: false,
+    headless: false,
+    startupDelay: 1000,
+    waitForPlugin: "() => true",
     hooks: {},
   },
   logLevel: "info",
