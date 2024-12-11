@@ -580,7 +580,7 @@ export interface TestConfig {
      *
      * 测试的超时时间。
      *
-     * @default 5000
+     * @default 10000
      */
     timeout: number;
   };
@@ -612,6 +612,19 @@ export interface TestConfig {
    */
   exitOnFinish: boolean;
 
+  /**
+   * Run Zotero in deadless mode.
+   *
+   * - Supported for Linux only.
+   * - Default to true when in CI environments.
+   *
+   * 使用无头模式运行 Zotero。
+   *
+   * - 仅支持 Linux
+   * - 在 CI 模式下，默认为 true
+   *
+   * @default false
+   */
   headless: boolean;
 
   /**

@@ -8,7 +8,7 @@ import process, { cwd, env } from "node:process";
 import { build } from "esbuild";
 import fsExtra from "fs-extra/esm";
 import { globbySync } from "globby";
-import { isCI, isLinux, isMacOS } from "std-env";
+import { isCI, isLinux } from "std-env";
 import { Xvfb } from "xvfb-ts";
 import { saveResource } from "../utils/file.js";
 import { toArray } from "../utils/string.js";
@@ -530,7 +530,7 @@ mocha.run();
               res.end(JSON.stringify({ message: "Results received successfully" }));
             }
             catch (error: any) {
-              console.error("Error parsing JSON:", error);
+              this.logger.error("Error parsing JSON:", error);
               res.writeHead(400, { "Content-Type": "application/json" });
               res.end(JSON.stringify({ error: "Invalid JSON" }));
             }
@@ -600,44 +600,31 @@ mocha.run();
   }
 
   async installXvfb() {
+    if (!isLinux) {
+      this.logger.error("Unsupported platform. Please install Xvfb manually.");
+      process.exit(1);
+    }
     try {
       execSync("which xvfb", { stdio: "ignore" });
     }
     catch {
-      if (isLinux) {
-        try {
-          const osId = execSync("cat /etc/os-release | grep '^ID='").toString();
-          if (osId.includes("ubuntu") || osId.includes("debian")) {
-            this.logger.debug("Detected Ubuntu/Debian. Installing Xvfb...");
-            execSync("sudo apt-get update && sudo apt-get install -y xvfb", { stdio: "inherit" });
-          }
-          else if (osId.includes("centos") || osId.includes("rhel")) {
-            this.logger.debug("Detected CentOS/RHEL. Installing Xvfb...");
-            execSync("sudo yum install -y xorg-x11-server-Xvfb", { stdio: "inherit" });
-          }
-          else {
-            throw new Error("Unsupported Linux distribution.");
-          }
-          this.logger.debug("Xvfb installation completed.");
+      try {
+        const osId = execSync("cat /etc/os-release | grep '^ID='").toString();
+        if (osId.includes("ubuntu") || osId.includes("debian")) {
+          this.logger.debug("Detected Ubuntu/Debian. Installing Xvfb...");
+          execSync("sudo apt-get update && sudo apt-get install -y xvfb", { stdio: "pipe" });
         }
-        catch (error) {
-          console.error("Failed to install Xvfb:", error);
-          process.exit(1);
+        else if (osId.includes("centos") || osId.includes("rhel")) {
+          this.logger.debug("Detected CentOS/RHEL. Installing Xvfb...");
+          execSync("sudo yum install -y xorg-x11-server-Xvfb", { stdio: "pipe" });
         }
+        else {
+          throw new Error("Unsupported Linux distribution.");
+        }
+        this.logger.debug("Xvfb installation completed.");
       }
-      else if (isMacOS) {
-        this.logger.debug("Detected macOS. Installing XQuartz...");
-        try {
-          execSync("brew install xquartz", { stdio: "inherit" });
-          this.logger.debug("XQuartz installation completed.");
-        }
-        catch (error) {
-          console.error("Failed to install XQuartz:", error);
-          process.exit(1);
-        }
-      }
-      else {
-        console.error("Unsupported platform. Please install Xvfb manually.");
+      catch (error) {
+        this.logger.error("Failed to install Xvfb:", error);
         process.exit(1);
       }
     }
@@ -645,10 +632,11 @@ mocha.run();
 
   async installZoteroLinux() {
     try {
-      execSync("wget -O zotero.tar.bz2 'https://www.zotero.org/download/client/dl?platform=linux-x86_64&channel=beta'");
-      execSync("tar -xvf zotero.tar.bz2");
+      execSync("wget -O zotero.tar.bz2 'https://www.zotero.org/download/client/dl?platform=linux-x86_64&channel=beta'", { stdio: "pipe" });
+      execSync("tar -xvf zotero.tar.bz2", { stdio: "pipe" });
     }
-    catch {
+    catch (e) {
+      this.logger.error(e);
       throw new Error("Zotero extracted failed");
     }
   }
