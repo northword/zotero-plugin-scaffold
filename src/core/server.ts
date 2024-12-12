@@ -34,6 +34,7 @@ export default class Serve extends Base {
         id: this.ctx.id,
         sourceDir: join(this.ctx.dist, "addon"),
       }],
+      asProxy: this.ctx.server.asProxy,
       devtools: this.ctx.server.devtools,
       binaryArgs: this.ctx.server.startArgs,
     });
@@ -102,7 +103,10 @@ export default class Serve extends Base {
 
   async reload() {
     this.logger.tip("Reloading...");
-    await this.runner?.reloadAllPlugins();
+    if (this.ctx.server.asProxy)
+      await this.runner?.reloadPluginByZToolkit(this.ctx.id, this.ctx.name, this.ctx.version);
+    else
+      await this.runner?.reloadAllPlugins();
     await this.ctx.hooks.callHook("serve:onReloaded", this.ctx);
   }
 

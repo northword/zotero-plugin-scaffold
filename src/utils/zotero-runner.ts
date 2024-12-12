@@ -192,8 +192,6 @@ export class ZoteroRunner {
       });
       outputJSONSync(addonInfoFilePath, content);
     }
-
-    //
   }
 
   private async installPluginsByProxyMode() {
@@ -255,6 +253,14 @@ export class ZoteroRunner {
     const startZoteroCmd = `"${this.options.binaryPath}" --purgecaches -profile "${this.options.profilePath}"`;
     const command = `${startZoteroCmd} -url "${url}"`;
     execSync(command);
+  }
+
+  // Do not use this method if possible,
+  // as frequent execSync can cause Zotero to crash.
+  public async reloadAllPluginsByZToolkit() {
+    for (const { id } of this.options.plugins) {
+      await this.reloadPluginByZToolkit(id, id, id);
+    }
   }
 
   public async reloadAllPlugins() {
