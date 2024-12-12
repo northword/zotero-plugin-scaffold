@@ -1,9 +1,8 @@
-import type { ChildProcess } from "node:child_process";
 import type { Context } from "../types/index.js";
 import { readFile } from "node:fs/promises";
 import http from "node:http";
 import { join, resolve } from "node:path";
-import process, { cwd, env } from "node:process";
+import process, { cwd, env, exit } from "node:process";
 import { build } from "esbuild";
 import { emptyDirSync, outputFile, outputFileSync, outputJSON, pathExists } from "fs-extra/esm";
 import { globbySync } from "globby";
@@ -21,18 +20,12 @@ export default class Test extends Base {
   private runner?: ZoteroRunner;
 
   private _server?: http.Server;
-  private _process?: ChildProcess;
-
-  private _testPluginRef: string;
-  private _testPluginID: string;
 
   constructor(ctx: Context) {
     super(ctx);
     env.NODE_ENV ??= "test";
 
     this.builder = new Build(ctx);
-    this._testPluginRef = `${ctx.namespace}-test`;
-    this._testPluginID = `${this._testPluginRef}@only-for-testing.com`;
 
     if (isCI) {
       this.ctx.test.exitOnFinish = true;
@@ -54,7 +47,7 @@ export default class Test extends Base {
     await this.builder.run();
     await this.ctx.hooks.callHook("test:prebuild", this.ctx);
 
-    this.logger.newLine();
+    this.logger.clear();
 
     await this.startTestServer();
     await this.ctx.hooks.callHook("test:listen", this.ctx);
@@ -80,12 +73,12 @@ export default class Test extends Base {
   async createManifest() {
     const manifest = {
       manifest_version: 2,
-      name: this._testPluginRef,
+      name: this.testPluginRef,
       version: "0.0.1",
       description: "Test suite for the Zotero plugin. This is a runtime-generated plugin only for testing purposes.",
       applications: {
         zotero: {
-          id: `${this._testPluginRef}@only-for-testing.com`,
+          id: this.testPluginID,
           update_url: "https://invalid.com",
           // strict_min_version: "*.*.*",
           strict_max_version: "999.*.*",
@@ -93,7 +86,7 @@ export default class Test extends Base {
       },
     };
     await outputJSON(`${this.testPluginDir}/manifest.json`, manifest, { spaces: 2 });
-    this.logger.success("Saved manifest.json for test");
+    this.logger.tip("Saved manifest.json for test");
   }
 
   async createBootstrap() {
@@ -113,7 +106,7 @@ async function startup({ id, version, resourceURI, rootURI }, reason) {
   ].getService(Components.interfaces.amIAddonManagerStartup);
   const manifestURI = Services.io.newURI(rootURI + "manifest.json");
   chromeHandle = aomStartup.registerChrome(manifestURI, [
-    ["content", "${this._testPluginRef}", rootURI + "content/"],
+    ["content", "${this.testPluginRef}", rootURI + "content/"],
   ]);
 
   launchTests().catch((error) => {
@@ -173,7 +166,7 @@ async function launchTests() {
 
   Services.ww.openWindow(
     null,
-    "chrome://${this._testPluginRef}/content/index.xhtml",
+    "chrome://${this.testPluginRef}/content/index.xhtml",
     "${this.ctx.namespace}-test",
     "chrome,centerscreen,resizable=yes",
     {}
@@ -201,7 +194,7 @@ function waitUtilAsync(condition, interval = 100, timeout = 1e4) {
 `;
 
     outputFileSync(`${this.testPluginDir}/bootstrap.js`, code);
-    this.logger.success("Saved bootstrap.js for test");
+    this.logger.tip("Saved bootstrap.js for test");
   }
 
   async createTestResources() {
@@ -241,7 +234,7 @@ function waitUtilAsync(condition, interval = 100, timeout = 1e4) {
 </html>
 `;
     await outputFile(`${this.testPluginDir}/content/index.xhtml`, html);
-    this.logger.success("Saved test resources");
+    this.logger.tip("Saved test resources");
   }
 
   async bundleTests() {
@@ -255,8 +248,7 @@ function waitUtilAsync(condition, interval = 100, timeout = 1e4) {
       }
 
       await build({
-        entryPoints:
-          [resolve(`${dir}/**/*.spec.js`), resolve(`${dir}/**/*.spec.ts`)],
+        entryPoints: globbySync(`${dir}/**/*.spec.{js,ts}`),
         outdir: this.testBuildDir,
         bundle: true,
         target: "firefox115",
@@ -430,7 +422,7 @@ mocha.run();
     // Save the concatenated test code to a single file
     await outputFile(`${this.testPluginDir}/content/index.spec.js`, testCode);
 
-    this.logger.success(`Injected ${testFiles.length} test files`);
+    this.logger.tip(`Injected ${testFiles.length} test files`);
   }
 
   async startTestServer() {
@@ -476,7 +468,7 @@ mocha.run();
     // Start the server
     const PORT = this.ctx.test.port || 9876;
     this._server.listen(PORT, () => {
-      this.logger.success(`Server is listening on http://localhost:${PORT}`);
+      this.logger.tip(`Server is listening on http://localhost:${PORT}`);
     });
   }
 
@@ -545,7 +537,7 @@ mocha.run();
         id: this.ctx.id,
         sourceDir: join(this.ctx.dist, "addon"),
       }, {
-        id: this._testPluginID,
+        id: this.testPluginID,
         sourceDir: this.testPluginDir,
       }],
       devtools: this.ctx.server.devtools,
@@ -556,45 +548,57 @@ mocha.run();
     await this.runner.run();
   }
 
-  async exit(status = 0) {
+  exit = (code?: string | number) => {
     this._server?.close();
+    this.runner?.exit();
 
-    await this.ctx.hooks.callHook("test:done", this.ctx);
+    this.ctx.hooks.callHook("test:exit", this.ctx);
 
-    if (status === 0) {
-      this.logger.success("Test run completed successfully");
-      process.exit(0);
+    if (code === 1) {
+      this.logger.error("Test run failed");
+      exit(1);
+    }
+    else if (code === "SIGINT") {
+      this.logger.info("Tester shutdown by user request");
+      exit();
     }
     else {
-      this.logger.error("Test run failed");
-      this._process?.kill();
-      process.exit(status);
+      this.logger.success("Test run completed successfully");
+      exit();
     }
-  }
+  };
 
-  get zoteroBinPath() {
+  private get zoteroBinPath() {
     if (!env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH)
       throw new Error("No Zotero Found.");
     return env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH;
   }
 
-  get profilePath() {
+  private get profilePath() {
     return `${this.ctx.dist}/testTmp/profile`;
   }
 
-  get dataDir() {
+  private get dataDir() {
     return `${this.ctx.dist}/testTmp/data`;
   }
 
-  get testBuildDir() {
+  private get testBuildDir() {
     return `${this.ctx.dist}/testTmp/build`;
   }
 
-  get testPluginDir() {
+  private get testPluginDir() {
     return `${this.ctx.dist}/testTmp/resource`;
   }
 
-  get prefs() {
+  private get testPluginRef() {
+    return `${this.ctx.namespace}-test`;
+  }
+
+  private get testPluginID() {
+    return `${this.testPluginRef}@only-for-testing.com`;
+  }
+
+  private get prefs() {
     const defaultPref = {
       "extensions.experiments.enabled": true,
       "extensions.autoDisableScopes": 0,

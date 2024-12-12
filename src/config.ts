@@ -179,7 +179,7 @@ const defaultConfig = {
     hooks: {},
   },
   test: {
-    entries: "test/",
+    entries: "test",
     prefs: {},
     mocha: {
       timeout: 10000,

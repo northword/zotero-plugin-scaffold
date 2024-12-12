@@ -11,8 +11,10 @@ import Build from "./builder.js";
 export default class Serve extends Base {
   private builder: Build;
   private runner?: ZoteroRunner;
+
   private _zoteroBinPath?: string;
   private _profilePath?: string;
+
   constructor(ctx: Context) {
     super(ctx);
     process.env.NODE_ENV ??= "development";
