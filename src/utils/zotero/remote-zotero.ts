@@ -211,7 +211,22 @@ export class RemoteFirefox {
       return addon;
     }
     else {
+      /**
+       * {
+       *   "from": "server1.conn0.webExtensionDescriptor8",
+       *   "requestTypes": [
+       *     "reload",
+       *     "terminateBackgroundScript",
+       *     "connect",
+       *     "getTarget",
+       *     "reloadDescriptor",
+       *     "getWatcher"
+       *   ]
+       * }
+       *
+       */
       const response = await this.addonRequest(addon, "requestTypes");
+      // logger.debug("this.addonRequest(addon, 'requestTypes')", response);
 
       if (!response.requestTypes.includes("reload")) {
         const supportedRequestTypes = JSON.stringify(response.requestTypes);
@@ -230,6 +245,8 @@ export class RemoteFirefox {
 
   async reloadAddon(addonId: string) {
     const addon = await this.getInstalledAddon(addonId);
+    // logger.debug(`Reload addon: ${JSON.stringify(addon)}`);
+    // Reload addon: {"actor":"server1.conn0.webExtensionDescriptor8","debuggable":true,"hidden":false,"iconURL":"file:///D:/Code/Zotero/zotero-format-metadata/build/addon/content/icons/favicon@0.5x.png","id":"zotero-format-metadata@northword.cn","isSystem":false,"isWebExtension":true,"manifestURL":"moz-extension://d6d93075-0004-4850-b421-30347a44928c/manifest.json","name":"Linter for Zotero","temporarilyInstalled":true,"traits":{"supportsReloadDescriptor":true,"watcher":true},"url":"file:///D:/Code/Zotero/zotero-format-metadata/build/addon/","warnings":[]}
     await this.checkForAddonReloading(addon);
     await this.addonRequest(addon, "reload");
     logger.success(

@@ -28,6 +28,21 @@ import { Buffer } from "node:buffer";
 import EventEmitter from "node:events";
 import net from "node:net";
 
+export const DEFAULT_PORT = 6000;
+export const DEFAULT_HOST = "127.0.0.1";
+
+const UNSOLICITED_EVENTS = new Set([
+  "tabNavigated",
+  "styleApplied",
+  "propertyChange",
+  "networkEventUpdate",
+  "networkEvent",
+  "propertyChange",
+  "newMutations",
+  "frameUpdate",
+  "tabListChanged",
+]);
+
 interface Message {
   from?: string;
   type?: string;
@@ -86,7 +101,7 @@ function parseMessage(
 export class MessagingClient extends EventEmitter {
   private incomingData: Buffer = Buffer.alloc(0);
   private pendingRequests: Array<{ request: any; deferred: Deferred }> = [];
-  private readonly activeRequests = new Map<string, Deferred>();
+  private activeRequests = new Map<string, Deferred>();
   private connection?: net.Socket;
 
   constructor() {
@@ -156,9 +171,11 @@ export class MessagingClient extends EventEmitter {
       ({ request, deferred }: { request: { to: string }; deferred: Deferred }) => {
         if (this.activeRequests.has(request.to))
           return true;
+
         if (!this.connection) {
           throw new Error("RDP connection closed");
         }
+
         try {
           const messageString = `${
             Buffer.from(JSON.stringify(request)).length
@@ -210,27 +227,43 @@ export class MessagingClient extends EventEmitter {
 
   private handleMessage(message: Message): void {
     if (!message.from) {
-      this.emit("rdp-error", message);
+      if (message.error) {
+        this.emit("rdp-error", message);
+        return;
+      }
+
+      this.emit(
+        "error",
+        new Error(`Received an RDP message without a sender actor: ${JSON.stringify(message)}`),
+      );
       return;
     }
 
-    const deferred = this.activeRequests.get(message.from);
-    if (deferred) {
+    if (message.type && UNSOLICITED_EVENTS.has(message.type)) {
+      this.emit("unsolicited-event", message);
+      return;
+    }
+
+    console.log("activeRequests: ", this.activeRequests);
+    console.log("message: ", message);
+
+    if (this.activeRequests.has(message.from)) {
+      const deferred = this.activeRequests.get(message.from);
       this.activeRequests.delete(message.from);
       if (message.error) {
-        deferred.reject(message);
+        deferred?.reject(message);
       }
       else {
-        deferred.resolve(message);
+        deferred?.resolve(message);
       }
       this.flushPendingRequests();
+      return;
     }
-    else {
-      this.emit(
-        "error",
-        new Error(`Received unexpected message:\n ${JSON.stringify(message)}`),
-      );
-    }
+
+    this.emit(
+      "error",
+      new Error(`Received unexpected message:\n ${JSON.stringify(message)}`),
+    );
   }
 
   onError(error: Error): void {

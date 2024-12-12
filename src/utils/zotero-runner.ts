@@ -7,6 +7,7 @@ import { outputFileSync, outputJSONSync, readJSONSync, removeSync } from "fs-ext
 import { isLinux, isMacOS, isWindows } from "std-env";
 import { Log } from "./log.js";
 import { isRunning } from "./process.js";
+import { prefs } from "./zotero/preference.js";
 import { findFreeTcpPort, RemoteFirefox } from "./zotero/remote-zotero.js";
 
 const logger = new Log();
@@ -65,6 +66,9 @@ export class ZoteroRunner {
     }
 
     // Setup prefs.js
+    const defaultPrefs = Object.entries(prefs).map(([key, value]) => {
+      return `user_pref("${key}", ${JSON.stringify(value)});`;
+    });
     const customPrefs = Object.entries(this.options.customPrefs || []).map(([key, value]) => {
       return `user_pref("${key}", ${JSON.stringify(value)});`;
     });
@@ -86,7 +90,7 @@ export class ZoteroRunner {
         return line;
       });
     }
-    const updatedPrefs = [...exsitedPrefs, ...customPrefs].join("\n");
+    const updatedPrefs = [...defaultPrefs, ...exsitedPrefs, ...customPrefs].join("\n");
     outputFileSync(prefsPath, updatedPrefs, "utf-8");
     logger.debug("The <profile>/prefs.js has been modified.");
 
@@ -98,25 +102,34 @@ export class ZoteroRunner {
 
   private async startZoteroInstance() {
     // Build args
-    let args: string[] = ["--purgecaches"];
+    let args: string[] = ["--purgecaches", "no-remote"];
     if (this.options.profilePath) {
       args.push("-profile", this.options.profilePath);
     }
     if (this.options.devtools) {
       args.push("--jsdebugger");
     }
+    if (this.options.binaryArgs) {
+      args = [...args, ...this.options.binaryArgs];
+    }
 
     // support for starting the remote debugger server
     const remotePort = await findFreeTcpPort();
     args.push("-start-debugger-server", String(remotePort));
 
-    if (this.options.binaryArgs) {
-      args = [...args, ...this.options.binaryArgs];
-    }
+    const defaultFirefoxEnv = {
+      XPCOM_DEBUG_BREAK: "stack",
+      NS_TRACE_MALLOC_DISABLE_STACKS: "1",
+    };
 
     // Using `spawn` so we can stream logging as they come in, rather than
     // buffer them up until the end, which can easily hit the max buffer size.
-    this.zotero = spawn(this.options.binaryPath, args);
+    this.zotero = spawn(this.options.binaryPath, args, {
+      env: {
+        ...env,
+        ...defaultFirefoxEnv,
+      },
+    });
 
     // Handle Zotero log, necessary on macOS
     this.zotero.stdout?.on("data", (_data) => {});
