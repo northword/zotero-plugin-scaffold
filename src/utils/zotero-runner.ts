@@ -1,6 +1,6 @@
 import type { ChildProcessWithoutNullStreams } from "node:child_process";
 import { execSync, spawn } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { env } from "node:process";
 import { outputFileSync, outputJSONSync, readJSONSync, removeSync } from "fs-extra/esm";
@@ -61,14 +61,19 @@ export class ZoteroRunner {
    */
   private async setupProfileDir() {
     if (!this.options.profilePath) {
-      // 创建 profile
+      // Create profile
     }
 
     // Setup prefs.js
+    const customPrefs = Object.entries(this.options.customPrefs || []).map(([key, value]) => {
+      return `user_pref("${key}", ${JSON.stringify(value)});`;
+    });
+
+    let exsitedPrefs: string[] = [];
     const prefsPath = join(this.options.profilePath, "prefs.js");
     if (existsSync(prefsPath)) {
       const PrefsLines = readFileSync(prefsPath, "utf-8").split("\n");
-      const filteredLines = PrefsLines.map((line: string) => {
+      exsitedPrefs = PrefsLines.map((line: string) => {
         if (
           line.includes("extensions.lastAppBuildId")
           || line.includes("extensions.lastAppVersion")
@@ -80,10 +85,10 @@ export class ZoteroRunner {
         }
         return line;
       });
-      const updatedPrefs = filteredLines.join("\n");
-      writeFileSync(prefsPath, updatedPrefs, "utf-8");
-      logger.debug("The <profile>/prefs.js has been modified.");
     }
+    const updatedPrefs = [...exsitedPrefs, ...customPrefs].join("\n");
+    outputFileSync(prefsPath, updatedPrefs, "utf-8");
+    logger.debug("The <profile>/prefs.js has been modified.");
 
     // Install plugins in proxy file mode
     if (this.options.asProxy) {

@@ -645,7 +645,7 @@ export interface TestConfig {
    *
    * 如果设置，测试将等待函数返回 true 后再运行测试。
    *
-   * @default "()=>true"
+   * @default "() => true"
    *
    * @example
    * ```js

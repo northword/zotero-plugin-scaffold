@@ -1,53 +1,40 @@
 import type { ChildProcess } from "node:child_process";
 import type { Context } from "../types/index.js";
-import { execSync, spawn } from "node:child_process";
-import fs from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import http from "node:http";
-import { basename, join, resolve } from "node:path";
+import { join, resolve } from "node:path";
 import process, { cwd, env } from "node:process";
 import { build } from "esbuild";
-import fsExtra from "fs-extra/esm";
+import { emptyDirSync, outputFile, outputFileSync, outputJSON, pathExists } from "fs-extra/esm";
 import { globbySync } from "globby";
-import { isCI, isLinux } from "std-env";
+import { isCI } from "std-env";
 import { Xvfb } from "xvfb-ts";
 import { saveResource } from "../utils/file.js";
+import { installXvfb, installZoteroLinux } from "../utils/headless.js";
 import { toArray } from "../utils/string.js";
+import { ZoteroRunner } from "../utils/zotero-runner.js";
 import { Base } from "./base.js";
 import Build from "./builder.js";
 
 export default class Test extends Base {
   private builder: Build;
-  private _profileDir?: string;
-  private _dataDir?: string;
-  private _testPluginDir?: string;
-  private _testPluginRef: string;
-  private _testPluginID: string;
-  private _testBuildDir?: string;
+  private runner?: ZoteroRunner;
+
   private _server?: http.Server;
   private _process?: ChildProcess;
 
-  get startArgs() {
-    const args = [
-      "--purgecaches",
-      "--jsdebugger",
-      "--no-remote",
-    ];
-    if (this._dataDir)
-      args.push("--dataDir", this._dataDir);
-    if (this._profileDir)
-      args.push("--profile", this._profileDir);
-    return args;
-  }
+  private _testPluginRef: string;
+  private _testPluginID: string;
 
   constructor(ctx: Context) {
     super(ctx);
+    env.NODE_ENV ??= "test";
+
     this.builder = new Build(ctx);
     this._testPluginRef = `${ctx.namespace}-test`;
     this._testPluginID = `${this._testPluginRef}@only-for-testing.com`;
-    env.NODE_ENV ??= "test";
 
     if (isCI) {
-      this.ctx.test.abortOnFail = true;
       this.ctx.test.exitOnFinish = true;
       this.ctx.test.headless = true;
     }
@@ -57,6 +44,9 @@ export default class Test extends Base {
     // Handle interrupt signal (Ctrl+C) to gracefully terminate Zotero process
     // Must be placed at the top to prioritize registration of events to prevent web-ext interference
     process.on("SIGINT", this.exit);
+
+    // Empty dirs
+    emptyDirSync(this.ctx.dist);
 
     await this.ctx.hooks.callHook("test:init", this.ctx);
 
@@ -69,24 +59,15 @@ export default class Test extends Base {
     await this.startTestServer();
     await this.ctx.hooks.callHook("test:listen", this.ctx);
 
-    await this.prepareDir();
-
-    await this.ctx.hooks.callHook("test:mkdir", this.ctx);
-
     await this.createManifest();
-
     await this.createBootstrap();
-
     await this.createTestResources();
-
     await this.ctx.hooks.callHook("test:copyAssets", this.ctx);
 
     await this.bundleTests();
-
     await this.ctx.hooks.callHook("test:bundleTests", this.ctx);
 
     if ((isCI || this.ctx.test.headless)) {
-      await this.prepareHeadless();
       await this.startZoteroHeadless();
     }
     else {
@@ -94,53 +75,6 @@ export default class Test extends Base {
     }
 
     await this.ctx.hooks.callHook("test:run", this.ctx);
-  }
-
-  // async setupProfile
-
-  async prepareDir() {
-    const { dist } = this.ctx;
-
-    this._profileDir = resolve(`${dist}/testTmp/profile`);
-    this._dataDir = resolve(`${dist}/testTmp/data`);
-    this._testBuildDir = `${dist}/testTmp/build`;
-    // TODO: when scaffold init is implemented, can use it to create the tester plugin
-    this._testPluginDir = resolve(`${dist}/testTmp/resource`);
-
-    await fsExtra.emptyDir(this._profileDir);
-    await fsExtra.emptyDir(this._dataDir);
-    await fsExtra.emptyDir(this._testBuildDir);
-    await fsExtra.emptyDir(this._testPluginDir);
-    await fsExtra.emptyDir(join(this._testPluginDir, "content"));
-    await fsExtra.emptyDir(join(this._profileDir, "extensions"));
-
-    const addonProxyFilePath = join(this._profileDir, `extensions/${this.ctx.id}`);
-    await fs.writeFile(addonProxyFilePath, resolve(`${dist}/addon`));
-
-    const testerProxyFilePath = join(this._profileDir, `extensions/${this._testPluginID}`);
-    await fs.writeFile(testerProxyFilePath, this._testPluginDir);
-    this.logger.debug(
-      [
-        `Addon proxy file has been updated.`,
-        `  File path: ${testerProxyFilePath}`,
-        `  Addon path: ${this._testPluginDir}`,
-      ].join("\n"),
-    );
-
-    const prefs = Object.assign({ "extensions.experiments.enabled": true, "extensions.autoDisableScopes": 0,
-      // Enable remote-debugging
-      "devtools.debugger.remote-enabled": true, "devtools.debugger.remote-websocket": true, "devtools.debugger.prompt-connection": false,
-      // Inherit the default test settings from Zotero
-      "app.update.enabled": false, "extensions.zotero.sync.server.compressData": false, "extensions.zotero.automaticScraperUpdates": false, "extensions.zotero.debug.log": 5, "extensions.zotero.debug.level": 5, "extensions.zotero.debug.time": 5, "extensions.zotero.firstRun.skipFirefoxProfileAccessCheck": true, "extensions.zotero.firstRunGuidance": false, "extensions.zotero.firstRun2": false, "extensions.zotero.reportTranslationFailure": false, "extensions.zotero.httpServer.enabled": true, "extensions.zotero.httpServer.port": 23124, "extensions.zotero.httpServer.localAPI.enabled": true, "extensions.zotero.backup.numBackups": 0, "extensions.zotero.sync.autoSync": false, "extensions.zoteroMacWordIntegration.installed": true, "extensions.zoteroMacWordIntegration.skipInstallation": true, "extensions.zoteroWinWordIntegration.skipInstallation": true, "extensions.zoteroOpenOfficeIntegration.skipInstallation": true }, this.ctx.test.prefs || {});
-
-    // Write to prefs.js
-    const prefsCode = Object.entries(prefs).map(([key, value]) => {
-      return `user_pref("${key}", ${JSON.stringify(value)});`;
-    }).join("\n");
-    await fs.writeFile(join(this._profileDir, "prefs.js"), prefsCode);
-    this.logger.debug("The <profile>/prefs.js has been modified");
-
-    this.logger.success(`Prepared test directories: profile=${this._profileDir}, data=${this._dataDir}, resource=${this._testPluginDir}`);
   }
 
   async createManifest() {
@@ -158,7 +92,7 @@ export default class Test extends Base {
         },
       },
     };
-    await fs.writeFile(resolve(`${this._testPluginDir}/manifest.json`), JSON.stringify(manifest, null, 2));
+    await outputJSON(`${this.testPluginDir}/manifest.json`, manifest, { spaces: 2 });
     this.logger.success("Saved manifest.json for test");
   }
 
@@ -266,7 +200,7 @@ function waitUtilAsync(condition, interval = 100, timeout = 1e4) {
  */
 `;
 
-    await fs.writeFile(resolve(`${this._testPluginDir}/bootstrap.js`), code);
+    outputFileSync(`${this.testPluginDir}/bootstrap.js`, code);
     this.logger.success("Saved bootstrap.js for test");
   }
 
@@ -274,9 +208,10 @@ function waitUtilAsync(condition, interval = 100, timeout = 1e4) {
     const MOCHA_JS_URL = "https://cdn.jsdelivr.net/npm/mocha/mocha.js";
     // const MOCHA_CSS_URL = "https://cdn.jsdelivr.net/npm/mocha/mocha.css";
     const CHAI_JS_URL = "https://www.chaijs.com/chai.js";
-    await saveResource(MOCHA_JS_URL, resolve(`${this._testPluginDir}/content/mocha.js`));
+    await saveResource(MOCHA_JS_URL, `${this.testPluginDir}/content/mocha.js`);
     // saveResource(MOCHA_CSS_URL, resolve(`${resourceDir}/content/mocha.css`));
-    await saveResource(CHAI_JS_URL, resolve(`${this._testPluginDir}/content/chai.js`));
+    await saveResource(CHAI_JS_URL, `${this.testPluginDir}/content/chai.js`);
+
     const html = `
 <!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml">
@@ -305,8 +240,7 @@ function waitUtilAsync(condition, interval = 100, timeout = 1e4) {
 </body>
 </html>
 `;
-    await fs.writeFile(resolve(`${this._testPluginDir}/content/index.xhtml`), html);
-
+    await outputFile(`${this.testPluginDir}/content/index.xhtml`, html);
     this.logger.success("Saved test resources");
   }
 
@@ -316,30 +250,23 @@ function waitUtilAsync(condition, interval = 100, timeout = 1e4) {
     // Bundle all test files, including both JavaScript and TypeScript
     for (const dir of testDirs) {
       let tsconfigPath: string | undefined = resolve(`${dir}/tsconfig.json`);
-      if (!await fsExtra.pathExists(tsconfigPath)) {
+      if (!await pathExists(tsconfigPath)) {
         tsconfigPath = undefined;
       }
+
       await build({
         entryPoints:
           [resolve(`${dir}/**/*.spec.js`), resolve(`${dir}/**/*.spec.ts`)],
-        outdir: this._testBuildDir,
+        outdir: this.testBuildDir,
         bundle: true,
         target: "firefox115",
         tsconfig: tsconfigPath || undefined,
       });
     }
 
-    const testFiles = globbySync(`${this._testBuildDir}/**/*.spec.js`);
+    const testFiles = globbySync(`${this.testBuildDir}/**/*.spec.js`);
     // Sort the test files to ensure consistent test order
-    testFiles.sort((a, b) => {
-      const aName = basename(a);
-      const bName = basename(b);
-      if (aName < bName)
-        return -1;
-      if (aName > bName)
-        return 1;
-      return 0;
-    });
+    testFiles.sort();
 
     // Concatenate all test files into a single file
     let testCode = `
@@ -487,7 +414,7 @@ function Reporter(runner) {
 `;
 
     for (const testFile of testFiles) {
-      const code = await fs.readFile(testFile, "utf8");
+      const code = await readFile(testFile, "utf8");
       testCode += `
 // Test file: ${testFile}
 (function () {
@@ -501,7 +428,7 @@ mocha.run();
 `;
 
     // Save the concatenated test code to a single file
-    await fs.writeFile(resolve(`${this._testPluginDir}/content/index.spec.js`), testCode);
+    await outputFile(`${this.testPluginDir}/content/index.spec.js`, testCode);
 
     this.logger.success(`Injected ${testFiles.length} test files`);
   }
@@ -592,62 +519,16 @@ mocha.run();
     }
   }
 
-  async prepareHeadless() {
+  async startZoteroHeadless() {
     // Ensure xvfb installing
-    await this.installXvfb();
+    await installXvfb();
 
     // Download and Extract Zotero Beta Linux
-    await this.installZoteroLinux();
+    await installZoteroLinux();
 
     // Set Environment Variable for Zotero Bin Path
-    process.env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH = `${cwd()}/Zotero_linux-x86_64/zotero`;
-  }
+    env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH = `${cwd()}/Zotero_linux-x86_64/zotero`;
 
-  async installXvfb() {
-    this.logger.debug("Installing xvfb...");
-    if (!isLinux) {
-      this.logger.error("Unsupported platform. Please install Xvfb manually.");
-      process.exit(1);
-    }
-    try {
-      execSync("which xvfb", { stdio: "ignore" });
-    }
-    catch {
-      try {
-        const osId = execSync("cat /etc/os-release | grep '^ID='").toString();
-        if (osId.includes("ubuntu") || osId.includes("debian")) {
-          this.logger.debug("Detected Ubuntu/Debian. Installing Xvfb...");
-          execSync("sudo apt-get update && sudo apt-get install -y xvfb", { stdio: "pipe" });
-        }
-        else if (osId.includes("centos") || osId.includes("rhel")) {
-          this.logger.debug("Detected CentOS/RHEL. Installing Xvfb...");
-          execSync("sudo yum install -y xorg-x11-server-Xvfb", { stdio: "pipe" });
-        }
-        else {
-          throw new Error("Unsupported Linux distribution.");
-        }
-        this.logger.debug("Xvfb installation completed.");
-      }
-      catch (error) {
-        this.logger.error("Failed to install Xvfb:", error);
-        process.exit(1);
-      }
-    }
-  }
-
-  async installZoteroLinux() {
-    this.logger.debug("Installing Zotero...");
-    try {
-      execSync("wget -O zotero.tar.bz2 'https://www.zotero.org/download/client/dl?platform=linux-x86_64&channel=beta'", { stdio: "pipe" });
-      execSync("tar -xvf zotero.tar.bz2", { stdio: "pipe" });
-    }
-    catch (e) {
-      this.logger.error(e);
-      throw new Error("Zotero extracted failed");
-    }
-  }
-
-  async startZoteroHeadless() {
     const xvfb = new Xvfb({
       timeout: 2000,
     });
@@ -656,17 +537,23 @@ mocha.run();
   }
 
   async startZotero() {
-    const zoteroProcess = spawn(env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH!, [
-      ...this.startArgs,
-    ]);
+    this.runner = new ZoteroRunner({
+      binaryPath: this.zoteroBinPath,
+      profilePath: this.profilePath,
+      dataDir: this.dataDir,
+      plugins: [{
+        id: this.ctx.id,
+        sourceDir: join(this.ctx.dist, "addon"),
+      }, {
+        id: this._testPluginID,
+        sourceDir: this.testPluginDir,
+      }],
+      devtools: this.ctx.server.devtools,
+      binaryArgs: this.ctx.server.startArgs,
+      customPrefs: this.prefs,
+    });
 
-    // Necessary on macOS
-    zoteroProcess.stdout?.on("data", (_data) => {});
-
-    zoteroProcess.on("close", () => this.exit());
-
-    this._process = zoteroProcess;
-    return zoteroProcess;
+    await this.runner.run();
   }
 
   async exit(status = 0) {
@@ -683,5 +570,60 @@ mocha.run();
       this._process?.kill();
       process.exit(status);
     }
+  }
+
+  get zoteroBinPath() {
+    if (!env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH)
+      throw new Error("No Zotero Found.");
+    return env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH;
+  }
+
+  get profilePath() {
+    return `${this.ctx.dist}/testTmp/profile`;
+  }
+
+  get dataDir() {
+    return `${this.ctx.dist}/testTmp/data`;
+  }
+
+  get testBuildDir() {
+    return `${this.ctx.dist}/testTmp/build`;
+  }
+
+  get testPluginDir() {
+    return `${this.ctx.dist}/testTmp/resource`;
+  }
+
+  get prefs() {
+    const defaultPref = {
+      "extensions.experiments.enabled": true,
+      "extensions.autoDisableScopes": 0,
+      // Enable remote-debugging
+      "devtools.debugger.remote-enabled": true,
+      "devtools.debugger.remote-websocket": true,
+      "devtools.debugger.prompt-connection": false,
+      // Inherit the default test settings from Zotero
+      "app.update.enabled": false,
+      "extensions.zotero.sync.server.compressData": false,
+      "extensions.zotero.automaticScraperUpdates": false,
+      "extensions.zotero.debug.log": 5,
+      "extensions.zotero.debug.level": 5,
+      "extensions.zotero.debug.time": 5,
+      "extensions.zotero.firstRun.skipFirefoxProfileAccessCheck": true,
+      "extensions.zotero.firstRunGuidance": false,
+      "extensions.zotero.firstRun2": false,
+      "extensions.zotero.reportTranslationFailure": false,
+      "extensions.zotero.httpServer.enabled": true,
+      "extensions.zotero.httpServer.port": 23124,
+      "extensions.zotero.httpServer.localAPI.enabled": true,
+      "extensions.zotero.backup.numBackups": 0,
+      "extensions.zotero.sync.autoSync": false,
+      "extensions.zoteroMacWordIntegration.installed": true,
+      "extensions.zoteroMacWordIntegration.skipInstallation": true,
+      "extensions.zoteroWinWordIntegration.skipInstallation": true,
+      "extensions.zoteroOpenOfficeIntegration.skipInstallation": true,
+    };
+
+    return Object.assign(defaultPref, this.ctx.test.prefs || {});
   }
 }
