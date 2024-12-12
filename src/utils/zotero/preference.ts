@@ -1,3 +1,21 @@
+/*
+ * This file is part of Zotero Plugin Scaffold, distributed under the terms of
+ * the GNU Affero General Public License (AGPL-3.0-or-later).
+ *
+ * Portions of this file are derived from code originally licensed under the
+ * Mozilla Public License, Version 2.0 (MPL-2.0). The original MPL-2.0 licensed
+ * code can be found at:
+ * - WebExt (MPL-2.0): https://github.com/mozilla/web-ext/blob/master/src/firefox/rdp-client.js.
+ *
+ * Modifications to the original MPL-2.0 code are distributed under
+ * the terms of the AGPL-3.0-or-later license. As required by the MPL-2.0, this file
+ * retains its original license for the derived portions.
+ *
+ * SPDX-License-Identifier: AGPL-3.0-or-later AND MPL-2.0
+ *
+ * For details, see the LICENSE file in the root of this project.
+ */
+
 export const nonOverridablePreferences = [
   "devtools.debugger.remote-enabled",
   "devtools.debugger.prompt-connection",
