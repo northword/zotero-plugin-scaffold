@@ -293,7 +293,8 @@ export class MessagingClient extends EventEmitter {
       return;
     }
 
-    // Petch 2024/12/12: ignore this response, otherwish will error:
+    // Dirty Patch by Northword
+    // Ignore this response, otherwish will error:
     // Error: Received unexpected message:
     //   {"from":"root","type":"addonListChanged"}
     if (message.type === "addonListChanged")

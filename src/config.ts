@@ -33,6 +33,7 @@ export async function loadConfig(overrides?: OverrideConfig): Promise<Context> {
 }
 
 function resolveConfig(config: Config): Context {
+  // Sync log level to env so that logs in utils are also output as expected by log level
   env.ZOTERO_PLUGIN_LOG_LEVEL = config.logLevel;
   const logger = new Log(config);
 
