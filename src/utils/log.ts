@@ -1,5 +1,5 @@
 import type { Config, Context } from "../types/index.js";
-import process from "node:process";
+import process, { env } from "node:process";
 import readline from "node:readline";
 import chalk from "chalk";
 import { isPlainObject } from "es-toolkit";
@@ -22,12 +22,14 @@ enum LOG_LEVEL {
 export class Log {
   private logLevel: number;
   constructor(config?: Config) {
-    if (!config || isDebug) {
+    if (isDebug)
       this.logLevel = LOG_LEVEL.trace;
-    }
-    else {
+    else if (config)
       this.logLevel = LOG_LEVEL[config.logLevel];
-    }
+    else if (env.ZOTERO_PLUGIN_LOG_LEVEL)
+      this.logLevel = LOG_LEVEL[env.ZOTERO_PLUGIN_LOG_LEVEL as Config["logLevel"]];
+    else
+      this.logLevel = LOG_LEVEL.trace;
   }
 
   private formatArgs(arg: any): string {

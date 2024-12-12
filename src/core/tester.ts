@@ -64,6 +64,8 @@ export default class Test extends Base {
     await this.builder.run();
     await this.ctx.hooks.callHook("test:prebuild", this.ctx);
 
+    this.logger.newLine();
+
     await this.startTestServer();
     await this.ctx.hooks.callHook("test:listen", this.ctx);
 
@@ -93,6 +95,8 @@ export default class Test extends Base {
 
     await this.ctx.hooks.callHook("test:run", this.ctx);
   }
+
+  // async setupProfile
 
   async prepareDir() {
     const { dist } = this.ctx;
@@ -600,6 +604,7 @@ mocha.run();
   }
 
   async installXvfb() {
+    this.logger.debug("Installing xvfb...");
     if (!isLinux) {
       this.logger.error("Unsupported platform. Please install Xvfb manually.");
       process.exit(1);
@@ -631,6 +636,7 @@ mocha.run();
   }
 
   async installZoteroLinux() {
+    this.logger.debug("Installing Zotero...");
     try {
       execSync("wget -O zotero.tar.bz2 'https://www.zotero.org/download/client/dl?platform=linux-x86_64&channel=beta'", { stdio: "pipe" });
       execSync("tar -xvf zotero.tar.bz2", { stdio: "pipe" });
@@ -642,7 +648,9 @@ mocha.run();
   }
 
   async startZoteroHeadless() {
-    const xvfb = new Xvfb();
+    const xvfb = new Xvfb({
+      timeout: 2000,
+    });
     await xvfb.start();
     await this.startZotero();
   }
