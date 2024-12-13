@@ -103,10 +103,7 @@ export default class Serve extends Base {
 
   async reload() {
     this.logger.tip("Reloading...");
-    if (this.ctx.server.asProxy)
-      await this.runner?.reloadPluginByZToolkit(this.ctx.id, this.ctx.name, this.ctx.version);
-    else
-      await this.runner?.reloadAllPlugins();
+    await this.runner?.reloadAllPlugins();
     await this.ctx.hooks.callHook("serve:onReloaded", this.ctx);
   }
 

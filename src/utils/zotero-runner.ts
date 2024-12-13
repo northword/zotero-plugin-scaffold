@@ -3,6 +3,7 @@ import { execSync, spawn } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { env } from "node:process";
+import { delay } from "es-toolkit";
 import { outputFileSync, outputJSONSync, readJSONSync, removeSync } from "fs-extra/esm";
 import { isLinux, isMacOS, isWindows } from "std-env";
 import { Log } from "./log.js";
@@ -96,7 +97,7 @@ export class ZoteroRunner {
 
     // Install plugins in proxy file mode
     if (this.options.asProxy) {
-      await this.installPluginsByProxyMode();
+      await this.installProxyPlugins();
     }
   }
 
@@ -153,7 +154,7 @@ export class ZoteroRunner {
     }
   }
 
-  private async installPluginByProxyMode(id: string, sourceDir: string) {
+  private async installProxyPlugin(id: string, sourceDir: string) {
     // Create a proxy file
     const addonProxyFilePath = join(this.options.profilePath, `extensions/${id}`);
     const buildPath = resolve(sourceDir);
@@ -194,17 +195,17 @@ export class ZoteroRunner {
     }
   }
 
-  private async installPluginsByProxyMode() {
+  private async installProxyPlugins() {
     for (const { id, sourceDir } of this.options.plugins) {
-      await this.installPluginByProxyMode(id, sourceDir);
+      await this.installProxyPlugin(id, sourceDir);
     }
   }
 
-  public async reloadPluginById(id: string) {
+  public async reloadTemporaryPluginById(id: string) {
     await this.remoteFirefox.reloadAddon(id);
   }
 
-  public async reloadPluginBySourceDir(sourceDir: string) {
+  public async reloadTemporaryPluginBySourceDir(sourceDir: string) {
     const addonId = this.options.plugins.find(p => p.sourceDir === sourceDir)?.id;
 
     if (!addonId) {
@@ -230,7 +231,16 @@ export class ZoteroRunner {
     return { sourceDir, reloadError: undefined };
   }
 
-  public async reloadPluginByZToolkit(id: string, name: string, version: string) {
+  private async reloadAllTemporaryPlugins() {
+    for (const { sourceDir } of this.options.plugins) {
+      const res = await this.reloadTemporaryPluginBySourceDir(sourceDir);
+      if (res.reloadError instanceof Error) {
+        logger.error(res.reloadError);
+      }
+    }
+  }
+
+  public async reloadProxyPluginByZToolkit(id: string, name: string, version: string) {
     const reloadScript = `
     (async () => {
     Services.obs.notifyObservers(null, "startupcache-invalidate", null);
@@ -257,19 +267,18 @@ export class ZoteroRunner {
 
   // Do not use this method if possible,
   // as frequent execSync can cause Zotero to crash.
-  public async reloadAllPluginsByZToolkit() {
+  private async reloadAllProxyPlugins() {
     for (const { id } of this.options.plugins) {
-      await this.reloadPluginByZToolkit(id, id, id);
+      await this.reloadProxyPluginByZToolkit(id, id, id);
+      await delay(2000);
     }
   }
 
   public async reloadAllPlugins() {
-    for (const { sourceDir } of this.options.plugins) {
-      const res = await this.reloadPluginBySourceDir(sourceDir);
-      if (res.reloadError instanceof Error) {
-        logger.error(res.reloadError);
-      }
-    }
+    if (this.options.asProxy)
+      await this.reloadAllProxyPlugins();
+    else
+      await this.reloadAllTemporaryPlugins();
   }
 
   public exit() {
