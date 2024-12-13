@@ -4,7 +4,7 @@ import { join } from "node:path";
 import process, { env, exit } from "node:process";
 import chokidar from "chokidar";
 import { debounce } from "es-toolkit";
-import { killZotero, ZoteroRunner } from "../utils/zotero-runner.js";
+import { ZoteroRunner } from "../utils/zotero-runner.js";
 import { Base } from "./base.js";
 import Build from "./builder.js";
 
@@ -48,6 +48,7 @@ export default class Serve extends Base {
     // start Zotero
     await this.runner.run();
     this.runner.zotero?.on("exit", this.onZoteroExit);
+    this.runner.zotero?.on("close", this.onZoteroExit);
 
     // watch
     await this.watch();
@@ -115,12 +116,10 @@ export default class Serve extends Base {
     process.exit();
   };
 
-  get onZoteroExit() {
-    return (_code?: number | null, _signal?: any) => {
-      this.logger.info(`Zotero terminated.`);
-      exit();
-    };
-  }
+  private onZoteroExit = (_code?: number | null, _signal?: any) => {
+    this.logger.info(`Zotero terminated.`);
+    exit();
+  };
 
   get zoteroBinPath() {
     if (this._zoteroBinPath)
