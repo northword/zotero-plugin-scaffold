@@ -561,7 +561,7 @@ export interface TestConfig {
    * 这些目录中的所有 `*.spec.js` 文件将被执行。
    * 文件将按字母顺序排序。
    *
-   * @default "test/"
+   * @default "test"
    */
   entries: string | string[];
 
@@ -645,7 +645,7 @@ export interface TestConfig {
    *
    * 如果设置，测试将等待函数返回 true 后再运行测试。
    *
-   * @default "()=>true"
+   * @default "() => true"
    *
    * @example
    * ```js
@@ -661,11 +661,10 @@ interface TestHooks {
   "test:init": (ctx: Context) => void | Promise<void>;
   "test:prebuild": (ctx: Context) => void | Promise<void>;
   "test:listen": (ctx: Context) => void | Promise<void>;
-  "test:mkdir": (ctx: Context) => void | Promise<void>;
   "test:copyAssets": (ctx: Context) => void | Promise<void>;
   "test:bundleTests": (ctx: Context) => void | Promise<void>;
   "test:run": (ctx: Context) => void | Promise<void>;
-  "test:done": (ctx: Context) => void | Promise<void>;
+  "test:exit": (ctx: Context) => void;
 }
 
 export interface Hooks extends BuildHooks, ServeHooks, ReleaseHooks, TestHooks {}

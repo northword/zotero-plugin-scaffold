@@ -3,16 +3,14 @@ import type { Manifest } from "../types/manifest.js";
 import type { UpdateJSON } from "../types/update-json.js";
 import path from "node:path";
 import { env } from "node:process";
+import AdmZip from "adm-zip";
 import chalk from "chalk";
 import { toMerged } from "es-toolkit";
 import { build as buildAsync } from "esbuild";
 import fs from "fs-extra";
 import { globbySync } from "globby";
 import { replaceInFileSync } from "replace-in-file";
-import webext from "web-ext";
 import { generateHashSync } from "../utils/crypto.js";
-import { patchWebExtLogger } from "../utils/log.js";
-import { getValidatedManifest } from "../utils/manifest.js";
 import { dateFormat, toArray } from "../utils/string.js";
 import { Base } from "./base.js";
 
@@ -306,17 +304,16 @@ export default class Build extends Base {
   }
 
   async pack() {
-    await patchWebExtLogger(this.ctx);
-
     const { dist, xpiName } = this.ctx;
 
-    await webext.cmd.build({
-      sourceDir: `${dist}/addon`,
-      artifactsDir: dist,
-      filename: `${xpiName}.xpi`,
-      overwriteDest: true,
-    }, {
-      manifestData: getValidatedManifest(),
+    const zip = new AdmZip();
+
+    const paths = globbySync("**", { cwd: `${dist}/addon`, dot: true });
+    paths.forEach((relativePath) => {
+      const absolutePath = path.resolve(`${dist}/addon`, relativePath);
+      zip.addLocalFile(absolutePath, path.dirname(relativePath));
     });
+
+    zip.writeZip(`${dist}/${xpiName}.xpi`);
   }
 }

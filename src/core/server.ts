@@ -1,17 +1,20 @@
-import type { Context } from "../../types/index.js";
-import type { ServeBase } from "./base.js";
-import process from "node:process";
+import type { Context } from "../types/index.js";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import process, { env, exit } from "node:process";
 import chokidar from "chokidar";
 import { debounce } from "es-toolkit";
-import { Base } from "../base.js";
-import Build from "../builder.js";
-import { killZotero } from "./kill-zotero.js";
-import RunnerProxy from "./runner-proxy.js";
-import RunnerWebExt from "./runner-web-ext.js";
+import { ZoteroRunner } from "../utils/zotero-runner.js";
+import { Base } from "./base.js";
+import Build from "./builder.js";
 
 export default class Serve extends Base {
   private builder: Build;
-  private runner?: ServeBase;
+  private runner?: ZoteroRunner;
+
+  private _zoteroBinPath?: string;
+  private _profilePath?: string;
+
   constructor(ctx: Context) {
     super(ctx);
     process.env.NODE_ENV ??= "development";
@@ -23,12 +26,18 @@ export default class Serve extends Base {
     // Must be placed at the top to prioritize registration of events to prevent web-ext interference
     process.on("SIGINT", this.exit);
 
-    if (this.ctx.server.asProxy) {
-      this.runner = new RunnerProxy(this.ctx);
-    }
-    else {
-      this.runner = new RunnerWebExt(this.ctx);
-    }
+    this.runner = new ZoteroRunner({
+      binaryPath: this.zoteroBinPath,
+      profilePath: this.profilePath,
+      dataDir: this.dataDir,
+      plugins: [{
+        id: this.ctx.id,
+        sourceDir: join(this.ctx.dist, "addon"),
+      }],
+      asProxy: this.ctx.server.asProxy,
+      devtools: this.ctx.server.devtools,
+      binaryArgs: this.ctx.server.startArgs,
+    });
 
     await this.ctx.hooks.callHook("serve:init", this.ctx);
 
@@ -38,6 +47,8 @@ export default class Serve extends Base {
 
     // start Zotero
     await this.runner.run();
+    this.runner.zotero?.on("exit", this.onZoteroExit);
+    this.runner.zotero?.on("close", this.onZoteroExit);
 
     // watch
     await this.watch();
@@ -93,7 +104,7 @@ export default class Serve extends Base {
 
   async reload() {
     this.logger.tip("Reloading...");
-    await this.runner?.reload();
+    await this.runner?.reloadAllPlugins();
     await this.ctx.hooks.callHook("serve:onReloaded", this.ctx);
   }
 
@@ -101,10 +112,38 @@ export default class Serve extends Base {
   exit = () => {
     this.logger.info("Server shutdown by user request.");
     this.runner?.exit();
-    // Sometimes `runner.exit()` cannot kill the Zotero,
-    // so we force kill it.
-    killZotero();
     this.ctx.hooks.callHook("serve:exit", this.ctx);
     process.exit();
   };
+
+  private onZoteroExit = (_code?: number | null, _signal?: any) => {
+    this.logger.info(`Zotero terminated.`);
+    exit();
+  };
+
+  get zoteroBinPath() {
+    if (this._zoteroBinPath)
+      return this._zoteroBinPath;
+
+    this._zoteroBinPath = env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH;
+    if (!this._zoteroBinPath || !existsSync(this._zoteroBinPath))
+      throw new Error("The Zotero binary not found.");
+
+    return this._zoteroBinPath;
+  }
+
+  get profilePath() {
+    if (this._profilePath)
+      return this._profilePath;
+
+    this._profilePath = env.ZOTERO_PLUGIN_PROFILE_PATH;
+    if (!this._profilePath || !existsSync(this._profilePath))
+      throw new Error("The Zotero profile not found.");
+
+    return this._profilePath;
+  }
+
+  get dataDir() {
+    return env.ZOTERO_PLUGIN_DATA_DIR ?? "";
+  }
 }

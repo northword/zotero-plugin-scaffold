@@ -1,5 +1,6 @@
 import type { Config, Context, Hooks, OverrideConfig, UserConfig } from "./types/index.js";
 import path from "node:path";
+import { env } from "node:process";
 import { loadConfig as c12 } from "c12";
 import { kebabCase, mapValues } from "es-toolkit";
 import fs from "fs-extra";
@@ -32,6 +33,8 @@ export async function loadConfig(overrides?: OverrideConfig): Promise<Context> {
 }
 
 function resolveConfig(config: Config): Context {
+  // Sync log level to env so that logs in utils are also output as expected by log level
+  env.ZOTERO_PLUGIN_LOG_LEVEL = config.logLevel;
   const logger = new Log(config);
 
   // Load user's package.json
@@ -177,7 +180,7 @@ const defaultConfig = {
     hooks: {},
   },
   test: {
-    entries: "test/",
+    entries: "test",
     prefs: {},
     mocha: {
       timeout: 10000,
