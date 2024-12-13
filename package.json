@@ -70,7 +70,6 @@
   },
   "dependencies": {
     "@commander-js/extra-typings": "^12.1.0",
-    "@inquirer/prompts": "^7.2.0",
     "adm-zip": "^0.5.16",
     "bumpp": "^9.9.1",
     "c12": "^2.0.1",
