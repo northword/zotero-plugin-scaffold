@@ -296,18 +296,22 @@ type _PrefsMap = {
 
 type FullKey<T extends keyof _PrefsMap> = \`${this.ctx.build.prefs.prefix}.\${T}\`;
 
-declare const Zotero: {
-  Prefs: _ZoteroTypes.Prefs & {
+type PrefsMap = {
+  [prop in keyof _PrefsMap as FullKey<prop>]: _PrefsMap[prop];
+};
+
+declare namespace _ZoteroTypes {
+  interface Prefs extends _ZoteroTypes.Prefs {
     get: <T extends keyof PrefsMap>(key: T) => PrefsMap[T];
-    set: <T extends keyof PrefsMap>(key: T) => PrefsMap[T];
-  }
-}
+    set: <T extends keyof PrefsMap>(key: T, value: PrefsMap[T], global?: boolean) => any;
+    clear: <T extends keyof PrefsMap>(key: T, global?: boolean) => void;
+  };
+};
 `;
 
       let dtsFilePath = `typings/prefs.d.ts`;
       if (typeof this.ctx.build.prefs.dts === "string")
         dtsFilePath = this.ctx.build.prefs.dts;
-
       fs.outputFileSync(dtsFilePath, dtsContent, "utf-8");
     }
   }
