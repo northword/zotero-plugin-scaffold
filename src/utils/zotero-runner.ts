@@ -283,7 +283,7 @@ export class ZoteroRunner {
 
   public exit() {
     this.zotero?.kill();
-    // Sometimes `runner.exit()` cannot kill the Zotero,
+    // Sometimes `process.kill()` cannot kill the Zotero,
     // so we force kill it.
     killZotero();
   }

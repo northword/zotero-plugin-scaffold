@@ -111,9 +111,6 @@ export default class Serve extends Base {
   exit = () => {
     this.logger.info("Server shutdown by user request.");
     this.runner?.exit();
-    // Sometimes `runner.exit()` cannot kill the Zotero,
-    // so we force kill it.
-    killZotero();
     this.ctx.hooks.callHook("serve:exit", this.ctx);
     process.exit();
   };
