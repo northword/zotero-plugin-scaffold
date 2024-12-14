@@ -3,7 +3,7 @@ import path from "node:path";
 import { env } from "node:process";
 import { loadConfig as c12 } from "c12";
 import { kebabCase, mapValues } from "es-toolkit";
-import fs from "fs-extra";
+import fs, { readJsonSync } from "fs-extra";
 import { createHooks } from "hookable";
 import { Log } from "./utils/log.js";
 import { dateFormat, parseRepoUrl, template } from "./utils/string.js";
@@ -38,7 +38,7 @@ function resolveConfig(config: Config): Context {
   const logger = new Log(config);
 
   // Load user's package.json
-  const pkgUser = fs.readJsonSync(path.join("package.json"), {
+  const pkgUser = readJsonSync("package.json", {
     encoding: "utf-8",
   });
   const { name, version } = pkgUser;

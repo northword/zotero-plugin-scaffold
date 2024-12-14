@@ -2,15 +2,15 @@ import type { Context } from "../types/index.js";
 import type { Manifest } from "../types/manifest.js";
 import type { UpdateJSON } from "../types/update-json.js";
 import { readFile, writeFile } from "node:fs/promises";
-import path, { basename, dirname } from "node:path";
+import { basename, dirname } from "node:path";
 import { env } from "node:process";
 import AdmZip from "adm-zip";
 import chalk from "chalk";
 import { toMerged } from "es-toolkit";
 import { build as buildAsync } from "esbuild";
-import fs, { copy, move } from "fs-extra";
-import { glob, globSync } from "tinyglobby";
-import { generateHashSync } from "../utils/crypto.js";
+import { copy, emptyDir, move, outputJSON, readJSON, writeJson } from "fs-extra";
+import { glob } from "tinyglobby";
+import { generateHash } from "../utils/crypto.js";
 import { dateFormat, replace, toArray } from "../utils/string.js";
 import { Base } from "./base.js";
 
@@ -37,7 +37,7 @@ export default class Build extends Base {
     );
     await this.ctx.hooks.callHook("build:init", this.ctx);
 
-    fs.emptyDirSync(dist);
+    await emptyDir(dist);
     await this.ctx.hooks.callHook("build:mkdir", this.ctx);
 
     this.logger.tip("Preparing static assets");
@@ -45,7 +45,7 @@ export default class Build extends Base {
     await this.ctx.hooks.callHook("build:copyAssets", this.ctx);
 
     this.logger.debug("Preparing manifest");
-    this.makeManifest();
+    await this.makeManifest();
     await this.ctx.hooks.callHook("build:makeManifest", this.ctx);
 
     this.logger.debug("Preparing locale files");
@@ -63,7 +63,7 @@ export default class Build extends Base {
       await this.pack();
       await this.ctx.hooks.callHook("build:pack", this.ctx);
 
-      this.makeUpdateJson();
+      await this.makeUpdateJson();
       await this.ctx.hooks.callHook("build:makeUpdateJSON", this.ctx);
     }
 
@@ -112,13 +112,13 @@ export default class Build extends Base {
    * Override user's manifest
    *
    */
-  makeManifest() {
+  async makeManifest() {
     if (!this.ctx.build.makeManifest.enable)
       return;
 
     const { name, id, updateURL, dist, version } = this.ctx;
 
-    const userData = fs.readJSONSync(
+    const userData = await readJSON(
       `${dist}/addon/manifest.json`,
     ) as Manifest;
     const template: Manifest = {
@@ -138,7 +138,7 @@ export default class Build extends Base {
     const data: Manifest = toMerged(userData, template);
     this.logger.debug("manifest: ", JSON.stringify(data, null, 2));
 
-    fs.outputJSONSync(`${dist}/addon/manifest.json`, data, { spaces: 2 });
+    outputJSON(`${dist}/addon/manifest.json`, data, { spaces: 2 });
   }
 
   async prepareLocaleFiles() {
@@ -150,8 +150,8 @@ export default class Build extends Base {
     const I10NID_REG = new RegExp(`(data-l10n-id)="((?!${namespace})\\S*)"`, "g");
 
     // Walk the sub folders of `build/addon/locale`
-    const localeNames = globSync(`${dist}/addon/locale/*`, { onlyDirectories: true })
-      .map(locale => path.basename(locale));
+    const localeNames = (await glob(`${dist}/addon/locale/*`, { onlyDirectories: true }))
+      .map(locale => basename(locale));
     this.logger.debug("locale names: ", localeNames);
 
     const Messages = new Map<string, Set<string>>();
@@ -233,19 +233,16 @@ export default class Build extends Base {
     );
   }
 
-  makeUpdateJson() {
+  async makeUpdateJson() {
     const { dist, xpiName, id, version, xpiDownloadLink, build } = this.ctx;
 
-    const manifest = fs.readJSONSync(
+    const manifest = await readJSON(
       `${dist}/addon/manifest.json`,
     ) as Manifest;
     const min = manifest.applications?.zotero?.strict_min_version;
     const max = manifest.applications?.zotero?.strict_max_version;
 
-    const updateHash = generateHashSync(
-      path.join(dist, `${xpiName}.xpi`),
-      "sha512",
-    );
+    const updateHash = await generateHash(`${dist}/${xpiName}.xpi`, "sha512");
 
     const data: UpdateJSON = {
       addons: {
@@ -270,9 +267,9 @@ export default class Build extends Base {
       },
     };
 
-    fs.writeJsonSync(`${dist}/update-beta.json`, data, { spaces: 2 });
+    await writeJson(`${dist}/update-beta.json`, data, { spaces: 2 });
     if (!this.isPreRelease)
-      fs.writeJsonSync(`${dist}/update.json`, data, { spaces: 2 });
+      await writeJson(`${dist}/update.json`, data, { spaces: 2 });
 
     this.logger.debug(
       `Prepare Update.json for ${
@@ -288,12 +285,12 @@ export default class Build extends Base {
 
     const zip = new AdmZip();
 
-    const paths = globSync("**", { cwd: `${dist}/addon`, dot: true });
-    paths.forEach((relativePath) => {
-      const absolutePath = path.resolve(`${dist}/addon`, relativePath);
-      zip.addLocalFile(absolutePath, path.dirname(relativePath));
-    });
-
+    // const paths = globSync("**", { cwd: `${dist}/addon`, dot: true });
+    // paths.forEach((relativePath) => {
+    //   const absolutePath = path.resolve(`${dist}/addon`, relativePath);
+    //   zip.addLocalFile(absolutePath, path.dirname(relativePath));
+    // });
+    zip.addLocalFolder(`${dist}/addon`);
     zip.writeZip(`${dist}/${xpiName}.xpi`);
   }
 }
