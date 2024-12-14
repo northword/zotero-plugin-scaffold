@@ -79,12 +79,12 @@
     "es-toolkit": "^1.29.0",
     "esbuild": "^0.24.0",
     "fs-extra": "^11.2.0",
-    "globby": "^14.0.2",
     "hookable": "^5.5.3",
     "mime": "^4.0.4",
     "octokit": "^4.0.2",
     "replace-in-file": "^8.2.0",
     "std-env": "^3.8.0",
+    "tinyglobby": "^0.2.10",
     "update-notifier": "^7.3.1",
     "xvfb-ts": "^1.1.0"
   },

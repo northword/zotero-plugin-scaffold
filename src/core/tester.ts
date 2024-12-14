@@ -5,8 +5,8 @@ import { join, resolve } from "node:path";
 import process, { cwd, env, exit } from "node:process";
 import { build } from "esbuild";
 import { emptyDirSync, outputFile, outputFileSync, outputJSON, pathExists } from "fs-extra/esm";
-import { globbySync } from "globby";
 import { isCI } from "std-env";
+import { globSync } from "tinyglobby";
 import { Xvfb } from "xvfb-ts";
 import { saveResource } from "../utils/file.js";
 import { installXvfb, installZoteroLinux } from "../utils/headless.js";
@@ -248,7 +248,7 @@ function waitUtilAsync(condition, interval = 100, timeout = 1e4) {
       }
 
       await build({
-        entryPoints: globbySync(`${dir}/**/*.spec.{js,ts}`),
+        entryPoints: globSync(`${dir}/**/*.spec.{js,ts}`),
         outdir: this.testBuildDir,
         bundle: true,
         target: "firefox115",
@@ -256,7 +256,7 @@ function waitUtilAsync(condition, interval = 100, timeout = 1e4) {
       });
     }
 
-    const testFiles = globbySync(`${this.testBuildDir}/**/*.spec.js`);
+    const testFiles = globSync(`${this.testBuildDir}/**/*.spec.js`);
     // Sort the test files to ensure consistent test order
     testFiles.sort();
 

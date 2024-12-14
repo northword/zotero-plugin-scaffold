@@ -8,8 +8,8 @@ import chalk from "chalk";
 import { toMerged } from "es-toolkit";
 import { build as buildAsync } from "esbuild";
 import fs from "fs-extra";
-import { globbySync } from "globby";
 import { replaceInFileSync } from "replace-in-file";
+import { globSync } from "tinyglobby";
 import { generateHashSync } from "../utils/crypto.js";
 import { dateFormat, toArray } from "../utils/string.js";
 import { Base } from "./base.js";
@@ -84,7 +84,7 @@ export default class Build extends Base {
     const { source, dist, build } = this.ctx;
     const { assets } = build;
 
-    const files = globbySync(assets);
+    const files = globSync(assets);
     files.forEach((file) => {
       const newPath = `${dist}/addon/${file.replace(new RegExp(toArray(source).join("|")), "")}`;
       this.logger.debug(`Copy ${file} to ${newPath}`);
@@ -163,14 +163,14 @@ export default class Build extends Base {
     const { dist, namespace, build } = this.ctx;
 
     // Walk the sub folders of `build/addon/locale`
-    const localeNames = globbySync(`${dist}/addon/locale/**`, { onlyDirectories: true })
+    const localeNames = globSync(`${dist}/addon/locale/*`, { onlyDirectories: true })
       .map(locale => path.basename(locale));
     this.logger.debug("locale names: ", localeNames);
 
     for (const localeName of localeNames) {
       // rename *.ftl to addonRef-*.ftl
       if (build.fluent.prefixLocaleFiles === true) {
-        globbySync(`${dist}/addon/locale/${localeName}/**/*.ftl`, {})
+        globSync(`${dist}/addon/locale/${localeName}/**/*.ftl`, {})
           .forEach((f) => {
             fs.moveSync(
               f,
@@ -308,7 +308,7 @@ export default class Build extends Base {
 
     const zip = new AdmZip();
 
-    const paths = globbySync("**", { cwd: `${dist}/addon`, dot: true });
+    const paths = globSync("**", { cwd: `${dist}/addon`, dot: true });
     paths.forEach((relativePath) => {
       const absolutePath = path.resolve(`${dist}/addon`, relativePath);
       zip.addLocalFile(absolutePath, path.dirname(relativePath));

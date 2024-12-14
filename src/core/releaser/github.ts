@@ -2,9 +2,9 @@ import type { Context } from "../../types/index.js";
 import { basename, join } from "node:path";
 import { env } from "node:process";
 import fs from "fs-extra";
-import { globbySync } from "globby";
 import mime from "mime";
 import { Octokit } from "octokit";
+import { globSync } from "tinyglobby";
 import { ReleaseBase } from "./base.js";
 
 export default class GitHub extends ReleaseBase {
@@ -114,7 +114,7 @@ export default class GitHub extends ReleaseBase {
 
     const { dist, version } = this.ctx;
 
-    const assets = globbySync(`${dist}/update*.json`)
+    const assets = globSync(`${dist}/update*.json`)
       .map(p => basename(p));
 
     const release
