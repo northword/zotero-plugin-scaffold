@@ -82,7 +82,6 @@
     "hookable": "^5.5.3",
     "mime": "^4.0.4",
     "octokit": "^4.0.2",
-    "replace-in-file": "^8.2.0",
     "std-env": "^3.8.0",
     "tinyglobby": "^0.2.10",
     "update-notifier": "^7.3.1",
