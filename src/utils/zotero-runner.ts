@@ -1,10 +1,10 @@
 import type { ChildProcessWithoutNullStreams } from "node:child_process";
 import { execSync, spawn } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { env } from "node:process";
 import { delay } from "es-toolkit";
-import { outputFileSync, outputJSONSync, readJSONSync, removeSync } from "fs-extra/esm";
+import { outputFile, outputJSON, pathExists, readJSON, remove } from "fs-extra/esm";
 import { isLinux, isMacOS, isWindows } from "std-env";
 import { Log } from "./log.js";
 import { isRunning } from "./process.js";
@@ -76,8 +76,8 @@ export class ZoteroRunner {
 
     let exsitedPrefs: string[] = [];
     const prefsPath = join(this.options.profilePath, "prefs.js");
-    if (existsSync(prefsPath)) {
-      const PrefsLines = readFileSync(prefsPath, "utf-8").split("\n");
+    if (await pathExists(prefsPath)) {
+      const PrefsLines = (await readFile(prefsPath, "utf-8")).split("\n");
       exsitedPrefs = PrefsLines.map((line: string) => {
         if (
           line.includes("extensions.lastAppBuildId")
@@ -92,7 +92,7 @@ export class ZoteroRunner {
       });
     }
     const updatedPrefs = [...defaultPrefs, ...exsitedPrefs, ...customPrefs].join("\n");
-    outputFileSync(prefsPath, updatedPrefs, "utf-8");
+    await outputFile(prefsPath, updatedPrefs, "utf-8");
     logger.debug("The <profile>/prefs.js has been modified.");
 
     // Install plugins in proxy file mode
@@ -158,31 +158,27 @@ export class ZoteroRunner {
     // Create a proxy file
     const addonProxyFilePath = join(this.options.profilePath, `extensions/${id}`);
     const buildPath = resolve(sourceDir);
-    if (
-      !existsSync(addonProxyFilePath)
-      || readFileSync(addonProxyFilePath, "utf-8") !== buildPath
-    ) {
-      outputFileSync(addonProxyFilePath, buildPath);
-      logger.debug(
-        [
-          `Addon proxy file has been updated.`,
-          `  File path: ${addonProxyFilePath}`,
-          `  Addon path: ${buildPath}`,
-        ].join("\n"),
-      );
-    }
+
+    await outputFile(addonProxyFilePath, buildPath);
+    logger.debug(
+      [
+        `Addon proxy file has been updated.`,
+        `  File path: ${addonProxyFilePath}`,
+        `  Addon path: ${buildPath}`,
+      ].join("\n"),
+    );
 
     // Delete XPI file
     const addonXpiFilePath = join(this.options.profilePath, `extensions/${id}.xpi`);
-    if (existsSync(addonXpiFilePath)) {
-      removeSync(addonXpiFilePath);
+    if (await pathExists(addonXpiFilePath)) {
+      await remove(addonXpiFilePath);
       logger.debug(`XPI file found, removed.`);
     }
 
     // Force enable plugin in extensions.json
     const addonInfoFilePath = join(this.options.profilePath, "extensions.json");
-    if (existsSync(addonInfoFilePath)) {
-      const content = readJSONSync(addonInfoFilePath);
+    if (await pathExists(addonInfoFilePath)) {
+      const content = await readJSON(addonInfoFilePath);
       content.addons = content.addons.map((addon: any) => {
         if (addon.id === id && addon.active === false) {
           addon.active = true;
@@ -191,7 +187,7 @@ export class ZoteroRunner {
         }
         return addon;
       });
-      outputJSONSync(addonInfoFilePath, content);
+      await outputJSON(addonInfoFilePath, content);
     }
   }
 

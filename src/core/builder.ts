@@ -1,17 +1,17 @@
 import type { Context } from "../types/index.js";
 import type { Manifest } from "../types/manifest.js";
 import type { UpdateJSON } from "../types/update-json.js";
-import path from "node:path";
+import { readFile, writeFile } from "node:fs/promises";
+import { basename, dirname } from "node:path";
 import { env } from "node:process";
 import AdmZip from "adm-zip";
 import chalk from "chalk";
 import { toMerged } from "es-toolkit";
 import { build as buildAsync } from "esbuild";
-import fs from "fs-extra";
-import { globbySync } from "globby";
-import { replaceInFileSync } from "replace-in-file";
-import { generateHashSync } from "../utils/crypto.js";
-import { dateFormat, toArray } from "../utils/string.js";
+import { copy, emptyDir, move, outputJSON, readJSON, writeJson } from "fs-extra/esm";
+import { glob } from "tinyglobby";
+import { generateHash } from "../utils/crypto.js";
+import { dateFormat, replaceInFile, toArray } from "../utils/string.js";
 import { Base } from "./base.js";
 
 export default class Build extends Base {
@@ -37,24 +37,20 @@ export default class Build extends Base {
     );
     await this.ctx.hooks.callHook("build:init", this.ctx);
 
-    fs.emptyDirSync(dist);
+    await emptyDir(dist);
     await this.ctx.hooks.callHook("build:mkdir", this.ctx);
 
     this.logger.tip("Preparing static assets");
-    this.copyAssets();
+    await this.makeAssets();
     await this.ctx.hooks.callHook("build:copyAssets", this.ctx);
 
     this.logger.debug("Preparing manifest");
-    this.makeManifest();
+    await this.makeManifest();
     await this.ctx.hooks.callHook("build:makeManifest", this.ctx);
 
     this.logger.debug("Preparing locale files");
-    this.prepareLocaleFiles();
+    await this.prepareLocaleFiles();
     await this.ctx.hooks.callHook("build:fluent", this.ctx);
-
-    this.logger.debug("Replacing placeholders");
-    this.replaceString();
-    await this.ctx.hooks.callHook("build:replace", this.ctx);
 
     this.logger.tip("Bundling scripts");
     await this.esbuild();
@@ -67,7 +63,7 @@ export default class Build extends Base {
       await this.pack();
       await this.ctx.hooks.callHook("build:pack", this.ctx);
 
-      this.makeUpdateJson();
+      await this.makeUpdateJson();
       await this.ctx.hooks.callHook("build:makeUpdateJSON", this.ctx);
     }
 
@@ -80,31 +76,47 @@ export default class Build extends Base {
   /**
    * Copys files in `Config.build.assets` to `Config.dist`
    */
-  copyAssets() {
+  async makeAssets() {
     const { source, dist, build } = this.ctx;
-    const { assets } = build;
+    const { assets, define } = build;
 
-    const files = globbySync(assets);
-    files.forEach((file) => {
-      const newPath = `${dist}/addon/${file.replace(new RegExp(toArray(source).join("|")), "")}`;
-      this.logger.debug(`Copy ${file} to ${newPath}`);
-      fs.copySync(file, newPath);
+    // We should ignore node_modules/ by default, glob this folder will be very slow
+    const paths = await glob(assets, { ignore: ["node_modules", ".git", dist] });
+    const newPaths = paths.map(p => `${dist}/addon/${p.replace(new RegExp(toArray(source).join("|")), "")}`);
+
+    // Copys files in `Config.build.assets` to `Config.dist`
+    await Promise.all(paths.map(async (file, i) => {
+      await copy(file, newPaths[i]);
+      this.logger.debug(`Copy ${file} to ${newPaths[i]}`);
+    }));
+
+    // Replace all `placeholder.key` to `placeholder.value` for all files in `dist`
+    const replaceMap = new Map(
+      Object.keys(define).map(key => [
+        new RegExp(`__${key}__`, "g"),
+        define[key],
+      ]),
+    );
+    this.logger.debug("replace map: ", replaceMap);
+    await replaceInFile({
+      files: newPaths,
+      from: Array.from(replaceMap.keys()),
+      to: Array.from(replaceMap.values()),
+      isGlob: false,
     });
   }
 
   /**
    * Override user's manifest
    *
-   * Write `applications.gecko` to `manifest.json`
-   *
    */
-  makeManifest() {
+  async makeManifest() {
     if (!this.ctx.build.makeManifest.enable)
       return;
 
     const { name, id, updateURL, dist, version } = this.ctx;
 
-    const userData = fs.readJSONSync(
+    const userData = await readJSON(
       `${dist}/addon/manifest.json`,
     ) as Manifest;
     const template: Manifest = {
@@ -124,120 +136,85 @@ export default class Build extends Base {
     const data: Manifest = toMerged(userData, template);
     this.logger.debug("manifest: ", JSON.stringify(data, null, 2));
 
-    fs.outputJSONSync(`${dist}/addon/manifest.json`, data, { spaces: 2 });
+    outputJSON(`${dist}/addon/manifest.json`, data, { spaces: 2 });
   }
 
-  /**
-   * Replace all `placeholder.key` to `placeholder.value` for all files in `dist`
-   */
-  replaceString() {
-    const { dist, build } = this.ctx;
-    const { assets, define } = build;
-
-    const replaceMap = new Map(
-      Object.keys(define).map(key => [
-        new RegExp(`__${key}__`, "g"),
-        define[key],
-      ]),
-    );
-    this.logger.debug("replace map: ", replaceMap);
-
-    const replaceResult = replaceInFileSync({
-      files: toArray(assets).map(
-        asset => `${dist}/addon/${asset.split("/").slice(1).join("/")}`,
-      ),
-      from: Array.from(replaceMap.keys()),
-      to: Array.from(replaceMap.values()),
-      countMatches: true,
-    });
-
-    this.logger.debug(
-      "Run replace in ",
-      replaceResult
-        .filter(f => f.hasChanged)
-        .map(f => `${f.file} : ${f.numReplacements} / ${f.numMatches}`),
-    );
-  }
-
-  prepareLocaleFiles() {
+  async prepareLocaleFiles() {
     const { dist, namespace, build } = this.ctx;
 
+    // https://regex101.com/r/lQ9x5p/1
+    // eslint-disable-next-line regexp/no-super-linear-backtracking
+    const FTL_MESSAGE_PATTERN = /^(?<message>[a-z]\S*)( *= *)(?<pattern>.*)$/gim;
+    const HTML_DATAI10NID_PATTERN = new RegExp(`(data-l10n-id)="((?!${namespace})\\S*)"`, "g");
+
     // Walk the sub folders of `build/addon/locale`
-    const localeNames = globbySync(`${dist}/addon/locale/**`, { onlyDirectories: true })
-      .map(locale => path.basename(locale));
+    const localeNames = (await glob(`${dist}/addon/locale/*`, { onlyDirectories: true }))
+      .map(locale => basename(locale));
     this.logger.debug("locale names: ", localeNames);
 
+    const Messages = new Map<string, Set<string>>();
     for (const localeName of localeNames) {
-      // rename *.ftl to addonRef-*.ftl
-      if (build.fluent.prefixLocaleFiles === true) {
-        globbySync(`${dist}/addon/locale/${localeName}/**/*.ftl`, {})
-          .forEach((f) => {
-            fs.moveSync(
-              f,
-              `${path.dirname(f)}/${namespace}-${path.basename(f)}`,
-            );
-            this.logger.debug(`Prefix filename: ${f}`);
-          });
-      }
+      // Prefix Fluent messages in each ftl, add message to set.
+      const MessageInThisLang = new Set<string>();
+      const ftlPaths = await glob(`${dist}/addon/locale/${localeName}/**/*.ftl`);
+      await Promise.all(ftlPaths.map(async (ftlPath: string) => {
+        const ftlContent = await readFile(ftlPath, "utf-8");
+        const matchs = [...ftlContent.matchAll(FTL_MESSAGE_PATTERN)];
+        const newFtlContent = matchs.reduce((content, match) => {
+          if (!match.groups?.message)
+            return content;
+          MessageInThisLang.add(match.groups.message);
+          return content.replace(match.groups.message, `${namespace}-${match.groups.message}`);
+        }, ftlContent);
 
-      // Prefix Fluent messages in each ftl
-      const MessageInThisLang = new Set();
-      replaceInFileSync({
-        files: [`${dist}/addon/locale/${localeName}/**/*.ftl`],
-        processor: (fltContent) => {
-          const lines = fltContent.split("\n");
-          const prefixedLines = lines.map((line: string) => {
-            // https://regex101.com/r/lQ9x5p/1
-            const match = line.match(
-              // eslint-disable-next-line regexp/no-super-linear-backtracking
-              /^(?<message>[a-z]\S*)( *= *)(?<pattern>.*)$/im,
-            );
-            if (match && match.groups) {
-              MessageInThisLang.add(match.groups.message);
-              return build.fluent.prefixFluentMessages
-                ? `${namespace}-${line}`
-                : line;
-            }
-            else {
-              return line;
-            }
-          });
-          return prefixedLines.join("\n");
-        },
-      });
+        // If prefixFluentMessages===true, we save the changed ftl file,
+        // otherwise discard the changes
+        if (build.fluent.prefixFluentMessages)
+          await writeFile(ftlPath, newFtlContent);
 
-      // Prefix Fluent messages in xhtml
-      const MessagesInHTML = new Set();
-      replaceInFileSync({
-        files: [
-          `${dist}/addon/**/*.xhtml`,
-          `${dist}/addon/**/*.html`,
-        ],
-        processor: (input) => {
-          const matches = [
-            ...input.matchAll(
-              new RegExp(`(data-l10n-id)="((?!${namespace})\\S*)"`, "g"),
-            ),
-          ];
-          matches.forEach((match) => {
-            const [matched, attrKey, attrVal] = match;
-            if (!MessageInThisLang.has(attrVal)) {
-              this.logger.warn(`${attrVal} don't exist in ${localeName}`);
-              return;
-            }
-            if (!this.ctx.build.fluent.prefixFluentMessages) {
-              return;
-            }
-            input = input.replace(
-              matched,
-              `${attrKey}="${namespace}-${attrVal}"`,
-            );
-            MessagesInHTML.add(attrVal);
-          });
-          return input;
-        },
-      });
+        // rename *.ftl to addonRef-*.ftl
+        if (build.fluent.prefixLocaleFiles === true) {
+          await move(ftlPath, `${dirname(ftlPath)}/${namespace}-${basename(ftlPath)}`);
+          this.logger.debug(`Prefix filename: ${ftlPath}`);
+        }
+      }));
+      Messages.set(localeName, MessageInThisLang);
     }
+
+    // Prefix Fluent messages in xhtml
+    const MessagesInHTML = new Set<string>();
+    const htmlPaths = await glob([
+      `${dist}/addon/**/*.xhtml`,
+      `${dist}/addon/**/*.html`,
+    ]);
+    await Promise.all(htmlPaths.map(async (htmlPath) => {
+      const content = await readFile(htmlPath, "utf-8");
+      const matches = [...content.matchAll(HTML_DATAI10NID_PATTERN)];
+      const newHtmlContent = matches.reduce((result, match) => {
+        const [matched, attrKey, attrVal] = match;
+        MessagesInHTML.add(attrVal);
+        return result.replace(
+          matched,
+          `${attrKey}="${namespace}-${attrVal}"`,
+        );
+      }, content);
+
+      if (build.fluent.prefixFluentMessages)
+        await writeFile(htmlPath, newHtmlContent);
+    }));
+
+    // Check miss 1: Cross check in diff locale
+
+    // Check miss 2: Check ids in HTML but not in ftl
+    MessagesInHTML.forEach((messageInHTML) => {
+      const miss = new Set();
+      Messages.forEach((messagesInThisLang, lang) => {
+        if (!messagesInThisLang.has(messageInHTML))
+          miss.add(lang);
+      });
+      if (miss.size !== 0)
+        this.logger.warn(`FTL message "${messageInHTML}" don't exist in "${[...miss].join(", ")}"`);
+    });
   }
 
   esbuild() {
@@ -253,19 +230,16 @@ export default class Build extends Base {
     );
   }
 
-  makeUpdateJson() {
+  async makeUpdateJson() {
     const { dist, xpiName, id, version, xpiDownloadLink, build } = this.ctx;
 
-    const manifest = fs.readJSONSync(
+    const manifest = await readJSON(
       `${dist}/addon/manifest.json`,
     ) as Manifest;
     const min = manifest.applications?.zotero?.strict_min_version;
     const max = manifest.applications?.zotero?.strict_max_version;
 
-    const updateHash = generateHashSync(
-      path.join(dist, `${xpiName}.xpi`),
-      "sha512",
-    );
+    const updateHash = await generateHash(`${dist}/${xpiName}.xpi`, "sha512");
 
     const data: UpdateJSON = {
       addons: {
@@ -290,9 +264,9 @@ export default class Build extends Base {
       },
     };
 
-    fs.writeJsonSync(`${dist}/update-beta.json`, data, { spaces: 2 });
+    await writeJson(`${dist}/update-beta.json`, data, { spaces: 2 });
     if (!this.isPreRelease)
-      fs.writeJsonSync(`${dist}/update.json`, data, { spaces: 2 });
+      await writeJson(`${dist}/update.json`, data, { spaces: 2 });
 
     this.logger.debug(
       `Prepare Update.json for ${
@@ -305,15 +279,8 @@ export default class Build extends Base {
 
   async pack() {
     const { dist, xpiName } = this.ctx;
-
     const zip = new AdmZip();
-
-    const paths = globbySync("**", { cwd: `${dist}/addon`, dot: true });
-    paths.forEach((relativePath) => {
-      const absolutePath = path.resolve(`${dist}/addon`, relativePath);
-      zip.addLocalFile(absolutePath, path.dirname(relativePath));
-    });
-
+    zip.addLocalFolder(`${dist}/addon`);
     zip.writeZip(`${dist}/${xpiName}.xpi`);
   }
 }
