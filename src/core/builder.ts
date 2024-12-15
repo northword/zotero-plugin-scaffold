@@ -8,7 +8,7 @@ import AdmZip from "adm-zip";
 import chalk from "chalk";
 import { toMerged } from "es-toolkit";
 import { build as buildAsync } from "esbuild";
-import { copy, emptyDir, move, outputJSON, readJSON, writeJson } from "fs-extra/esm";
+import { copy, emptyDir, move, outputFile, outputJSON, pathExists, readJSON, writeJson } from "fs-extra/esm";
 import { glob } from "tinyglobby";
 import { generateHash } from "../utils/crypto.js";
 import { dateFormat, replaceInFile, toArray } from "../utils/string.js";
@@ -52,7 +52,7 @@ export default class Build extends Base {
     await this.prepareLocaleFiles();
     await this.ctx.hooks.callHook("build:fluent", this.ctx);
 
-    this.preparePrefs();
+    await this.preparePrefs();
 
     this.logger.tip("Bundling scripts");
     await this.esbuild();
@@ -238,34 +238,32 @@ export default class Build extends Base {
     });
   }
 
-  preparePrefs() {
+  async preparePrefs() {
     if (!this.ctx.build.prefs.prefixPrefKeys && !this.ctx.build.prefs.dts)
       return;
 
-    const prefsFilePath = path.join(this.ctx.dist, "addon", "prefs.js");
-    if (!fs.existsSync(prefsFilePath))
+    const prefsFilePath = `${this.ctx.dist}/addon/prefs.js`;
+    if (!await pathExists(prefsFilePath))
       return;
 
-    const prefsContent = fs.readFileSync(prefsFilePath, "utf-8");
+    // Parse pref.js
     // eslint-disable-next-line regexp/no-super-linear-backtracking
     const prefPattern = /^pref\s*\(\s*["']([^"']+)["']\s*,\s*(.+)\s*\)\s*;$/gm;
     const prefsMap: Map<string, string | boolean | number > = new Map();
 
+    const prefsContent = await readFile(prefsFilePath, "utf-8");
     const matches = prefsContent.matchAll(prefPattern);
     for (const match of matches) {
       const key = match[1].trim();
       const value = match[2].trim();
 
       let parsedValue: string | boolean | number;
-      if (value === "true" || value === "false") {
+      if (value === "true" || value === "false")
         parsedValue = value === "true";
-      }
-      else if (/^\d+$/.test(value)) {
+      else if (/^\d+$/.test(value))
         parsedValue = Number(value);
-      }
-      else {
-        parsedValue = value.replace(/['"]/g, "");
-      }
+      else
+        parsedValue = value;
 
       if (prefsMap.has(key))
         this.logger.warn(`Duplicate preference keys found: ${key}`);
@@ -273,10 +271,25 @@ export default class Build extends Base {
         prefsMap.set(key, parsedValue);
     };
 
-    if (this.ctx.build.prefs.prefixPrefKeys) {
-      //
+    // Parse prefix
+    let prefix = this.ctx.build.prefs.prefix;
+    if (!prefix.endsWith(".")) {
+      prefix = `${prefix}.`;
     }
 
+    // Prefix pref keys in prefs.js
+    if (this.ctx.build.prefs.prefixPrefKeys) {
+      let prefsContent = "";
+      prefsMap.forEach((value, key) => {
+        if (key.startsWith(prefix))
+          prefsContent += `pref("${key}", ${value});\n`;
+        else
+          prefsContent += `pref("${prefix}${key}", ${value});\n`;
+      });
+      await writeFile(prefsFilePath, prefsContent);
+    }
+
+    // Generate dts for pref keys
     if (this.ctx.build.prefs.dts) {
       const dtsContent = `
 /* prettier-ignore */
@@ -286,11 +299,11 @@ export default class Build extends Base {
 
 type _PrefsMap = {
   ${Array.from(prefsMap)
-    .map(pref => `"${pref[0].replace(this.ctx.build.prefs.prefix, "")}": ${typeof pref[1]};`)
+    .map(pref => `"${pref[0].replace(prefix, "")}": ${typeof pref[1]};`)
     .join("\n  ")}
 };
 
-type FullKey<T extends keyof _PrefsMap> = \`${this.ctx.build.prefs.prefix}.\${T}\`;
+type FullKey<T extends keyof _PrefsMap> = \`${this.ctx.build.prefs.prefix}\${T}\`;
 
 type PrefsMap = {
   [prop in keyof _PrefsMap as FullKey<prop>]: _PrefsMap[prop];
@@ -308,7 +321,7 @@ declare namespace _ZoteroTypes {
       let dtsFilePath = `typings/prefs.d.ts`;
       if (typeof this.ctx.build.prefs.dts === "string")
         dtsFilePath = this.ctx.build.prefs.dts;
-      fs.outputFileSync(dtsFilePath, dtsContent, "utf-8");
+      await outputFile(dtsFilePath, dtsContent, "utf-8");
     }
   }
 
