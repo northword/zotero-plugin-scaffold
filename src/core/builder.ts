@@ -147,30 +147,37 @@ export default class Build extends Base {
     const FTL_MESSAGE_PATTERN = /^(?<message>[a-z]\S*)( *= *)(?<pattern>.*)$/gim;
     const HTML_DATAI10NID_PATTERN = new RegExp(`(data-l10n-id)="((?!${namespace})\\S*)"`, "g");
 
-    // Walk the sub folders of `build/addon/locale`
-    const localeNames = (await glob(`${dist}/addon/locale/*`, { onlyDirectories: true }))
-      .map(locale => basename(locale));
-    this.logger.debug("locale names: ", localeNames);
+    // Get locale names
+    const localePaths = await glob(`${dist}/addon/locale/*`, { onlyDirectories: true });
+    const localeNames = localePaths.map(locale => basename(locale));
+    this.logger.debug("Locale names:", localeNames);
 
-    const Messages = new Map<string, Set<string>>();
+    const allMessages = new Set<string>();
+    const messagesByLocale = new Map<string, Set<string>>();
+
     for (const localeName of localeNames) {
       // Prefix Fluent messages in each ftl, add message to set.
-      const MessageInThisLang = new Set<string>();
+      const localeMessages = new Set<string>();
       const ftlPaths = await glob(`${dist}/addon/locale/${localeName}/**/*.ftl`);
+
       await Promise.all(ftlPaths.map(async (ftlPath: string) => {
-        const ftlContent = await readFile(ftlPath, "utf-8");
-        const matchs = [...ftlContent.matchAll(FTL_MESSAGE_PATTERN)];
-        const newFtlContent = matchs.reduce((content, match) => {
-          if (!match.groups?.message)
-            return content;
-          MessageInThisLang.add(match.groups.message);
-          return content.replace(match.groups.message, `${namespace}-${match.groups.message}`);
-        }, ftlContent);
+        let ftlContent = await readFile(ftlPath, "utf-8");
+        const matches = [...ftlContent.matchAll(FTL_MESSAGE_PATTERN)];
+
+        for (const match of matches) {
+          const message = match.groups?.message;
+          if (message) {
+            const namespacedMessage = `${namespace}-${message}`;
+            localeMessages.add(message);
+            allMessages.add(message);
+            ftlContent = ftlContent.replace(message, namespacedMessage);
+          }
+        }
 
         // If prefixFluentMessages===true, we save the changed ftl file,
         // otherwise discard the changes
         if (build.fluent.prefixFluentMessages)
-          await writeFile(ftlPath, newFtlContent);
+          await writeFile(ftlPath, ftlContent);
 
         // rename *.ftl to addonRef-*.ftl
         if (build.fluent.prefixLocaleFiles === true) {
@@ -178,42 +185,54 @@ export default class Build extends Base {
           this.logger.debug(`Prefix filename: ${ftlPath}`);
         }
       }));
-      Messages.set(localeName, MessageInThisLang);
+
+      messagesByLocale.set(localeName, localeMessages);
     }
 
     // Prefix Fluent messages in xhtml
-    const MessagesInHTML = new Set<string>();
+    const messagesInHTML = new Set<string>();
     const htmlPaths = await glob([
       `${dist}/addon/**/*.xhtml`,
       `${dist}/addon/**/*.html`,
     ]);
     await Promise.all(htmlPaths.map(async (htmlPath) => {
-      const content = await readFile(htmlPath, "utf-8");
-      const matches = [...content.matchAll(HTML_DATAI10NID_PATTERN)];
-      const newHtmlContent = matches.reduce((result, match) => {
+      let htmlContent = await readFile(htmlPath, "utf-8");
+      const matches = [...htmlContent.matchAll(HTML_DATAI10NID_PATTERN)];
+
+      for (const match of matches) {
         const [matched, attrKey, attrVal] = match;
-        MessagesInHTML.add(attrVal);
-        return result.replace(
-          matched,
-          `${attrKey}="${namespace}-${attrVal}"`,
-        );
-      }, content);
+
+        if (!allMessages.has(attrVal)) {
+          this.logger.debug(`HTML data-i10n-id ${attrVal} do not exist in any FTL message, skip to namespace`);
+          continue;
+        }
+
+        messagesInHTML.add(attrVal);
+        const namespacedAttr = `${namespace}-${attrVal}`;
+        htmlContent = htmlContent.replace(matched, `${attrKey}="${namespacedAttr}"`);
+      }
 
       if (build.fluent.prefixFluentMessages)
-        await writeFile(htmlPath, newHtmlContent);
+        await writeFile(htmlPath, htmlContent);
     }));
 
-    // Check miss 1: Cross check in diff locale
+    // Check miss 1: Cross check in diff locale - seems no need
+    // messagesMap.forEach((messageInThisLang, lang) => {
+    //   // Needs Nodejs 22
+    //   const diff = allMessages.difference(messageInThisLang);
+    //   if (diff.size)
+    //     this.logger.warn(`FTL messages "${Array.from(diff).join(", ")} don't exist the locale ${lang}"`);
+    // });
 
     // Check miss 2: Check ids in HTML but not in ftl
-    MessagesInHTML.forEach((messageInHTML) => {
-      const miss = new Set();
-      Messages.forEach((messagesInThisLang, lang) => {
-        if (!messagesInThisLang.has(messageInHTML))
-          miss.add(lang);
-      });
-      if (miss.size !== 0)
-        this.logger.warn(`FTL message "${messageInHTML}" don't exist in "${[...miss].join(", ")}"`);
+    messagesInHTML.forEach((messageInHTML) => {
+      const missingLocales = [...messagesByLocale.entries()]
+        .filter(([_, messages]) => !messages.has(messageInHTML))
+        .map(([locale]) => locale);
+
+      if (missingLocales.length > 0) {
+        this.logger.warn(`HTML data-l10n-id "${messageInHTML}" is missing in locales: ${missingLocales.join(", ")}`);
+      }
     });
   }
 
