@@ -81,7 +81,7 @@ export default class Build extends Base {
     const { assets, define } = build;
 
     // We should ignore node_modules/ by default, glob this folder will be very slow
-    const paths = await glob(assets, { ignore: "node_modules" });
+    const paths = await glob(assets, { ignore: ["node_modules", ".git", dist] });
     const newPaths = paths.map(p => `${dist}/addon/${p.replace(new RegExp(toArray(source).join("|")), "")}`);
 
     // Copys files in `Config.build.assets` to `Config.dist`
