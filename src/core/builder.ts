@@ -11,7 +11,7 @@ import { build as buildAsync } from "esbuild";
 import { copy, emptyDir, move, outputJSON, readJSON, writeJson } from "fs-extra";
 import { glob } from "tinyglobby";
 import { generateHash } from "../utils/crypto.js";
-import { dateFormat, replace, toArray } from "../utils/string.js";
+import { dateFormat, replaceInFile, toArray } from "../utils/string.js";
 import { Base } from "./base.js";
 
 export default class Build extends Base {
@@ -80,16 +80,15 @@ export default class Build extends Base {
     const { source, dist, build } = this.ctx;
     const { assets, define } = build;
 
-    const paths = await glob(assets);
+    // We should ignore node_modules/ by default, glob this folder will be very slow
+    const paths = await glob(assets, { ignore: "node_modules" });
     const newPaths = paths.map(p => `${dist}/addon/${p.replace(new RegExp(toArray(source).join("|")), "")}`);
 
     // Copys files in `Config.build.assets` to `Config.dist`
-    const copyTasks = paths.map(async (file) => {
-      const newPath = `${dist}/addon/${file.replace(new RegExp(toArray(source).join("|")), "")}`;
-      await copy(file, newPath);
-      this.logger.debug(`Copy ${file} to ${newPath}`);
-    });
-    await Promise.all(copyTasks);
+    await Promise.all(paths.map(async (file, i) => {
+      await copy(file, newPaths[i]);
+      this.logger.debug(`Copy ${file} to ${newPaths[i]}`);
+    }));
 
     // Replace all `placeholder.key` to `placeholder.value` for all files in `dist`
     const replaceMap = new Map(
@@ -99,13 +98,12 @@ export default class Build extends Base {
       ]),
     );
     this.logger.debug("replace map: ", replaceMap);
-
-    const replaceTasks = newPaths.map(async (path) => {
-      const contens = await readFile(path, "utf-8");
-      const newContents = replace(contens, Array.from(replaceMap.keys()), Array.from(replaceMap.values()));
-      await writeFile(path, newContents);
+    await replaceInFile({
+      files: newPaths,
+      from: Array.from(replaceMap.keys()),
+      to: Array.from(replaceMap.values()),
+      isGlob: false,
     });
-    await Promise.all(replaceTasks);
   }
 
   /**

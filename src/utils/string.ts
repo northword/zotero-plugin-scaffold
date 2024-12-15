@@ -67,11 +67,17 @@ export function replace(contents: string, from: RegExp | RegExp[], to: string | 
   return froms.reduce((result, pattern, index) => result.replace(pattern, tos[index]), contents);
 }
 
-export async function replaceInFile(files: string | string[], from: RegExp | RegExp[], to: string | string[]) {
-  const paths = await glob(files);
+export async function replaceInFile({ files, from, to, isGlob = true }: {
+  files: string | string[];
+  from: RegExp | RegExp[];
+  to: string | string[];
+  isGlob?: boolean;
+}) {
+  const paths = isGlob ? await glob(files) : toArray(files);
   await Promise.all(paths.map(async (path) => {
     const contents = await readFile(path, "utf-8");
     const newContents = replace(contents, from, to);
-    await writeFile(path, newContents);
+    if (contents !== newContents)
+      await writeFile(path, newContents);
   }));
 }
