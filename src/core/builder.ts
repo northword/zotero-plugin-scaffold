@@ -144,8 +144,8 @@ export default class Build extends Base {
 
     // https://regex101.com/r/lQ9x5p/1
     // eslint-disable-next-line regexp/no-super-linear-backtracking
-    const MESSAGE_REG = /^(?<message>[a-z]\S*)( *= *)(?<pattern>.*)$/gim;
-    const I10NID_REG = new RegExp(`(data-l10n-id)="((?!${namespace})\\S*)"`, "g");
+    const FTL_MESSAGE_PATTERN = /^(?<message>[a-z]\S*)( *= *)(?<pattern>.*)$/gim;
+    const HTML_DATAI10NID_PATTERN = new RegExp(`(data-l10n-id)="((?!${namespace})\\S*)"`, "g");
 
     // Walk the sub folders of `build/addon/locale`
     const localeNames = (await glob(`${dist}/addon/locale/*`, { onlyDirectories: true }))
@@ -159,7 +159,7 @@ export default class Build extends Base {
       const ftlPaths = await glob(`${dist}/addon/locale/${localeName}/**/*.ftl`);
       await Promise.all(ftlPaths.map(async (ftlPath: string) => {
         const ftlContent = await readFile(ftlPath, "utf-8");
-        const matchs = [...ftlContent.matchAll(MESSAGE_REG)];
+        const matchs = [...ftlContent.matchAll(FTL_MESSAGE_PATTERN)];
         const newFtlContent = matchs.reduce((content, match) => {
           if (!match.groups?.message)
             return content;
@@ -189,7 +189,7 @@ export default class Build extends Base {
     ]);
     await Promise.all(htmlPaths.map(async (htmlPath) => {
       const content = await readFile(htmlPath, "utf-8");
-      const matches = [...content.matchAll(I10NID_REG)];
+      const matches = [...content.matchAll(HTML_DATAI10NID_PATTERN)];
       const newHtmlContent = matches.reduce((result, match) => {
         const [matched, attrKey, attrVal] = match;
         MessagesInHTML.add(attrVal);
@@ -203,11 +203,10 @@ export default class Build extends Base {
         await writeFile(htmlPath, newHtmlContent);
     }));
 
-    // Check miss
-    MessagesInHTML.forEach((messageInHTML) => {
-      // Cross check in diff locale
+    // Check miss 1: Cross check in diff locale
 
-      // Check ids in HTML but not in ftl
+    // Check miss 2: Check ids in HTML but not in ftl
+    MessagesInHTML.forEach((messageInHTML) => {
       const miss = new Set();
       Messages.forEach((messagesInThisLang, lang) => {
         if (!messagesInThisLang.has(messageInHTML))
@@ -280,14 +279,7 @@ export default class Build extends Base {
 
   async pack() {
     const { dist, xpiName } = this.ctx;
-
     const zip = new AdmZip();
-
-    // const paths = globSync("**", { cwd: `${dist}/addon`, dot: true });
-    // paths.forEach((relativePath) => {
-    //   const absolutePath = path.resolve(`${dist}/addon`, relativePath);
-    //   zip.addLocalFile(absolutePath, path.dirname(relativePath));
-    // });
     zip.addLocalFolder(`${dist}/addon`);
     zip.writeZip(`${dist}/${xpiName}.xpi`);
   }
