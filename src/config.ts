@@ -2,7 +2,7 @@ import type { Config, Context, Hooks, OverrideConfig, UserConfig } from "./types
 import { env } from "node:process";
 import { loadConfig as c12 } from "c12";
 import { kebabCase, mapValues } from "es-toolkit";
-import { readJsonSync } from "fs-extra";
+import { readJsonSync } from "fs-extra/esm";
 import { createHooks } from "hookable";
 import { Log } from "./utils/log.js";
 import { dateFormat, parseRepoUrl, template } from "./utils/string.js";

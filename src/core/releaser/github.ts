@@ -1,8 +1,7 @@
 import type { Context } from "../../types/index.js";
-import { stat } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import { basename, join } from "node:path";
 import { env } from "node:process";
-import { readFile } from "fs-extra";
 import mime from "mime";
 import { Octokit } from "octokit";
 import { glob } from "tinyglobby";

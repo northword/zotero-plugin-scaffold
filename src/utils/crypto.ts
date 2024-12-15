@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { createReadStream, readFileSync } from "fs-extra";
+import { createReadStream, readFileSync } from "node:fs";
 
 export function generateHash(
   filePath: string,

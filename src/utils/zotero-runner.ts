@@ -4,8 +4,7 @@ import { readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { env } from "node:process";
 import { delay } from "es-toolkit";
-import { exists, outputJSON } from "fs-extra";
-import { outputFile, readJSON, remove } from "fs-extra/esm";
+import { outputFile, outputJSON, pathExists, readJSON, remove } from "fs-extra/esm";
 import { isLinux, isMacOS, isWindows } from "std-env";
 import { Log } from "./log.js";
 import { isRunning } from "./process.js";
@@ -77,7 +76,7 @@ export class ZoteroRunner {
 
     let exsitedPrefs: string[] = [];
     const prefsPath = join(this.options.profilePath, "prefs.js");
-    if (await exists(prefsPath)) {
+    if (await pathExists(prefsPath)) {
       const PrefsLines = (await readFile(prefsPath, "utf-8")).split("\n");
       exsitedPrefs = PrefsLines.map((line: string) => {
         if (
@@ -171,14 +170,14 @@ export class ZoteroRunner {
 
     // Delete XPI file
     const addonXpiFilePath = join(this.options.profilePath, `extensions/${id}.xpi`);
-    if (await exists(addonXpiFilePath)) {
+    if (await pathExists(addonXpiFilePath)) {
       await remove(addonXpiFilePath);
       logger.debug(`XPI file found, removed.`);
     }
 
     // Force enable plugin in extensions.json
     const addonInfoFilePath = join(this.options.profilePath, "extensions.json");
-    if (await exists(addonInfoFilePath)) {
+    if (await pathExists(addonInfoFilePath)) {
       const content = await readJSON(addonInfoFilePath);
       content.addons = content.addons.map((addon: any) => {
         if (addon.id === id && addon.active === false) {

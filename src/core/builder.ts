@@ -8,7 +8,7 @@ import AdmZip from "adm-zip";
 import chalk from "chalk";
 import { toMerged } from "es-toolkit";
 import { build as buildAsync } from "esbuild";
-import { copy, emptyDir, move, outputJSON, readJSON, writeJson } from "fs-extra";
+import { copy, emptyDir, move, outputJSON, readJSON, writeJson } from "fs-extra/esm";
 import { glob } from "tinyglobby";
 import { generateHash } from "../utils/crypto.js";
 import { dateFormat, replaceInFile, toArray } from "../utils/string.js";
