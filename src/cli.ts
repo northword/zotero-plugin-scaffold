@@ -2,10 +2,10 @@
 
 import process, { env, exit } from "node:process";
 import { Command } from "@commander-js/extra-typings";
-import updateNotifier from "update-notifier";
 import pkg from "../package.json" with { type: "json" };
 import { Build, Config, Release, Serve, Test } from "./index.js";
 import { Log } from "./utils/log.js";
+import { updateNotifier } from "./utils/updater.js";
 
 const logger = new Log();
 // let globalOpts: {
@@ -16,11 +16,7 @@ const logger = new Log();
 
 export default async function main() {
   const { name, version } = pkg;
-  updateNotifier({ pkg: { name, version } }).notify();
-  // Remove SIGINT listeners registered by other programs to
-  // ensure that Scaffold-registered listeners take effect.
-  // see https://github.com/yeoman/update-notifier/pull/237
-  process.removeAllListeners("SIGINT");
+  updateNotifier(name, version);
 
   // Env variables are initialized to dev, but can be overridden by each command
   // For example, "zotero-plugin build" overrides them to "production"
