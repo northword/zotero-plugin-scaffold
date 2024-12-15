@@ -653,6 +653,11 @@ export interface TestConfig {
    */
   waitForPlugin: string;
 
+  /**
+   * @todo not
+   */
+  watch: boolean;
+
   hooks: Partial<TestHooks>;
 }
 
