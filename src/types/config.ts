@@ -315,7 +315,6 @@ interface BuildHooks {
   "build:copyAssets": (ctx: Context) => void | Promise<void>;
   "build:makeManifest": (ctx: Context) => void | Promise<void>;
   "build:fluent": (ctx: Context) => void | Promise<void>;
-  "build:replace": (ctx: Context) => void | Promise<void>;
   "build:bundle": (ctx: Context) => void | Promise<void>;
   "build:pack": (ctx: Context) => void | Promise<void>;
   "build:makeUpdateJSON": (ctx: Context) => void | Promise<void>;

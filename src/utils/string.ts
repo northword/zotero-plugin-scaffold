@@ -1,3 +1,6 @@
+import { readFile, writeFile } from "node:fs/promises";
+import { glob } from "tinyglobby";
+
 export function dateFormat(fmt: string, date: Date) {
   let ret;
   const opt: { [key: string]: string } = {
@@ -49,4 +52,32 @@ export function parseRepoUrl(url?: string) {
   }
   const [, owner, repo] = match;
   return { owner, repo };
+}
+
+export function replace(contents: string, from: RegExp | RegExp[], to: string | string[]) {
+  const froms = Array.isArray(from) ? from : [from];
+  const tos = Array.isArray(to)
+    ? to
+    : Array.from({ length: froms.length }, () => to);
+
+  if (froms.length !== tos.length) {
+    throw new Error("The lengths of 'from' and 'to' must be equal");
+  }
+
+  return froms.reduce((result, pattern, index) => result.replace(pattern, tos[index]), contents);
+}
+
+export async function replaceInFile({ files, from, to, isGlob = true }: {
+  files: string | string[];
+  from: RegExp | RegExp[];
+  to: string | string[];
+  isGlob?: boolean;
+}) {
+  const paths = isGlob ? await glob(files) : toArray(files);
+  await Promise.all(paths.map(async (path) => {
+    const contents = await readFile(path, "utf-8");
+    const newContents = replace(contents, from, to);
+    if (contents !== newContents)
+      await writeFile(path, newContents);
+  }));
 }
