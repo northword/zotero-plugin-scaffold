@@ -1,10 +1,10 @@
 import type { Context } from "../../types/index.js";
+import { readFile, stat } from "node:fs/promises";
 import { basename, join } from "node:path";
 import { env } from "node:process";
-import fs from "fs-extra";
-import { globbySync } from "globby";
 import mime from "mime";
 import { Octokit } from "octokit";
+import { glob } from "tinyglobby";
 import { ReleaseBase } from "./base.js";
 
 export default class GitHub extends ReleaseBase {
@@ -92,10 +92,10 @@ export default class GitHub extends ReleaseBase {
       .uploadReleaseAsset({
         ...this.remote,
         release_id: releaseID,
-        data: fs.readFileSync(asset) as unknown as string,
+        data: await readFile(asset) as unknown as string,
         headers: {
           "content-type": mime.getType(asset) || "application/octet-stream",
-          "content-length": fs.statSync(asset).size,
+          "content-length": (await stat(asset)).size,
         },
         name: basename(asset),
       })
@@ -114,7 +114,7 @@ export default class GitHub extends ReleaseBase {
 
     const { dist, version } = this.ctx;
 
-    const assets = globbySync(`${dist}/update*.json`)
+    const assets = (await glob(`${dist}/update*.json`))
       .map(p => basename(p));
 
     const release

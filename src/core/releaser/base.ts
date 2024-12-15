@@ -1,6 +1,6 @@
 import type { Context } from "../../types/index.js";
-import { globbySync } from "globby";
 import { isCI } from "std-env";
+import { globSync } from "tinyglobby";
 import { Base } from "../base.js";
 
 export abstract class ReleaseBase extends Base {
@@ -15,7 +15,7 @@ export abstract class ReleaseBase extends Base {
   checkFiles() {
     const { dist } = this.ctx;
 
-    if (globbySync(`${dist}/*.xpi`).length === 0) {
+    if (globSync(`${dist}/*.xpi`).length === 0) {
       throw new Error("No xpi file found, are you sure you have run build?");
     }
   }

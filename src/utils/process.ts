@@ -25,3 +25,5 @@ export function isRunning(query: string) {
     return false;
   }
 }
+
+export const ExitSignals = ["exit", "SIGABRT", "SIGALRM", "SIGHUP", "SIGINT", "SIGTERM"];

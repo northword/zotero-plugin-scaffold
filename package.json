@@ -1,7 +1,7 @@
 {
   "name": "zotero-plugin-scaffold",
   "type": "module",
-  "version": "0.2.0-beta.7",
+  "version": "0.2.0-beta.9",
   "packageManager": "pnpm@9.15.0",
   "description": "A scaffold for Zotero plugin development.",
   "author": "northword",
@@ -79,13 +79,12 @@
     "es-toolkit": "^1.29.0",
     "esbuild": "^0.24.0",
     "fs-extra": "^11.2.0",
-    "globby": "^14.0.2",
     "hookable": "^5.5.3",
     "mime": "^4.0.4",
     "octokit": "^4.0.2",
-    "replace-in-file": "^8.2.0",
     "std-env": "^3.8.0",
-    "update-notifier": "^7.3.1",
+    "tiny-update-notifier": "^2.0.0",
+    "tinyglobby": "^0.2.10",
     "xvfb-ts": "^1.1.0"
   },
   "devDependencies": {
@@ -93,17 +92,9 @@
     "@types/adm-zip": "^0.5.7",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^22.10.2",
-    "@types/update-notifier": "^6.0.8",
     "eslint": "^9.16.0",
     "eslint-plugin-format": "^0.1.3",
     "typescript": "^5.7.2",
     "unbuild": "^2.0.0"
-  },
-  "pnpm": {
-    "peerDependencyRules": {
-      "allowAny": [
-        "node-fetch"
-      ]
-    }
   }
 }
