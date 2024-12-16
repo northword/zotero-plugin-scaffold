@@ -4,15 +4,8 @@ import process, { env, exit } from "node:process";
 import { Command } from "@commander-js/extra-typings";
 import pkg from "../package.json" with { type: "json" };
 import { Build, Config, Release, Serve, Test } from "./index.js";
-import { Log } from "./utils/log.js";
+import { logger } from "./utils/log.js";
 import { updateNotifier } from "./utils/updater.js";
-
-const logger = new Log();
-// let globalOpts: {
-//   configCwd?: string;
-// } = {
-//   configCwd: cwd(),
-// };
 
 export default async function main() {
   const { name, version } = pkg;

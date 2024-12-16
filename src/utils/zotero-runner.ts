@@ -6,12 +6,10 @@ import { env } from "node:process";
 import { delay } from "es-toolkit";
 import { outputFile, outputJSON, pathExists, readJSON, remove } from "fs-extra/esm";
 import { isLinux, isMacOS, isWindows } from "std-env";
-import { Log } from "./log.js";
+import { logger } from "./log.js";
 import { isRunning } from "./process.js";
 import { prefs } from "./zotero/preference.js";
 import { findFreeTcpPort, RemoteFirefox } from "./zotero/remote-zotero.js";
-
-const logger = new Log();
 
 export interface ZoteroRunnerOptions {
   binaryPath: string;
@@ -286,8 +284,6 @@ export class ZoteroRunner {
 }
 
 export function killZotero() {
-  const logger = new Log();
-
   function kill() {
     try {
       if (env.ZOTERO_PLUGIN_KILL_COMMAND) {
