@@ -1,4 +1,3 @@
-import type { Config } from "../types/index.js";
 import process, { env } from "node:process";
 import readline from "node:readline";
 import chalk from "chalk";
@@ -8,7 +7,7 @@ import { isDebug } from "std-env";
 /**
  * Log level
  */
-enum LOG_LEVEL {
+export enum LOG_LEVEL {
   trace = 0,
   debug = 1,
   info = 2,
@@ -16,20 +15,34 @@ enum LOG_LEVEL {
   error = 4,
 }
 
+export type LogLevelType = keyof typeof LOG_LEVEL;
+
 /**
  * Logger
  */
 export class Log {
+  private static instance: Log;
   private logLevel: number;
-  constructor(config?: Config) {
+  constructor(level?: LOG_LEVEL) {
     if (isDebug)
       this.logLevel = LOG_LEVEL.trace;
-    else if (config)
-      this.logLevel = LOG_LEVEL[config.logLevel];
     else if (env.ZOTERO_PLUGIN_LOG_LEVEL)
-      this.logLevel = LOG_LEVEL[env.ZOTERO_PLUGIN_LOG_LEVEL as Config["logLevel"]];
+      this.logLevel = LOG_LEVEL[env.ZOTERO_PLUGIN_LOG_LEVEL as LogLevelType];
+    else if (level)
+      this.logLevel = level;
     else
-      this.logLevel = LOG_LEVEL.trace;
+      this.logLevel = LOG_LEVEL.info;
+  }
+
+  static getInstance(): Log {
+    if (!Log.instance) {
+      Log.instance = new Log();
+    }
+    return Log.instance;
+  }
+
+  setLogLevel(level: LogLevelType) {
+    this.logLevel = LOG_LEVEL[level];
   }
 
   private formatArgs(arg: any): string {
@@ -117,3 +130,5 @@ export class Log {
     console.log("");
   }
 }
+
+export const logger = Log.getInstance();

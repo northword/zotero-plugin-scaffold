@@ -1,9 +1,7 @@
 import { execSync } from "node:child_process";
 import { exit } from "node:process";
 import { isLinux } from "std-env";
-import { Log } from "./log.js";
-
-const logger = new Log();
+import { logger } from "./log.js";
 
 export async function installXvfb() {
   logger.debug("Installing xvfb...");

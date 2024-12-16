@@ -1,10 +1,9 @@
 import type { Config, Context, Hooks, OverrideConfig, UserConfig } from "./types/index.js";
-import { env } from "node:process";
 import { loadConfig as c12 } from "c12";
 import { kebabCase, mapValues } from "es-toolkit";
 import { readJsonSync } from "fs-extra/esm";
 import { createHooks } from "hookable";
-import { Log } from "./utils/log.js";
+import { logger } from "./utils/log.js";
 import { dateFormat, parseRepoUrl, template } from "./utils/string.js";
 
 /**
@@ -32,9 +31,7 @@ export async function loadConfig(overrides?: OverrideConfig): Promise<Context> {
 }
 
 function resolveConfig(config: Config): Context {
-  // Sync log level to env so that logs in utils are also output as expected by log level
-  env.ZOTERO_PLUGIN_LOG_LEVEL = config.logLevel;
-  const logger = new Log(config);
+  logger.setLogLevel(config.logLevel);
 
   // Load user's package.json
   const pkgUser = readJsonSync("package.json", {
