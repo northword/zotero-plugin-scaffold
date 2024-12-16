@@ -1,4 +1,5 @@
 import type { BuildOptions } from "esbuild";
+import type { LogLevelType } from "../utils/log.js";
 import type { Context } from "./index.js";
 import type { Manifest } from "./manifest.js";
 import type { UpdateJSON } from "./update-json.js";
@@ -153,7 +154,7 @@ export interface Config {
    *
    * @default "info"
    */
-  logLevel: "trace" | "debug" | "info" | "warn" | "error";
+  logLevel: LogLevelType;
 }
 
 export interface BuildConfig {

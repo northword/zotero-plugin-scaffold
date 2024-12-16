@@ -22,10 +22,9 @@
 
 import net from "node:net";
 
-import { Log } from "../log.js";
+import { logger } from "../log.js";
 import { MessagingClient } from "./rdp-client.js";
 
-const logger = new Log();
 const MAX_RETRIES = 150;
 const RETRY_INTERVAL = 1000;
 
