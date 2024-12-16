@@ -40,7 +40,6 @@ export default class Test extends Base {
     // Empty dirs
     await emptyDir(this.profilePath);
     await emptyDir(this.dataDir);
-    await emptyDir(this.testBuildDir);
     await emptyDir(this.testPluginDir);
 
     await this.ctx.hooks.callHook("test:init", this.ctx);
@@ -247,7 +246,7 @@ export default class Test extends Base {
 
       await build({
         entryPoints: await glob(`${dir}/**/*.spec.{js,ts}`),
-        outdir: `${this.testPluginDir}/content/unit`,
+        outdir: `${this.testPluginDir}/content/units`,
         bundle: true,
         target: "firefox115",
         tsconfig: tsconfigPath || undefined,
@@ -609,23 +608,19 @@ export default class Test extends Base {
   }
 
   private get profilePath() {
-    return `node_modules/.scaffold/profile`;
+    return `.scaffold/test/profile`;
   }
 
   private get dataDir() {
-    return `node_modules/.scaffold/data`;
-  }
-
-  private get testBuildDir() {
-    return `node_modules/.scaffold/test/units`;
+    return `.scaffold/test/data`;
   }
 
   private get testPluginDir() {
-    return `node_modules/.scaffold/test/resource`;
+    return `.scaffold/test/resource`;
   }
 
   private get cacheDir() {
-    return `node_modules/.scaffold/cache`;
+    return `.scaffold/cache`;
   }
 
   private get testPluginRef() {

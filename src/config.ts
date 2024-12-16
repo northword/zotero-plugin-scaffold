@@ -86,7 +86,7 @@ function resolveConfig(config: Config): Context {
 
 const defaultConfig = {
   source: "src",
-  dist: "build",
+  dist: ".scaffold/build",
 
   name: "",
   id: "",
