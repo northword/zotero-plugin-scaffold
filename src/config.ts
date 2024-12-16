@@ -92,10 +92,8 @@ const defaultConfig = {
   id: "",
   namespace: "",
   xpiName: "",
-  xpiDownloadLink:
-    "https://github.com/{{owner}}/{{repo}}/releases/download/v{{version}}/{{xpiName}}.xpi",
-  updateURL:
-    "https://github.com/{{owner}}/{{repo}}/releases/download/release/{{updateJson}}",
+  xpiDownloadLink: "https://github.com/{{owner}}/{{repo}}/releases/download/v{{version}}/{{xpiName}}.xpi",
+  updateURL: "https://github.com/{{owner}}/{{repo}}/releases/download/release/{{updateJson}}",
 
   build: {
     assets: "addon/**/*.*",
@@ -184,7 +182,6 @@ const defaultConfig = {
     mocha: {
       timeout: 10000,
     },
-    port: 9876,
     abortOnFail: false,
     exitOnFinish: false,
     headless: false,

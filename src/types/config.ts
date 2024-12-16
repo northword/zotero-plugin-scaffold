@@ -585,15 +585,6 @@ export interface TestConfig {
   };
 
   /**
-   * Port for the test server.
-   *
-   * 测试服务器的端口。
-   *
-   * @default 9876
-   */
-  port: number;
-
-  /**
    * Abort the test when the first test fails.
    *
    * 当第一个测试失败时中止测试。
