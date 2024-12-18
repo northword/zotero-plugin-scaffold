@@ -1,48 +1,71 @@
 import { execSync } from "node:child_process";
 import process from "node:process";
-import { isLinux } from "std-env";
-import { logger } from "./log.js";
+import { isDebug, isLinux } from "std-env";
+import { LOG_LEVEL, logger } from "./log.js";
 
-export async function installXvfb() {
-  logger.debug("Installing xvfb...");
-  if (!isLinux) {
-    logger.error("Unsupported platform. Please install Xvfb manually.");
-    process.exit(1);
-  }
+function isPackageInstalled(packageName: string): boolean {
   try {
-    execSync("which xvfb", { stdio: "ignore" });
+    execSync(`dpkg-query -W ${packageName}`, { stdio: "ignore" });
+    return true;
   }
   catch {
-    try {
-      const osId = execSync("cat /etc/os-release | grep '^ID='").toString();
-      if (osId.includes("ubuntu") || osId.includes("debian")) {
-        logger.debug("Detected Ubuntu/Debian. Installing Xvfb...");
-        execSync("sudo apt-get update && sudo apt-get install -y xvfb", { stdio: "pipe" });
-      }
-      else if (osId.includes("centos") || osId.includes("rhel")) {
-        logger.debug("Detected CentOS/RHEL. Installing Xvfb...");
-        execSync("sudo yum install -y xorg-x11-server-Xvfb", { stdio: "pipe" });
-      }
-      else {
-        throw new Error("Unsupported Linux distribution.");
-      }
-      logger.debug("Xvfb installation completed.");
-    }
-    catch (error) {
-      logger.error("Failed to install Xvfb:", error);
-      process.exit(1);
-    }
+    return false;
   }
 }
 
-export async function installZoteroLinux() {
-  logger.debug("Installing Zotero...");
+function installPackage(packageName: string): void {
+  const debug = isDebug || logger.level <= LOG_LEVEL.debug;
   try {
-    execSync("wget -O zotero.tar.bz2 'https://www.zotero.org/download/client/dl?platform=linux-x86_64&channel=beta'", { stdio: "pipe" });
-    execSync("tar -xvf zotero.tar.bz2", { stdio: "pipe" });
+    logger.debug(`Installing ${packageName}...`);
+    execSync(`sudo apt update && sudo apt install -y ${packageName}`, { stdio: debug ? "inherit" : "pipe" });
+    logger.debug(`${packageName} installed successfully.`);
   }
-  catch (e) {
-    logger.error(e);
-    throw new Error("Zotero extracted failed");
+  catch (error) {
+    logger.fail(`Failed to install ${packageName}.`, error);
+    throw error;
   }
+}
+
+function checkAndInstallDependencies(packages: string[]): void {
+  packages.forEach((pkg) => {
+    if (isPackageInstalled(pkg)) {
+      logger.debug(`${pkg} is already installed.`);
+    }
+    else {
+      installPackage(pkg);
+    }
+  });
+}
+
+export async function installXvfb() {
+  if (!isLinux) {
+    logger.error("Unsupported platform. Please install Xvfb manually.");
+    return;
+  }
+
+  const osId = execSync("cat /etc/os-release | grep '^ID='").toString();
+  if (!(osId.includes("ubuntu") || osId.includes("debian"))) {
+    logger.error("Unsupported Linux distribution.");
+    return;
+  }
+
+  checkAndInstallDependencies(["xvfb", "x11-xkb-utils", "xkb-data"]);
+}
+
+export async function installDepsForUbuntu24() {
+  checkAndInstallDependencies(["libasound2t64", "libdbus-glib-1-2"]);
+}
+
+export async function installZoteroLinux() {
+  if (process.env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH) {
+    logger.debug("Local Zotero found, skip to download.");
+    return;
+  }
+
+  logger.debug("Installing Zotero...");
+  execSync("wget -O zotero.tar.bz2 'https://www.zotero.org/download/client/dl?platform=linux-x86_64&channel=beta'", { stdio: "pipe" });
+  execSync("tar -xvf zotero.tar.bz2", { stdio: "pipe" });
+
+  // Set Environment Variable for Zotero Bin Path
+  process.env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH = `${process.cwd()}/Zotero_linux-x86_64/zotero`;
 }
