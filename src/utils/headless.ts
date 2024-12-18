@@ -17,7 +17,7 @@ export async function installXvfb() {
       const osId = execSync("cat /etc/os-release | grep '^ID='").toString();
       if (osId.includes("ubuntu") || osId.includes("debian")) {
         logger.debug("Detected Ubuntu/Debian. Installing Xvfb...");
-        execSync("sudo apt-get update && sudo apt-get install -y xvfb", { stdio: "pipe" });
+        execSync("sudo apt-get update && sudo apt-get install -y xvfb", { stdio: "inherit" });
       }
       else if (osId.includes("centos") || osId.includes("rhel")) {
         logger.debug("Detected CentOS/RHEL. Installing Xvfb...");
