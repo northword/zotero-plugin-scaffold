@@ -1,7 +1,7 @@
 import type { Context } from "../../types/index.js";
 import { readFile, stat } from "node:fs/promises";
 import { basename, join } from "node:path";
-import { env } from "node:process";
+import process from "node:process";
 import mime from "mime";
 import { Octokit } from "octokit";
 import { glob } from "tinyglobby";
@@ -172,10 +172,10 @@ export default class GitHub extends ReleaseBase {
   }
 
   getClient(): Octokit {
-    if (!env.GITHUB_TOKEN)
+    if (!process.env.GITHUB_TOKEN)
       throw new Error("No GITHUB_TOKEN.");
     const client = new Octokit({
-      auth: env.GITHUB_TOKEN,
+      auth: process.env.GITHUB_TOKEN,
       userAgent: "zotero-plugin-scaffold",
     });
 

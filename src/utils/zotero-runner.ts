@@ -2,7 +2,7 @@ import type { ChildProcessWithoutNullStreams } from "node:child_process";
 import { execSync, spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { env } from "node:process";
+import process from "node:process";
 import { delay } from "es-toolkit";
 import { outputFile, outputJSON, pathExists, readJSON, remove } from "fs-extra/esm";
 import { isLinux, isMacOS, isWindows } from "std-env";
@@ -117,19 +117,15 @@ export class ZoteroRunner {
     const remotePort = await findFreeTcpPort();
     args.push("-start-debugger-server", String(remotePort));
 
-    const defaultFirefoxEnv = {
+    const env = {
+      ...process.env,
       XPCOM_DEBUG_BREAK: "stack",
       NS_TRACE_MALLOC_DISABLE_STACKS: "1",
     };
 
     // Using `spawn` so we can stream logging as they come in, rather than
     // buffer them up until the end, which can easily hit the max buffer size.
-    this.zotero = spawn(this.options.binaryPath, args, {
-      env: {
-        ...env,
-        ...defaultFirefoxEnv,
-      },
-    });
+    this.zotero = spawn(this.options.binaryPath, args, { env });
 
     // Handle Zotero log, necessary on macOS
     this.zotero.stdout?.on("data", (_data) => {});
@@ -287,8 +283,8 @@ export class ZoteroRunner {
 export function killZotero() {
   function kill() {
     try {
-      if (env.ZOTERO_PLUGIN_KILL_COMMAND) {
-        execSync(env.ZOTERO_PLUGIN_KILL_COMMAND);
+      if (process.env.ZOTERO_PLUGIN_KILL_COMMAND) {
+        execSync(process.env.ZOTERO_PLUGIN_KILL_COMMAND);
       }
       else if (isWindows) {
         execSync("taskkill /f /im zotero.exe");

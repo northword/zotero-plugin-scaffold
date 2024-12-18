@@ -1,4 +1,4 @@
-import process, { env } from "node:process";
+import process from "node:process";
 import readline from "node:readline";
 import chalk from "chalk";
 import { isPlainObject } from "es-toolkit";
@@ -26,8 +26,8 @@ export class Log {
   constructor(level?: LOG_LEVEL) {
     if (isDebug)
       this.logLevel = LOG_LEVEL.trace;
-    else if (env.ZOTERO_PLUGIN_LOG_LEVEL)
-      this.logLevel = LOG_LEVEL[env.ZOTERO_PLUGIN_LOG_LEVEL as LogLevelType];
+    else if (process.env.ZOTERO_PLUGIN_LOG_LEVEL)
+      this.logLevel = LOG_LEVEL[process.env.ZOTERO_PLUGIN_LOG_LEVEL as LogLevelType];
     else if (level)
       this.logLevel = level;
     else
