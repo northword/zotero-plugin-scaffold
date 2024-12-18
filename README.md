@@ -144,6 +144,8 @@ await Builder.run();
 ## Testing
 
 `zotero-plugin-scaffold` can run [mocha](https://mochajs.org/)/[chai](https://www.chaijs.com/)-based tests against a live Zotero instance via a proxy plugin.
+A temporary profile and data directory will be created when launching Zotero,
+so tests can be run locally on the system Zotero installation.
 
 ### Configuration
 
