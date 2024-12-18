@@ -554,9 +554,7 @@ export default class Test extends Base {
     // Set Environment Variable for Zotero Bin Path
     process.env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH = `${cwd()}/Zotero_linux-x86_64/zotero`;
 
-    const xvfb = new Xvfb({
-      timeout: 2000,
-    });
+    const xvfb = new Xvfb();
     await xvfb.start();
     await this.startZotero();
   }
