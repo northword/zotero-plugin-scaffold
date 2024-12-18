@@ -1,5 +1,5 @@
 import { execSync } from "node:child_process";
-import { exit } from "node:process";
+import process from "node:process";
 import { isLinux } from "std-env";
 import { logger } from "./log.js";
 
@@ -7,7 +7,7 @@ export async function installXvfb() {
   logger.debug("Installing xvfb...");
   if (!isLinux) {
     logger.error("Unsupported platform. Please install Xvfb manually.");
-    exit(1);
+    process.exit(1);
   }
   try {
     execSync("which xvfb", { stdio: "ignore" });
@@ -30,7 +30,7 @@ export async function installXvfb() {
     }
     catch (error) {
       logger.error("Failed to install Xvfb:", error);
-      exit(1);
+      process.exit(1);
     }
   }
 }

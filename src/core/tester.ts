@@ -1,7 +1,7 @@
 import type { Context } from "../types/index.js";
 import http from "node:http";
 import { join, resolve } from "node:path";
-import process, { cwd, env, exit } from "node:process";
+import process, { cwd } from "node:process";
 import { build } from "esbuild";
 import { copy, emptyDir, outputFile, outputJSON, pathExists } from "fs-extra/esm";
 import { isCI } from "std-env";
@@ -22,7 +22,7 @@ export default class Test extends Base {
 
   constructor(ctx: Context) {
     super(ctx);
-    env.NODE_ENV ??= "test";
+    process.env.NODE_ENV ??= "test";
 
     this.builder = new Build(ctx);
 
@@ -552,7 +552,7 @@ export default class Test extends Base {
     await installZoteroLinux();
 
     // Set Environment Variable for Zotero Bin Path
-    env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH = `${cwd()}/Zotero_linux-x86_64/zotero`;
+    process.env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH = `${cwd()}/Zotero_linux-x86_64/zotero`;
 
     const xvfb = new Xvfb({
       timeout: 2000,
@@ -589,22 +589,22 @@ export default class Test extends Base {
 
     if (code === 1) {
       this.logger.error("Test run failed");
-      exit(1);
+      process.exit(1);
     }
     else if (code === "SIGINT") {
       this.logger.info("Tester shutdown by user request");
-      exit();
+      process.exit();
     }
     else {
       this.logger.success("Test run completed successfully");
-      exit();
+      process.exit();
     }
   };
 
   private get zoteroBinPath() {
-    if (!env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH)
+    if (!process.env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH)
       throw new Error("No Zotero Found.");
-    return env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH;
+    return process.env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH;
   }
 
   private get profilePath() {

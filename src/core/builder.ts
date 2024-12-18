@@ -3,7 +3,7 @@ import type { Manifest } from "../types/manifest.js";
 import type { UpdateJSON } from "../types/update-json.js";
 import { readFile, writeFile } from "node:fs/promises";
 import { basename, dirname } from "node:path";
-import { env } from "node:process";
+import process from "node:process";
 import AdmZip from "adm-zip";
 import chalk from "chalk";
 import { toMerged } from "es-toolkit";
@@ -19,7 +19,7 @@ export default class Build extends Base {
   private isPreRelease: boolean;
   constructor(ctx: Context) {
     super(ctx);
-    env.NODE_ENV ??= "production";
+    process.env.NODE_ENV ??= "production";
     this.buildTime = "";
     this.isPreRelease = this.ctx.version.includes("-");
   }
@@ -33,7 +33,7 @@ export default class Build extends Base {
     const t = new Date();
     this.buildTime = dateFormat("YYYY-mm-dd HH:MM:SS", t);
     this.logger.info(
-      `Building version ${chalk.blue(version)} to ${chalk.blue(dist)} at ${chalk.blue(this.buildTime)} in ${chalk.blue(env.NODE_ENV)} mode.`,
+      `Building version ${chalk.blue(version)} to ${chalk.blue(dist)} at ${chalk.blue(this.buildTime)} in ${chalk.blue(process.env.NODE_ENV)} mode.`,
     );
     await this.ctx.hooks.callHook("build:init", this.ctx);
 
@@ -58,7 +58,7 @@ export default class Build extends Base {
 
     /** ======== build resolved =========== */
 
-    if (env.NODE_ENV === "production") {
+    if (process.env.NODE_ENV === "production") {
       this.logger.tip("Packing plugin");
       await this.pack();
       await this.ctx.hooks.callHook("build:pack", this.ctx);
