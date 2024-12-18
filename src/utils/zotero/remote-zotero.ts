@@ -84,7 +84,7 @@ export class RemoteFirefox {
         return this.client;
       }
       catch (error: any) {
-        logger.fail('Failed to connecte to RDP client, retry...')
+        logger.fail("Failed to connecte to RDP client, retry...");
         if (isErrorWithCode("ECONNREFUSED", error)) {
           await new Promise(resolve => setTimeout(resolve, RETRY_INTERVAL));
           lastError = error;

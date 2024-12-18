@@ -1,7 +1,7 @@
 import type { Context } from "../types/index.js";
 import http from "node:http";
 import { join, resolve } from "node:path";
-import process, { cwd } from "node:process";
+import process from "node:process";
 import { build } from "esbuild";
 import { copy, emptyDir, outputFile, outputJSON, pathExists } from "fs-extra/esm";
 import { isCI } from "std-env";
