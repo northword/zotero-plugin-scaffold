@@ -83,9 +83,6 @@ export class ZoteroRunner {
         ) {
           return "";
         }
-        if (line.includes("extensions.zotero.dataDir") && this.options.dataDir !== "") {
-          return `user_pref("extensions.zotero.dataDir", "${this.options.dataDir}");`;
-        }
         return line;
       });
     }
@@ -103,7 +100,11 @@ export class ZoteroRunner {
     // Build args
     let args: string[] = ["--purgecaches", "no-remote"];
     if (this.options.profilePath) {
-      args.push("-profile", this.options.profilePath);
+      args.push("-profile", resolve(this.options.profilePath));
+    }
+    if (this.options.dataDir) {
+      // '--dataDir' required absolute path
+      args.push("--dataDir", resolve(this.options.dataDir));
     }
     if (this.options.devtools) {
       args.push("--jsdebugger");
