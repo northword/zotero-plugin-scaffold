@@ -23,5 +23,7 @@ export default defineConfig({
     socialLinks: [
       { icon: "github", link: "https://github.com/northword/zotero-plugin-scaffold" },
     ],
+
+    outline: "deep",
   },
 });

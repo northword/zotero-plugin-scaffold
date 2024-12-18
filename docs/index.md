@@ -14,10 +14,14 @@ hero:
 features:
   - title: Dev Serve
     details: Auto reload your plugin when source code changed
+    link: /serve
   - title: Build Plugin
-    details: TypeScript supported, many utils builders
-  - title: Pack plugin
-    details: Pack code to xpi file
+    details: TypeScript supported, many utils builders, and pack code to xpi
+    link: /build
+  - title: Test plugin
+    details: Out-of-the-box test kits
+    link: /test
   - title: Release
     details: Auto bump version, and publish your plugin to GitHub
+    link: /release
 ---

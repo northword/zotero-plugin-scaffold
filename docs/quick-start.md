@@ -17,30 +17,12 @@ pnpm dlx zotero-plugin create
 
 ### 01. Install
 
-#### From NPM
-
 ```bash
 npm install -D zotero-plugin-scaffold
 
 yarn add -D zotero-plugin-scaffold
 
 pnpm add -D zotero-plugin-scaffold
-```
-
-#### From source code
-
-```bash
-# clone this repo
-git clone https://github.com/northword/zotero-plugin-scaffold.git zotero-plugin-scaffold/
-cd zotero-plugin-scaffold/
-
-# build
-pnpm install
-pnpm build # or pnpm dev
-
-# npm link
-cd your-plugin-work-dir/
-pnpm link ../zotero-plugin-scaffold
 ```
 
 ### 02. Create a config file
@@ -72,7 +54,7 @@ export default defineConfig({
 });
 ```
 
-Full config please refrence in [src/types](./src/types/index.ts).
+Full config please refrence in [src/types](https://github.com/northword/zotero-plugin-scaffold/blob/main/src/types/config.ts).
 
 ### 03. Create a env file
 
