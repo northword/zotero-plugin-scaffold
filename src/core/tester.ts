@@ -8,7 +8,7 @@ import { isCI } from "std-env";
 import { glob } from "tinyglobby";
 import { Xvfb } from "xvfb-ts";
 import { saveResource } from "../utils/file.js";
-import { installXvfb, installZoteroLinux } from "../utils/headless.js";
+import { installDepsForUbuntu24, installXvfb, installZoteroLinux } from "../utils/headless.js";
 import { toArray } from "../utils/string.js";
 import { ZoteroRunner } from "../utils/zotero-runner.js";
 import { findFreeTcpPort } from "../utils/zotero/remote-zotero.js";
@@ -547,14 +547,14 @@ export default class Test extends Base {
   async startZoteroHeadless() {
     // Ensure xvfb installing
     await installXvfb();
+    await installDepsForUbuntu24();
 
     // Download and Extract Zotero Beta Linux
     await installZoteroLinux();
 
-    // Set Environment Variable for Zotero Bin Path
-    process.env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH = `${cwd()}/Zotero_linux-x86_64/zotero`;
-
-    const xvfb = new Xvfb();
+    const xvfb = new Xvfb({
+      timeout: 2000,
+    });
     await xvfb.start();
     await this.startZotero();
   }

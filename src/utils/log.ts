@@ -45,6 +45,10 @@ export class Log {
     this.logLevel = LOG_LEVEL[level];
   }
 
+  get level() {
+    return this.logLevel;
+  }
+
   private formatArgs(arg: any): string {
     if (typeof arg === "string")
       return arg;
