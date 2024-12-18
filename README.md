@@ -33,6 +33,18 @@ pnpm install
 # and the modified code does not need to be built again.
 pnpm run dev
 
+# link local scaffold to your plugin
+cd your-plugin-work-dir/
+pnpm link ../zotero-plugin-scaffold
+cd zotero-plugin-scaffold/
+
+```
+
+Now you can make changes to Scaffold and test them in your plugin.
+
+When you're done modifying, make sure that you can pass the build and that the code style meets the requirements of this repository.
+
+```bash
 # Build
 pnpm run build
 
