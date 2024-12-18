@@ -10,7 +10,7 @@ export async function installXvfb() {
     process.exit(1);
   }
   try {
-    execSync("which xvfb", { stdio: "ignore" });
+    execSync("which xvfb", { stdio: "inherit" });
   }
   catch {
     try {
