@@ -83,16 +83,14 @@ function resolveConfig(config: Config): Context {
 
 const defaultConfig = {
   source: "src",
-  dist: "build",
+  dist: ".scaffold/build",
 
   name: "",
   id: "",
   namespace: "",
   xpiName: "",
-  xpiDownloadLink:
-    "https://github.com/{{owner}}/{{repo}}/releases/download/v{{version}}/{{xpiName}}.xpi",
-  updateURL:
-    "https://github.com/{{owner}}/{{repo}}/releases/download/release/{{updateJson}}",
+  xpiDownloadLink: "https://github.com/{{owner}}/{{repo}}/releases/download/v{{version}}/{{xpiName}}.xpi",
+  updateURL: "https://github.com/{{owner}}/{{repo}}/releases/download/release/{{updateJson}}",
 
   build: {
     assets: "addon/**/*.*",
@@ -181,12 +179,12 @@ const defaultConfig = {
     mocha: {
       timeout: 10000,
     },
-    port: 9876,
     abortOnFail: false,
     exitOnFinish: false,
     headless: false,
     startupDelay: 1000,
     waitForPlugin: "() => true",
+    watch: false,
     hooks: {},
   },
   logLevel: "info",
