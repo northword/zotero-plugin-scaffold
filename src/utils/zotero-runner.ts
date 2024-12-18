@@ -117,6 +117,8 @@ export class ZoteroRunner {
     const remotePort = await findFreeTcpPort();
     args.push("-start-debugger-server", String(remotePort));
 
+    logger.debug("Zotero start args: ", args);
+
     const env = {
       ...process.env,
       XPCOM_DEBUG_BREAK: "stack",
@@ -126,10 +128,12 @@ export class ZoteroRunner {
     // Using `spawn` so we can stream logging as they come in, rather than
     // buffer them up until the end, which can easily hit the max buffer size.
     this.zotero = spawn(this.options.binaryPath, args, { env });
+    logger.debug("Zotero started, pid:", this.zotero.pid);
 
     // Handle Zotero log, necessary on macOS
     this.zotero.stdout?.on("data", (_data) => {});
 
+    logger.debug("Connecting to the remote Firefox debugger...");
     await this.remoteFirefox.connect(remotePort);
     logger.debug(`Connected to the remote Firefox debugger on port: ${remotePort}`);
   }
