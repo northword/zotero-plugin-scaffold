@@ -16,7 +16,7 @@ For best practices regarding this package, please refer to [zotero-plugin-templa
 
 ## Documentation
 
-[Read the Docs to Learn More.](https://northword.github.io/zotero-plugin-scaffold)
+[Read the Docs to Learn More](https://northword.github.io/zotero-plugin-scaffold).
 
 ## Contributing
 

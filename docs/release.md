@@ -1,9 +1,9 @@
 # Release
 
-我们都知道，对于一个插件的发布，我们需要手动修改 `manifest.json` 中的 `version` 值，然后将其打包，上传到某个地方，随后，我们还需要更新 `update.json` 中的版本号和链接。
+When releasing a plugin, we typically need to manually update the `version` value in `manifest.json`, package the plugin, upload it somewhere, and then update the `version` and link in `update.json`.
 
-为了保持 Git 记录，我们在修改 version 值后，还需要提交代码并为这个提交添加 tag。
+To maintain Git history, we also need to commit the changes and add a tag to the commit after updating the version.
 
-—— 这太麻烦了！
+— It’s too tedious!
 
-在 Scaffold 中，你只需要运行 `zotero-plugin release`，然后选择一个你需要的版本号，一切都将自动运行。
+With Scaffold, all you need to do is run `zotero-plugin release` and select the desired version number. Everything else will be handled automatically.

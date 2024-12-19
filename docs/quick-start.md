@@ -1,39 +1,45 @@
 # Quick Start
 
-## Using in a blank project
+## Using in a Blank Project
 
-::: details WIP: Not yet implemented
+::: details WIP: Not Yet Implemented
 
 ```bash
-# npm
+# Using npm
 npx zotero-plugin create
-# pnpm
+
+# Using pnpm
 pnpm dlx zotero-plugin create
 ```
 
 :::
 
-## Using in an existing project
+## Using in an Existing Project
 
-### 01. Install
+### 01. Install the Package
+
+You can install `zotero-plugin-scaffold` using your preferred package manager:
 
 ```bash
+# npm
 npm install -D zotero-plugin-scaffold
 
+# yarn
 yarn add -D zotero-plugin-scaffold
 
+# pnpm
 pnpm add -D zotero-plugin-scaffold
 ```
 
-### 02. Create a config file
+### 02. Create a Configuration File
 
-The configuration file needs to be stored in the following location.
+The configuration file should be placed at one of the following locations:
 
 ```bash
-zotero-plugin.config.ts  # also avaliable in *.js  *.mjs  *.cjs  *.ts
+zotero-plugin.config.ts  # Also supported: *.js, *.mjs, *.cjs, *.ts
 ```
 
-You can import helper `defineConfig` to get type hints. If no value is specified for an optional property, the default value will be used.
+You can use the `defineConfig` helper to enable type hints. Optional properties will default to predefined values if not explicitly specified.
 
 ```ts
 import { defineConfig } from "zotero-plugin-scaffold";
@@ -54,15 +60,15 @@ export default defineConfig({
 });
 ```
 
-Full config please refrence in [src/types](https://github.com/northword/zotero-plugin-scaffold/blob/main/src/types/config.ts).
+For a full list of configuration options, refer to the [type definitions](https://github.com/northword/zotero-plugin-scaffold/blob/main/src/types/config.ts).
 
-### 03. Create a env file
+### 03. Create an Environment File
 
-This file defines Zotero's runtime configuration such as binary paths, profile paths, and environment variables required for Node scripts to run.
+Define Zotero’s runtime configuration (e.g., binary paths, profile paths, and environment variables) in a `.env` file.
 
 ::: warning
 
-NOTE: Do not check-in this file to the repository!
+Do not commit this file to your repository!
 
 :::
 
@@ -71,17 +77,19 @@ NOTE: Do not check-in this file to the repository!
 ```
 
 ```ini
-# The path of the Zotero binary file.
-# The path is `*/Zotero.app/Contents/MacOS/zotero` for macOS.
-ZOTERO_PLUGIN_ZOTERO_BIN_PATH = /path/to/zotero.exe
+# Path to the Zotero binary file.
+# For macOS, the path is typically `*/Zotero.app/Contents/MacOS/zotero`.
+ZOTERO_PLUGIN_ZOTERO_BIN_PATH=/path/to/zotero.exe
 
-# The path of the profile used for development.
-# Start the profile manager by `/path/to/zotero.exe -p` to create a profile for development.
-# @see https://www.zotero.org/support/kb/profile_directory
-ZOTERO_PLUGIN_PROFILE_PATH = /path/to/profile
+# Path to the profile used for development.
+# To create a profile for development, start the profile manager with `/path/to/zotero.exe -p`.
+# More info: https://www.zotero.org/support/kb/profile_directory
+ZOTERO_PLUGIN_PROFILE_PATH=/path/to/profile
 ```
 
-### 04. Add scripts to package.json
+### 04. Add Scripts to `package.json`
+
+Add the following scripts for development:
 
 ```json
 {
@@ -93,20 +101,27 @@ ZOTERO_PLUGIN_PROFILE_PATH = /path/to/profile
 }
 ```
 
-### 05. Run
+### 05. Run the Plugin
+
+Use the following commands to start development or build the plugin:
 
 ```bash
+# Start the development server
 pnpm run start
+
+# Build the plugin
 pnpm run build
 ```
 
-## Using in NodeJS code
+## Using in Node.js Code
+
+You can also use `zotero-plugin-scaffold` programmatically in your Node.js scripts:
 
 ```ts
 import { Build, Config } from "zotero-plugin-scaffold";
 
 const config = await Config.loadConfig();
 
-const Builder = new Build(config);
-await Builder.run();
+const builder = new Build(config);
+await builder.run();
 ```
