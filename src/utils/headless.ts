@@ -53,6 +53,12 @@ export async function installXvfb() {
 }
 
 export async function installDepsForUbuntu24() {
+  const version = execSync("cat /etc/os-release | grep '^VERSION_ID='").toString();
+  if (!(version.includes("24"))) {
+    logger.error("Skip to install deps due to version not 24.04.");
+    return;
+  }
+
   checkAndInstallDependencies(["libasound2t64", "libdbus-glib-1-2"]);
 }
 
