@@ -2,9 +2,9 @@ import type { Context } from "../../types/index.js";
 import { readFile, stat } from "node:fs/promises";
 import { basename, join } from "node:path";
 import process from "node:process";
-import mime from "mime";
 import { Octokit } from "octokit";
 import { glob } from "tinyglobby";
+import { getMimeTypeByFileName } from "../../utils/mime.js";
 import { ReleaseBase } from "./base.js";
 
 export default class GitHub extends ReleaseBase {
@@ -94,7 +94,7 @@ export default class GitHub extends ReleaseBase {
         release_id: releaseID,
         data: await readFile(asset) as unknown as string,
         headers: {
-          "content-type": mime.getType(asset) || "application/octet-stream",
+          "content-type": getMimeTypeByFileName(asset) || "application/octet-stream",
           "content-length": (await stat(asset)).size,
         },
         name: basename(asset),
