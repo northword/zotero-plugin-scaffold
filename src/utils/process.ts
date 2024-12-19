@@ -1,9 +1,9 @@
 import { execSync } from "node:child_process";
-import { platform } from "node:process";
+import process from "node:process";
 
 export function isRunning(query: string) {
   let cmd = "";
-  switch (platform) {
+  switch (process.platform) {
     case "win32":
       cmd = `tasklist`;
       break;
@@ -27,3 +27,12 @@ export function isRunning(query: string) {
 }
 
 export const ExitSignals = ["exit", "SIGABRT", "SIGALRM", "SIGHUP", "SIGINT", "SIGTERM"];
+
+export function whenExit(cb: (_code: number, _signal: string) => any) {
+  ExitSignals.forEach((signal) => {
+    process.once(
+      signal,
+      (_code, _signal) => cb(_code, _signal),
+    );
+  });
+}

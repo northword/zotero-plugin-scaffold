@@ -1,4 +1,5 @@
 import type { BuildOptions } from "esbuild";
+import type { LogLevelType } from "../utils/log.js";
 import type { Context } from "./index.js";
 import type { Manifest } from "./manifest.js";
 import type { UpdateJSON } from "./update-json.js";
@@ -153,7 +154,7 @@ export interface Config {
    *
    * @default "info"
    */
-  logLevel: "trace" | "debug" | "info" | "warn" | "error";
+  logLevel: LogLevelType;
 }
 
 export interface BuildConfig {
@@ -600,15 +601,6 @@ export interface TestConfig {
   };
 
   /**
-   * Port for the test server.
-   *
-   * 测试服务器的端口。
-   *
-   * @default 9876
-   */
-  port: number;
-
-  /**
    * Abort the test when the first test fails.
    *
    * 当第一个测试失败时中止测试。
@@ -667,6 +659,11 @@ export interface TestConfig {
    * ```
    */
   waitForPlugin: string;
+
+  /**
+   * @todo not
+   */
+  watch: boolean;
 
   hooks: Partial<TestHooks>;
 }

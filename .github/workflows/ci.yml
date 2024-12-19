@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  check:
+  ci:
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GitHub_TOKEN }}
@@ -41,6 +41,6 @@ jobs:
         run: |
           pnpm build
 
-    #   - name: Run Test
-    #     run: |
-    #       pnpm test
+      - name: Run pkg-pr-new publish
+        if: github.event_name == 'pull_request'
+        run: pnpx pkg-pr-new publish

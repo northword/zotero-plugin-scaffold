@@ -1,10 +1,10 @@
 import type { Context } from "../../types/index.js";
 import { readFile, stat } from "node:fs/promises";
 import { basename, join } from "node:path";
-import { env } from "node:process";
-import mime from "mime";
+import process from "node:process";
 import { Octokit } from "octokit";
 import { glob } from "tinyglobby";
+import { getMimeTypeByFileName } from "../../utils/mime.js";
 import { ReleaseBase } from "./base.js";
 
 export default class GitHub extends ReleaseBase {
@@ -94,7 +94,7 @@ export default class GitHub extends ReleaseBase {
         release_id: releaseID,
         data: await readFile(asset) as unknown as string,
         headers: {
-          "content-type": mime.getType(asset) || "application/octet-stream",
+          "content-type": getMimeTypeByFileName(asset) || "application/octet-stream",
           "content-length": (await stat(asset)).size,
         },
         name: basename(asset),
@@ -172,10 +172,10 @@ export default class GitHub extends ReleaseBase {
   }
 
   getClient(): Octokit {
-    if (!env.GITHUB_TOKEN)
+    if (!process.env.GITHUB_TOKEN)
       throw new Error("No GITHUB_TOKEN.");
     const client = new Octokit({
-      auth: env.GITHUB_TOKEN,
+      auth: process.env.GITHUB_TOKEN,
       userAgent: "zotero-plugin-scaffold",
     });
 

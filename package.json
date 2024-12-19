@@ -1,7 +1,7 @@
 {
   "name": "zotero-plugin-scaffold",
   "type": "module",
-  "version": "0.2.0-beta.9",
+  "version": "0.2.0-beta.12",
   "packageManager": "pnpm@9.15.0",
   "description": "A scaffold for Zotero plugin development.",
   "author": "northword",
@@ -50,7 +50,10 @@
     "lint:fix": "eslint . --fix",
     "release": "bumpp --commit \"chore(release): publish v%s\"",
     "update:deps": "pnpx taze minor -w -f -l",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "publishConfig": {
     "access": "public",
@@ -80,7 +83,6 @@
     "esbuild": "^0.24.0",
     "fs-extra": "^11.2.0",
     "hookable": "^5.5.3",
-    "mime": "^4.0.4",
     "octokit": "^4.0.2",
     "std-env": "^3.8.0",
     "tiny-update-notifier": "^2.0.0",
@@ -95,6 +97,7 @@
     "eslint": "^9.16.0",
     "eslint-plugin-format": "^0.1.3",
     "typescript": "^5.7.2",
-    "unbuild": "^2.0.0"
+    "unbuild": "^2.0.0",
+    "vitepress": "^1.5.0"
   }
 }

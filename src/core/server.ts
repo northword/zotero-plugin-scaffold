@@ -1,7 +1,7 @@
 import type { Context } from "../types/index.js";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import process, { env, exit } from "node:process";
+import process from "node:process";
 import chokidar from "chokidar";
 import { debounce } from "es-toolkit";
 import { ZoteroRunner } from "../utils/zotero-runner.js";
@@ -118,14 +118,14 @@ export default class Serve extends Base {
 
   private onZoteroExit = (_code?: number | null, _signal?: any) => {
     this.logger.info(`Zotero terminated.`);
-    exit();
+    process.exit();
   };
 
   get zoteroBinPath() {
     if (this._zoteroBinPath)
       return this._zoteroBinPath;
 
-    this._zoteroBinPath = env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH;
+    this._zoteroBinPath = process.env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH;
     if (!this._zoteroBinPath || !existsSync(this._zoteroBinPath))
       throw new Error("The Zotero binary not found.");
 
@@ -136,7 +136,7 @@ export default class Serve extends Base {
     if (this._profilePath)
       return this._profilePath;
 
-    this._profilePath = env.ZOTERO_PLUGIN_PROFILE_PATH;
+    this._profilePath = process.env.ZOTERO_PLUGIN_PROFILE_PATH;
     if (!this._profilePath || !existsSync(this._profilePath))
       throw new Error("The Zotero profile not found.");
 
@@ -144,6 +144,6 @@ export default class Serve extends Base {
   }
 
   get dataDir() {
-    return env.ZOTERO_PLUGIN_DATA_DIR ?? "";
+    return process.env.ZOTERO_PLUGIN_DATA_DIR ?? "";
   }
 }

@@ -1,18 +1,12 @@
 #!/usr/bin/env node
 
-import process, { env, exit } from "node:process";
+import process from "node:process";
 import { Command } from "@commander-js/extra-typings";
 import pkg from "../package.json" with { type: "json" };
 import { Build, Config, Release, Serve, Test } from "./index.js";
-import { Log } from "./utils/log.js";
+import { checkGitIgnore } from "./utils/gitignore.js";
+import { logger } from "./utils/log.js";
 import { updateNotifier } from "./utils/updater.js";
-
-const logger = new Log();
-// let globalOpts: {
-//   configCwd?: string;
-// } = {
-//   configCwd: cwd(),
-// };
 
 export default async function main() {
   const { name, version } = pkg;
@@ -20,7 +14,7 @@ export default async function main() {
 
   // Env variables are initialized to dev, but can be overridden by each command
   // For example, "zotero-plugin build" overrides them to "production"
-  env.NODE_ENV ??= "development";
+  process.env.NODE_ENV ??= "development";
 
   const cli = new Command();
 
@@ -35,7 +29,7 @@ export default async function main() {
     .option("--dev", "Builds the plugin in dev mode")
     .option("--dist <dir>", "The relative path for the new output directory (default: build)")
     .action((options) => {
-      env.NODE_ENV = options.dev ? "development" : "production";
+      process.env.NODE_ENV = options.dev ? "development" : "production";
       Config.loadConfig({
         dist: options.dist,
       }).then(ctx => new Build(ctx).run());
@@ -62,7 +56,7 @@ export default async function main() {
     .option("--abort-on-fail", "Abort the test suite on first failure")
     .option("--exit-on-finish", "Exit the test suite after all tests have run")
     .action((options) => {
-      env.NODE_ENV = "test";
+      process.env.NODE_ENV = "test";
 
       Config.loadConfig({}).then((ctx) => {
         if (options.abortOnFail) {
@@ -90,7 +84,7 @@ export default async function main() {
     .option("--preid <preid>", "ID for prerelease")
     .option("-y, --yes", "Skip confirmation")
     .action(async (version, options) => {
-      env.NODE_ENV = "production";
+      process.env.NODE_ENV = "production";
       Config.loadConfig({
         release: {
           bumpp: {
@@ -111,11 +105,15 @@ export default async function main() {
   // globalOpts = cli.optsWithGlobals();
 }
 
-main().catch(onError);
+main()
+  .then(() => {
+    checkGitIgnore();
+  })
+  .catch(onError);
 
 process.on("uncaughtException", onError);
 
 function onError(err: Error) {
   logger.error(err);
-  exit(1);
+  process.exit(1);
 }

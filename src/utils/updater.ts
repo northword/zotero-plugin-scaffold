@@ -1,9 +1,7 @@
 import process from "node:process";
 import tinyUpdateNotifier from "tiny-update-notifier";
-import { Log } from "./log.js";
+import { logger } from "./log.js";
 import { ExitSignals } from "./process.js";
-
-const logger = new Log();
 
 export function updateNotifier(name: string, version: string) {
   tinyUpdateNotifier({ pkg: { name, version } }).then((update) => {

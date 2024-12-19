@@ -1,8 +1,6 @@
 // npx 创建模板
 // import { input } from "@inquirer/prompts";
-import { Log } from "./utils/log.js";
-
-const logger = new Log();
+import { logger } from "./utils/log.js";
 
 export default class Create {
   async run() {

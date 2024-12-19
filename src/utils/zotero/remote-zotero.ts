@@ -22,10 +22,9 @@
 
 import net from "node:net";
 
-import { Log } from "../log.js";
+import { logger } from "../log.js";
 import { MessagingClient } from "./rdp-client.js";
 
-const logger = new Log();
 const MAX_RETRIES = 150;
 const RETRY_INTERVAL = 1000;
 
@@ -85,6 +84,7 @@ export class RemoteFirefox {
         return this.client;
       }
       catch (error: any) {
+        logger.fail("Failed to connecte to RDP client, retry...");
         if (isErrorWithCode("ECONNREFUSED", error)) {
           await new Promise(resolve => setTimeout(resolve, RETRY_INTERVAL));
           lastError = error;

@@ -2,16 +2,14 @@ import type { ChildProcessWithoutNullStreams } from "node:child_process";
 import { execSync, spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { env } from "node:process";
+import process from "node:process";
 import { delay } from "es-toolkit";
 import { outputFile, outputJSON, pathExists, readJSON, remove } from "fs-extra/esm";
 import { isLinux, isMacOS, isWindows } from "std-env";
-import { Log } from "./log.js";
+import { logger } from "./log.js";
 import { isRunning } from "./process.js";
 import { prefs } from "./zotero/preference.js";
 import { findFreeTcpPort, RemoteFirefox } from "./zotero/remote-zotero.js";
-
-const logger = new Log();
 
 export interface ZoteroRunnerOptions {
   binaryPath: string;
@@ -85,9 +83,6 @@ export class ZoteroRunner {
         ) {
           return "";
         }
-        if (line.includes("extensions.zotero.dataDir") && this.options.dataDir !== "") {
-          return `user_pref("extensions.zotero.dataDir", "${this.options.dataDir}");`;
-        }
         return line;
       });
     }
@@ -105,7 +100,11 @@ export class ZoteroRunner {
     // Build args
     let args: string[] = ["--purgecaches", "no-remote"];
     if (this.options.profilePath) {
-      args.push("-profile", this.options.profilePath);
+      args.push("-profile", resolve(this.options.profilePath));
+    }
+    if (this.options.dataDir) {
+      // '--dataDir' required absolute path
+      args.push("--dataDir", resolve(this.options.dataDir));
     }
     if (this.options.devtools) {
       args.push("--jsdebugger");
@@ -118,23 +117,23 @@ export class ZoteroRunner {
     const remotePort = await findFreeTcpPort();
     args.push("-start-debugger-server", String(remotePort));
 
-    const defaultFirefoxEnv = {
+    logger.debug("Zotero start args: ", args);
+
+    const env = {
+      ...process.env,
       XPCOM_DEBUG_BREAK: "stack",
       NS_TRACE_MALLOC_DISABLE_STACKS: "1",
     };
 
     // Using `spawn` so we can stream logging as they come in, rather than
     // buffer them up until the end, which can easily hit the max buffer size.
-    this.zotero = spawn(this.options.binaryPath, args, {
-      env: {
-        ...env,
-        ...defaultFirefoxEnv,
-      },
-    });
+    this.zotero = spawn(this.options.binaryPath, args, { env });
+    logger.debug("Zotero started, pid:", this.zotero.pid);
 
     // Handle Zotero log, necessary on macOS
     this.zotero.stdout?.on("data", (_data) => {});
 
+    logger.debug("Connecting to the remote Firefox debugger...");
     await this.remoteFirefox.connect(remotePort);
     logger.debug(`Connected to the remote Firefox debugger on port: ${remotePort}`);
   }
@@ -286,12 +285,10 @@ export class ZoteroRunner {
 }
 
 export function killZotero() {
-  const logger = new Log();
-
   function kill() {
     try {
-      if (env.ZOTERO_PLUGIN_KILL_COMMAND) {
-        execSync(env.ZOTERO_PLUGIN_KILL_COMMAND);
+      if (process.env.ZOTERO_PLUGIN_KILL_COMMAND) {
+        execSync(process.env.ZOTERO_PLUGIN_KILL_COMMAND);
       }
       else if (isWindows) {
         execSync("taskkill /f /im zotero.exe");
