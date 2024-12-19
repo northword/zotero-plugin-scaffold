@@ -83,7 +83,6 @@
     "esbuild": "^0.24.0",
     "fs-extra": "^11.2.0",
     "hookable": "^5.5.3",
-    "mime": "^4.0.4",
     "octokit": "^4.0.2",
     "std-env": "^3.8.0",
     "tiny-update-notifier": "^2.0.0",
