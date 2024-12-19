@@ -5,23 +5,23 @@ layout: home
 hero:
   name: "Scaffold"
   text: "Zotero Plugins"
-  tagline: The Modern Development Experience for Zotero Plugins
+  tagline: "The Modern Development Framework for Zotero Plugins"
   actions:
     - theme: brand
-      text: Quick Start
+      text: "Quick Start"
       link: /quick-start
 
 features:
-  - title: Dev Serve
-    details: Auto reload your plugin when source code changed
+  - title: "Dev Serve"
+    details: "Automatically reload your plugin whenever the source code changes."
     link: /serve
-  - title: Build Plugin
-    details: TypeScript supported, many utils builders, and pack code to xpi
+  - title: "Build Plugin"
+    details: "Supports TypeScript, provides utility builders, and packages your code into an XPI file."
     link: /build
-  - title: Test plugin
-    details: Out-of-the-box test kits
+  - title: "Test Plugin"
+    details: "Comes with ready-to-use testing kits."
     link: /test
-  - title: Release
-    details: Auto bump version, and publish your plugin to GitHub
+  - title: "Release"
+    details: "Automatically bump the version and publish your plugin to GitHub."
     link: /release
 ---
