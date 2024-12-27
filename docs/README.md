@@ -14,6 +14,8 @@ pnpm docs:build
 
 Alternatively, you can run `pnpm dev` / `pnpm build` in the `docs` directory instead.
 
+Packages should be built before the documentation build.
+
 For syntax and configuration, see the following:
 
 - [Markdown Syntax Reference](https://vitepress.dev/guide/markdown)
