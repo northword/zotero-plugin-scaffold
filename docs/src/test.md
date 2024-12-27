@@ -18,7 +18,9 @@ Tests are executed via a temporary plugin generated in `.scaffold/test/resource/
 
 After setting up your project with `zotero-plugin-scaffold`, add a `test` object to your configuration:
 
-```ts
+```ts twoslash
+import { defineConfig } from "zotero-plugin-scaffold";
+
 export default defineConfig({
   // ...
   test: {
