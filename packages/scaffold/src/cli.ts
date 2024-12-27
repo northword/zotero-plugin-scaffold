@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import process from "node:process";
 import { Command } from "@commander-js/extra-typings";
 import pkg from "../package.json" with { type: "json" };
@@ -8,7 +6,7 @@ import { checkGitIgnore } from "./utils/gitignore.js";
 import { logger } from "./utils/log.js";
 import { updateNotifier } from "./utils/updater.js";
 
-export default async function main() {
+async function main() {
   const { name, version } = pkg;
   updateNotifier(name, version);
 
@@ -105,13 +103,15 @@ export default async function main() {
   // globalOpts = cli.optsWithGlobals();
 }
 
-main()
-  .then(() => {
-    checkGitIgnore();
-  })
-  .catch(onError);
+export default async function run() {
+  main()
+    .then(() => {
+      checkGitIgnore();
+    })
+    .catch(onError);
 
-process.on("uncaughtException", onError);
+  process.on("uncaughtException", onError);
+}
 
 function onError(err: Error) {
   logger.error(err);
