@@ -43,7 +43,7 @@ jobs:
 
       - name: Release
         run: |
-          pnpm publish --no-git-checks
+          pnpm -r publish --access public --no-git-checks
           pnpx changelogithub
           # sleep 1s
         env:

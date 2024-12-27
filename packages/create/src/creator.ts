@@ -1,11 +1,9 @@
 // npx 创建模板
 // import { input } from "@inquirer/prompts";
-import { logger } from "./utils/log.js";
 
 export default class Create {
   async run() {
-    const answers = await this.prompting();
-    logger.debug(answers);
+    const _answers = await this.prompting();
   }
 
   async prompting() {

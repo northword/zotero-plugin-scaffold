@@ -26,6 +26,7 @@ git clone https://github.com/northword/zotero-plugin-scaffold.git zotero-plugin-
 cd zotero-plugin-scaffold/
 
 # Install deps
+corepack enable
 pnpm install
 
 # Development Mode
@@ -35,9 +36,8 @@ pnpm run dev
 
 # link local scaffold to your plugin
 cd your-plugin-work-dir/
-pnpm link ../zotero-plugin-scaffold
+pnpm link ../zotero-plugin-scaffold/packages/scaffold/
 cd zotero-plugin-scaffold/
-
 ```
 
 Now you can make changes to Scaffold and test them in your plugin.
