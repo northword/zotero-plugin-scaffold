@@ -10,7 +10,10 @@
     "build": "pnpm -r --filter=./packages/* --parallel run build",
     "lint:check": "eslint .",
     "lint:fix": "eslint . --fix",
+    "docs:dev": "pnpm -C docs run dev",
+    "docs:build": "pnpm -C docs run build",
     "release": "bumpp -r --commit \"chore(release): publish v%s\"",
+    "packages:publish": "pnpm -r --filter=./packages/* run publish",
     "update:deps": "pnpx taze minor -w -f -l",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

@@ -2,7 +2,7 @@
 
 import process from "node:process";
 import { Command } from "@commander-js/extra-typings";
-import pkg from "../../../package.json" with { type: "json" };
+import pkg from "../package.json" with { type: "json" };
 import { Build, Config, Release, Serve, Test } from "./index.js";
 import { checkGitIgnore } from "./utils/gitignore.js";
 import { logger } from "./utils/log.js";

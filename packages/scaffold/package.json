@@ -41,6 +41,7 @@
     "zotero-plugin": "./bin/zotero-plugin.mjs"
   },
   "files": [
+    "bin",
     "dist"
   ],
   "engines": {
@@ -56,8 +57,7 @@
     "registry": "https://registry.npmjs.org"
   },
   "directories": {
-    "lib": "dist",
-    "doc": "docs"
+    "lib": "dist"
   },
   "peerDependencies": {
     "conventional-changelog": "^6.0.0"
