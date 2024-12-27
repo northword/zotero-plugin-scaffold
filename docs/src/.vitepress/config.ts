@@ -1,3 +1,4 @@
+import { transformerTwoslash } from "@shikijs/vitepress-twoslash";
 import { defineConfig } from "vitepress";
 
 // https://vitepress.dev/reference/site-config
@@ -25,5 +26,11 @@ export default defineConfig({
     ],
 
     outline: "deep",
+  },
+
+  markdown: {
+    codeTransformers: [
+      transformerTwoslash(),
+    ],
   },
 });

@@ -43,4 +43,4 @@ jobs:
 
       - name: Run pkg-pr-new publish
         if: github.event_name == 'pull_request'
-        run: pnpx pkg-pr-new publish
+        run: pnpx pkg-pr-new publish --compact --no-template --pnpm './packages/*'
