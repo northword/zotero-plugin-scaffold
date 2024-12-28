@@ -69,6 +69,7 @@ jobs:
           name: build-result
           path: |
             **/dist/
+            !**/node_modules
 
   docs:
     runs-on: ubuntu-latest
