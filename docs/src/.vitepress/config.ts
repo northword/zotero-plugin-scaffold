@@ -10,15 +10,26 @@ export default defineConfig({
     // https://vitepress.dev/reference/default-theme-config
     nav: [
       { text: "Home", link: "/" },
+      { text: "Docs", link: "/quick-start" },
     ],
 
     sidebar: [
-      { text: "Why", link: "/why" },
-      { text: "Quick Start", link: "/quick-start" },
-      { text: "Serve", link: "/serve" },
-      { text: "Build", link: "/build" },
-      { text: "Test", link: "/test" },
-      { text: "Release", link: "/release" },
+      {
+        text: "Introduction",
+        items: [
+          { text: "Why", link: "/why" },
+          { text: "Quick Start", link: "/quick-start" },
+        ],
+      },
+      {
+        text: "Modules",
+        items: [
+          { text: "Serve", link: "/serve" },
+          { text: "Build", link: "/build" },
+          { text: "Test", link: "/test" },
+          { text: "Release", link: "/release" },
+        ],
+      },
     ],
 
     socialLinks: [
