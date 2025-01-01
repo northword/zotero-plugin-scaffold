@@ -1,46 +1,18 @@
 # Testing
 
-`zotero-plugin-scaffold` enables testing with [Mocha](https://mochajs.org/) and [Chai](https://www.chaijs.com/) in a live Zotero instance through a proxy plugin.
-
-When running tests, a temporary profile and data directory are created, allowing the tests to execute locally on the installed Zotero application.
+This module facilitates testing Zotero plugins in a live Zotero environment using [Mocha](https://mochajs.org/) and [Chai](https://www.chaijs.com/).
 
 ## Why Use This Approach?
 
-Zotero operates in a browser-like environment with many private APIs. Using conventional Node.js testing frameworks would require extensive mocking, leading to distorted test results.
+Zotero runs in a browser-like environment with private APIs, making traditional Node.js testing frameworks impractical due to extensive mocking requirements and distorted test results.
 
-To address this, Scaffold uses Mocha as a lightweight yet flexible browser-compatible testing framework, complemented by Chai for assertions.
+With `zotero-plugin-scaffold`, tests are executed in a live Zotero instance via a proxy plugin. A temporary profile and data directory are created, allowing full access to Zotero's APIs during testing.
 
-Tests are executed via a temporary plugin generated in `.scaffold/test/resource/`. The test files in the `test.entries` directory are compiled into `.scaffold/test/resource/content`. When Zotero launches, it loads both the primary plugin and the generated test plugin, providing full access to all APIs needed for testing.
+## Quick Start
 
-## Usage
+### Add Test Script
 
-### Configuring Test Options
-
-After setting up your project with `zotero-plugin-scaffold`, add a `test` object to your configuration:
-
-```ts twoslash
-import { defineConfig } from "zotero-plugin-scaffold";
-
-export default defineConfig({
-  // ...
-  test: {
-    // Directories containing *.spec.js test files
-    entries: ["test"],
-    // Exit Zotero after the tests complete
-    exitOnFinish: true,
-    // Function string that returns the plugin's initialization status
-    // The test waits until this function returns true
-    // Example: if your plugin sets `Zotero.MyPlugin.initialized` to `true` in its `startup` method...
-    waitForPlugin: `() => Zotero.MyPlugin.initialized`,
-  }
-});
-```
-
-::: tip
-Refer to the `TestConfig` interface in [`src/types/config.ts`](https://github.com/northword/zotero-plugin-scaffold/blob/main/src/types/config.ts) for complete documentation.
-:::
-
-Add a `test` script to your `package.json`:
+Ensure `zotero-plugin-scaffold` is installed first. Then add a `test` script to your `package.json`:
 
 ```json
 {
@@ -52,27 +24,91 @@ Add a `test` script to your `package.json`:
 
 ### Install Mocha and Chai
 
-Install `mocha` as a local development dependency to avoid potential conflicts:
+Install `mocha` and `chai` as development dependencies to avoid potential conflicts:
 
 ```bash
-npm install -D mocha @types/mocha @types/chai
+npm install -D mocha chai @types/mocha @types/chai
 ```
 
-If Scaffold detects a local `mocha` installation, it will use it. Otherwise, it fetches the latest version from NPM. Due to unresolved ESM import issues with Chai, Scaffold always uses the remote version.
-
-Cached versions of `mocha` and `chai` are stored in `.scaffold/cache`. Delete this cache if you need to force an update.
+If Scaffold detects a local Mocha installation, it uses it; otherwise, it fetches the latest version from NPM. Cached versions are stored in `.scaffold/cache`, which can be deleted to force updates.
 
 ### Writing Test Cases
 
-Write test cases using [Mocha](https://mochajs.org/) and [Chai](https://www.chaijs.com/) syntax.
+Write test cases using [Mocha](https://mochajs.org/) and [Chai](https://www.chaijs.com/) syntax in `test/*.spec.{js,ts}`:
+
+```js
+import { expect } from "chai";
+
+describe("Example Test", () => {
+  it("should pass", () => {
+    expect(1 + 1).to.equal(2);
+  });
+});
+
+describe("Startup", () => {
+  it("should have plugin instance defined", () => {
+    assert.isNotEmpty(Zotero[MyPlugin]);
+  });
+});
+```
 
 ### Running Tests
 
-After writing your test cases, run them using:
+Run the tests using:
 
 ```bash
 npm run test
 ```
+
+## Advanced Configuration
+
+Customize test behavior by adding a `test` object to your `zotero-plugin-scaffold` configuration file. All settings have sensible defaults.
+
+```ts twoslash
+import { defineConfig } from "zotero-plugin-scaffold";
+// ---cut---
+export default defineConfig({
+  test: {
+    entries: ["test"],
+    prefs: {},
+    mocha: {
+      timeout: 10000
+    },
+    abortOnFail: false,
+    exitOnFinish: true,
+    headless: false,
+    startupDelay: 10000,
+    waitForPlugin: `() => Zotero.MyPlugin.initialized`,
+    watch: false,
+    hooks: {}
+  }
+});
+```
+
+### Source of Tests
+
+The `test.entries` option allows you to configure the source directories for test files.
+
+Test files must have filenames ending with `.spec.js` or `.spec.ts` to be recognized and executed.
+
+### Delay Running
+
+Ideally, tests should start only after the plugin has fully loaded. However, since Zotero does not provide a built-in mechanism to detect when a plugin is ready, you need to define a custom flag in your plugin to indicate its readiness.
+
+By default, Scaffold delays test execution for 10,000 milliseconds after the temporary plugin is loaded (`test.startDelay`). While this duration is sufficient for most plugins, hardware performance and plugin complexity may require adjustments.
+
+To handle such cases, use the `test.waitForPlugin` configuration option. This option accepts a function body as a string. Tests will begin only after this function returns `true`.
+
+## Watch Mode
+
+This feature is still under development.
+
+In watch mode, Scaffold automatically:
+
+- Recompiles source code, reloads plugins, and reruns tests when the source changes.
+- Reruns tests when test files are modified.
+
+## Running Tests with CLI Options
 
 You can override configuration settings with CLI parameters. Use `zotero-plugin test --help` to view available options:
 
@@ -87,15 +123,6 @@ Options:
   --exit-on-finish  Exit the test suite after all tests have run
   -h, --help        display help for command
 ```
-
-## Watch Mode
-
-In watch mode, Scaffold automatically:
-
-- Recompiles source code, reloads plugins, and reruns tests when the source changes.
-- Reruns tests when test files are modified.
-
-This feature is still under development.
 
 ## Running Tests on CI
 
