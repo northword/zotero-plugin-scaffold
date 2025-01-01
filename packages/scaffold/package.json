@@ -75,7 +75,7 @@
     "c12": "^2.0.1",
     "chalk": "^5.4.1",
     "chokidar": "^4.0.3",
-    "commander": "^12.1.0",
+    "commander": "^13.0.0",
     "es-toolkit": "^1.31.0",
     "esbuild": "^0.24.2",
     "fs-extra": "^11.2.0",
