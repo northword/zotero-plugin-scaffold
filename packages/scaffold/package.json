@@ -69,7 +69,7 @@
     }
   },
   "dependencies": {
-    "@commander-js/extra-typings": "^12.1.0",
+    "@commander-js/extra-typings": "^13.0.0",
     "adm-zip": "^0.5.16",
     "bumpp": "^9.9.2",
     "c12": "^2.0.1",
