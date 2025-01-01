@@ -1,34 +1,64 @@
 # Build
 
-该模块提供了编译和打包插件的能力，它预置了一些使用的打包器，如“复制”、“替换”、“bundling”等，使你可以快速配置插件构建流程。
+This module provides the capability to compile and package plugins, with built-in bundlers such as "copy," "replace," and "bundling" for quickly configuring your plugin's build process.
 
-同时还提供了一组钩子，以便你对构建过程进行定制。
+It also offers a set of hooks for customizing the build process.
 
-## 内建的构建器
+## Information of Plugin
 
-内置的构建起按照下面行文的顺序串行运行。
+```ts twoslash
+import { defineConfig } from "zotero-plugin-scaffold";
+// ---cut---
+export default defineConfig({
+  name: "Your Plugin Name",
+  id: "Your Plugin ID",
+  namespace: "Your Plugin Namespace",
+});
+```
 
-### 复制资产
+## Built-in Builders
 
-此步骤将源目录的静态资产复制到构建目录。
+The built-in builders run sequentially in the following order.
 
-使用 `build.assets` 来配置需要复制的资产：
+### Make Directory
+
+This step creates a new build storage folder.
+
+Configured via the `dist` option:
+
+```ts twoslash
+import { defineConfig } from "zotero-plugin-scaffold";
+// ---cut---
+export default defineConfig({
+  dist: ".scaffold/build",
+});
+```
+
+If the target folder already exists, it will be cleared before creating the new one.
+
+### Copy Assets
+
+This step copies static assets from the source directory to the build directory.
+
+Configure the assets to be copied using `build.assets`:
 
 ```ts twoslash
 import { defineConfig } from "zotero-plugin-scaffold";
 // ---cut---
 export default defineConfig({
   build: {
-    assets: ["addon"]
-  }
+    assets: ["addon"],
+  },
 });
 ```
 
-### 定义
+This is a glob list that supports negation patterns using `!`. For more details, refer to [tinyglobby](https://github.com/SuperchupuDev/tinyglobby).
 
-This feature provides a way to replace global identifiers with constant expressions.
+### Define
 
-Configurable via the `build.define` option.
+This feature allows you to replace global identifiers with constant expressions.
+
+Configurable via the `build.define` option:
 
 ```ts twoslash
 import { defineConfig } from "zotero-plugin-scaffold";
@@ -36,33 +66,33 @@ import { defineConfig } from "zotero-plugin-scaffold";
 export default defineConfig({
   build: {
     define: {
-      placeholder: "placeholderValue"
-    }
-  }
+      placeholder: "placeholderValue",
+    },
+  },
 });
 ```
 
 ::: warning
 
-替换在复制资产完成后立即发生，且仅在当前状态下 `config.dist` 下的所有资产中发生。
+Replacement occurs immediately after copying assets and applies only to all assets in `config.dist` under the current state.
 
-如果你需要为非资产文件替换占位符，如 `README.md` 等，可以使用 Scaffold 导出的实用工具 `replaceInFile`，见：[实用工具](#)。
+For non-asset files such as `README.md`, use the Scaffold utility `replaceInFile` (see: [Utilities](#utils)).
 
-如果你需要为 JavaScript 脚本替换常量，你可以使用 `esbuild.define`，参：[Script Bundling](#script-bundling)。
+For JavaScript constant replacement, use `esbuild.define` (see: [Script Bundling](#script-bundling)).
 
 :::
 
-替换时，定义的占位符 `placeholder` 将被转为正则表达式 `/__placeholder__/g` 进行替换（而不是 `/placeholder/g`）。
+During replacement, the placeholder `placeholder` is converted into the regular expression `/__placeholder__/g` for replacement (instead of `/placeholder/g`).
 
-该选项提供了一些内置的占位符供你使用，如 `version`, `buildTime` 等，见 `Context.templateData`。
+This option provides built-in placeholders such as `version` and `buildTime`. See `Context.templateData` for details.
 
 ### Manifest Generation
 
-自动更新 `manifest.json` 中的字段，包括 `version`, `id`, `update_url` 等。
+Automatically updates fields in `manifest.json`, including `version`, `id`, `update_url`, and more.
 
-该功能默认启用，将 `makeManifest` 设置为 `false` 来禁用该功能。
+This feature is enabled by default and can be disabled by setting `makeManifest` to `false`.
 
-`version` 值来自 `package.json`，其余值可以在配置文件中配置。
+The `version` is sourced from `package.json`, while other values can be configured in the configuration file:
 
 ```ts twoslash
 import { defineConfig } from "zotero-plugin-scaffold";
@@ -73,21 +103,21 @@ export default defineConfig({
   updateURL: "Your update.json Path",
   build: {
     makeManifest: {
-      enable: true
-    }
-  }
+      enable: true,
+    },
+  },
 });
 ```
+
+When `manifest.json` already exists in `dist/addon`, the values will always be deeply merged with the existing content, with priority given to the existing entries.
 
 ### Locale File Handling
 
-处理本地化文件以防止冲突。
+Handles localization files to prevent conflicts.
 
-通过 `fluent` 配置。
+Configured via `build.fluent`.
 
-#### 为 FTL 文件名添加前缀
-
-//
+#### Add Prefix to FTL File Names
 
 ```ts twoslash
 import { defineConfig } from "zotero-plugin-scaffold";
@@ -96,15 +126,15 @@ export default defineConfig({
   namespace: "Your Plugin Namespace",
   build: {
     fluent: {
-      prefixLocaleFiles: true
-    }
-  }
+      prefixLocaleFiles: true,
+    },
+  },
 });
 ```
 
-#### 为 FTL Message 添加前缀
+#### Add Prefix to FTL Messages
 
-Processes Fluent `.ftl` files, adding a namespace prefix and ensuring HTML references (`data-l10n-id`) are consistent with Fluent messages.
+Processes Fluent `.ftl` files by adding a namespace prefix and ensuring HTML references (`data-l10n-id`) align with Fluent messages.
 
 ```ts twoslash
 import { defineConfig } from "zotero-plugin-scaffold";
@@ -113,40 +143,40 @@ export default defineConfig({
   namespace: "Your Plugin Namespace",
   build: {
     fluent: {
-      prefixFluentMessages: true
-    }
-  }
+      prefixFluentMessages: true,
+    },
+  },
 });
 ```
 
-#### 为 FTL Message 生成类型定义
+#### Generate Type Definitions for FTL Messages
 
-> 尚在开发。
+> In development.
 
 ### Preference Management
 
-> 尚在开发。
+> In development.
 
 - Supports prefixing preference keys in `prefs.js` with a custom namespace.
 - Optionally generates TypeScript declaration files (`.d.ts`) for preferences.
 
 ### Script Bundling
 
-使用 `esbuild` 来编译/打包你的 JavaScript/TypeScript 脚本代码。
+Uses `esbuild` to compile and bundle your JavaScript/TypeScript code.
 
-使用 `build.esbuild` 来配置：
+Configure it using `build.esbuild`:
 
 ```ts twoslash
 import { defineConfig } from "zotero-plugin-scaffold";
 // ---cut---
 export default defineConfig({
   build: {
-    esbuildOptions: []
-  }
+    esbuildOptions: [],
+  },
 });
 ```
 
-由于 esbuild 仅编译/打包代码，不执行类型检查，因此你需要手动调用 `tsc` 进行类型检查。
+Since `esbuild` only compiles and bundles code without type checking, you need to run `tsc` manually for type checking.
 
 ### Plugin Packing
 
@@ -156,15 +186,17 @@ Creates a `.xpi` archive for the plugin using `AdmZip`.
 import { defineConfig } from "zotero-plugin-scaffold";
 // ---cut---
 export default defineConfig({
-  xpiName: "Your Plugin Built XPI Name"
+  xpiName: "Your Plugin Built XPI Name",
 });
 ```
+
+This step executes only in the `production` environment.
 
 ### Update Manifest
 
 Generates `update.json` and `update-beta.json` with versioning and compatibility information for Zotero plugin updates.
 
-通过 `build.makeUpdateJson` 来配置：
+Configured via `build.makeUpdateJson`:
 
 ```ts twoslash
 import { defineConfig } from "zotero-plugin-scaffold";
@@ -179,17 +211,63 @@ export default defineConfig({
           applications: {
             zotero: {
               strict_min_version: "5.9.9",
-              strict_max_version: "6.9.9"
-            }
-          }
-        }
+              strict_max_version: "6.9.9",
+            },
+          },
+        },
       ],
-      hash: true
-    }
-  }
+      hash: true,
+    },
+  },
 });
 ```
 
-## Extensibility
+This step executes only in the `production` environment.
 
-- The use of hooks allows custom behaviors to be injected at various stages of the build process.
+When the version number includes a `-` (pre-release), only `update-beta.json` is generated. Otherwise, both `update.json` and `update-beta.json` are generated. After installing a pre-release version, users will automatically update to the next pre-release version until the official release. Installing the next pre-release version still requires manual installation.
+
+For different plugin versions targeting different Zotero versions, specify the Zotero version and corresponding plugin version in `build.makeUpdateJson.updates`. Refer to: [Zotero 7 for developers](https://www.zotero.org/support/dev/zotero_7_for_developers#updaterdf_updatesjson).
+
+## Hooks
+
+> Documentation in progress.
+
+## Utils
+
+Scaffold exports utilities and third-party dependencies for use. Import them from `zotero-plugin-scaffold/vendor`.
+
+### replaceInFile
+
+```ts
+import { replaceInFile } from "zotero-plugin-scaffold/vendor";
+
+replaceInFile({
+  files: ["README.md", "**/README.md"],
+  from: [/from/g],
+  to: ["to"],
+});
+```
+
+### fs-extra
+
+> Node.js: Extra methods for the `fs` object like `copy()`, `remove()`, `mkdirs()`.
+
+Refer to the [fs-extra documentation](https://github.com/jprichardson/node-fs-extra).
+
+```ts
+import { fse } from "zotero-plugin-scaffold/vendor";
+
+fse.copy("a.txt", "b.txt");
+```
+
+### es-toolkit
+
+> es-toolkit: State-of-the-art JavaScript utility library
+
+Refer to the [es-toolkit documentation](https://es-toolkit.slash.page/).
+
+```ts
+import { esToolkit } from "zotero-plugin-scaffold/vendor";
+
+esToolkit.isNotNil(null);
+```

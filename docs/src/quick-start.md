@@ -6,10 +6,10 @@
 
 ```bash
 # Using npm
-npx zotero-plugin create
+npm create zotero-plugin
 
 # Using pnpm
-pnpm dlx zotero-plugin create
+pnpm create zotero-plugin
 ```
 
 :::
@@ -41,7 +41,7 @@ zotero-plugin.config.ts  # Also supported: *.js, *.mjs, *.cjs, *.ts
 
 You can use the `defineConfig` helper to enable type hints. Optional properties will default to predefined values if not explicitly specified.
 
-```ts
+```ts twoslash {4-6}
 import { defineConfig } from "zotero-plugin-scaffold";
 
 export default defineConfig({

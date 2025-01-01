@@ -30,6 +30,12 @@ export default defineConfig({
           { text: "Release", link: "/release" },
         ],
       },
+      {
+        text: "Presets",
+        items: [
+          { text: "ESLint", link: "/eslint" },
+        ],
+      },
     ],
 
     socialLinks: [
