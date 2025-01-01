@@ -2,7 +2,7 @@
   "name": "zotero-plugin-scaffold",
   "type": "module",
   "version": "0.2.0-beta.13",
-  "packageManager": "pnpm@9.15.1",
+  "packageManager": "pnpm@9.15.2",
   "description": "A scaffold for Zotero plugin development.",
   "author": "northword",
   "license": "AGPL-3.0-or-later",
