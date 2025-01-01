@@ -52,7 +52,7 @@ $ npm run release
            custom ...
 ```
 
-Use the `↑` / `↓` keys to choose the release type and press Enter to confirm. You’ll then be asked to confirm the selected version.
+Use the `↑` / `↓` keys to choose the [release type (Semantic Versioning)](https://semver.org/) and press Enter to confirm. You’ll then be asked to confirm the selected version.
 
 ```bash
 √ Current version 1.21.11 »          next 1.21.12
@@ -78,8 +78,6 @@ Scaffold will perform the following actions automatically:
 5. Create a `git tag` in the format `v{version}`.
 6. Push the changes to the repository.
 
-Note: The bump step runs only locally. If you run `release` in CI, the bump operation will be skipped.
-
 ### Publish XPI and `update.json`
 
 After bumping the version, Scaffold enters the publish phase, during which it:
@@ -101,8 +99,6 @@ on:
 
 permissions:
   contents: write
-  issues: write
-  pull-requests: write
 
 jobs:
   release:
@@ -141,12 +137,16 @@ export default defineConfig({
   release: {
     bumpp: {
       release: "prompt",
+      confirm: true,
+      all: true,
       commit: "chore(publish): release v%s",
       tag: "v%s"
     }
   }
 });
 ```
+
+Note: The `release.bumpp.release='prompt'` runs only locally. If you run `release` in CI, the `prompt` operation will be skipped.
 
 The release process also provides hooks for customization:
 
@@ -160,7 +160,6 @@ export default defineConfig({
     },
     hooks: {
       "release:init": (ctx) => {},
-      // "release:version": "",
       "release:push": (ctx) => {},
       "release:done": (ctx) => {},
     }
@@ -168,7 +167,9 @@ export default defineConfig({
 });
 ```
 
-The `release:version` hook is triggered after updating the `version` in `package.json` but before `git commit`. This is typically used for build tasks. The value of this hook is passed directly to `bumpp.execute`.
+The `release.bumpp.execute` hook is triggered after updating the `version` in `package.json` but before `git commit`. This is typically used for build tasks.
+
+Note: If the build process modifies files other than `package.json`, you also need to set `release.bumpp.all` to `true`.
 
 ## Publish Locally
 
@@ -212,7 +213,7 @@ export default defineConfig({
 
 By default, Scaffold uses `git log` for the changelog, but you can modify this via `release.changelog`.
 
-To generate a changelog based on conventional commits, install `conventional-changelog`:
+To generate a changelog based on [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/), install `conventional-changelog`:
 
 ```bash
 npm install -D conventional-changelog

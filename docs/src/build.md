@@ -36,6 +36,31 @@ export default defineConfig({
 
 If the target folder already exists, it will be cleared before creating the new one.
 
+::: details The file structure of `dist`
+
+- `addon` contains the plugin code after the build process but before packaging.
+- `*.xpi` represents the packaged plugin files.
+- `update*.json` are update manifest.
+
+```text {4,10,12}
+.
+|-- .scaffold
+|   |-- build
+|   |   |-- addon
+|   |   |   |-- bootstrap.js
+|   |   |   |-- content
+|   |   |   |-- locale
+|   |   |   |-- manifest.json
+|   |   |   `-- prefs.js
+|   |   |-- linter-for-zotero.xpi
+|   |   |-- update-beta.json
+|   |   `-- update.json
+|   `-- cache
+`-- zotero-plugin.config.ts
+```
+
+:::
+
 ### Copy Assets
 
 This step copies static assets from the source directory to the build directory.
