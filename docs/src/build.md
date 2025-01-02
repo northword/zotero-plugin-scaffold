@@ -185,6 +185,45 @@ export default defineConfig({
 - Supports prefixing preference keys in `prefs.js` with a custom namespace.
 - Optionally generates TypeScript declaration files (`.d.ts`) for preferences.
 
+```ts twoslash
+import { defineConfig } from "zotero-plugin-scaffold";
+// ---cut---
+export default defineConfig({
+  build: {
+    prefs: {
+      prefixPrefKeys: true,
+      prefix: "Your Plugin's Preference Key Prefix",
+      dts: true
+    }
+  }
+});
+```
+
+Helpers for geting and setting prefs:
+
+```ts
+const PREFS_PREFIX = "extensions.myPlugin";
+
+/**
+ * Get preference value.
+ * Wrapper of `Zotero.Prefs.get`.
+ * @param key
+ */
+export function getPref<K extends keyof _PluginPrefsMap>(key: K) {
+  return Zotero.Prefs.get(`${PREFS_PREFIX}.${key}` as PluginPrefKey<K>, true);
+}
+
+/**
+ * Set preference value.
+ * Wrapper of `Zotero.Prefs.set`.
+ * @param key
+ * @param value
+ */
+export function setPref<K extends keyof _PluginPrefsMap>(key: K, value: PluginPrefsMap[PluginPrefKey<K>]) {
+  return Zotero.Prefs.set(`${PREFS_PREFIX}.${key}` as PluginPrefKey<K>, value, true);
+}
+```
+
 ### Script Bundling
 
 Uses `esbuild` to compile and bundle your JavaScript/TypeScript code.
