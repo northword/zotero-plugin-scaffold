@@ -2,12 +2,13 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended",
+    "schedule:monthly",
+    "group:allNonMajor",
+    ":dependencyDashboard",
     ":prHourlyLimitNone",
     ":prConcurrentLimitNone",
-    "group:allNonMajor",
-    ":enableVulnerabilityAlerts",
-    ":dependencyDashboard",
-    "schedule:monthly"
+    ":enableVulnerabilityAlerts"
   ],
-  "labels": ["dependencies"]
+  "labels": ["dependencies"],
+  "rangeStrategy": "bump"
 }
