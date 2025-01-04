@@ -127,13 +127,13 @@ export class ZoteroRunner {
     const prefsPath = join(this.options.profile.path, "prefs.js");
     const prefsManager = new PrefsManager("user_pref");
     if (await pathExists(prefsPath))
-      prefsManager.read(prefsPath);
+      await prefsManager.read(prefsPath);
     prefsManager.setPrefs(this.options.profile.customPrefs);
     prefsManager.setPrefs({
       "extensions.lastAppBuildId": null,
       "extensions.lastAppVersion": null,
     });
-    prefsManager.write(prefsPath);
+    await prefsManager.write(prefsPath);
 
     // Install plugins in proxy file mode
     if (this.options.plugins.asProxy) {

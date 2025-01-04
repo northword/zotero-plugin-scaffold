@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { escapeRegExp, isNotNil } from "es-toolkit";
+import { isNotNil } from "es-toolkit";
 import { outputFile } from "fs-extra/esm";
 import { logger } from "./log.js";
 import { prefs as defaultPrefs } from "./zotero/preference.js";
@@ -8,23 +8,22 @@ export type Prefs = Record<string, string | number | boolean | undefined | null>
 
 export class PrefsManager {
   private namespace: "pref" | "user_pref";
-  private regExp: RegExp;
   private prefs: Prefs;
 
   constructor(namespace: "pref" | "user_pref") {
     this.namespace = namespace;
-    this.regExp = new RegExp(escapeRegExp(`/${namespace}\(['"](.*)["'],\s*(.*)\)/`));
     this.prefs = { ...defaultPrefs };
   }
 
   private parsePrefjs(content: string) {
-    const PrefsLines = content.split("\n");
-    PrefsLines.forEach((line: string) => {
-      const found = line.match(this.regExp);
-      if (found) {
-        this.prefs[found[1]] = found[2];
-      }
-    });
+    // eslint-disable-next-line regexp/no-super-linear-backtracking
+    const prefPattern = /^(pref|user_pref)\s*\(\s*["']([^"']+)["']\s*,\s*(.+)\s*\)\s*;$/gm;
+    const matches = content.matchAll(prefPattern);
+    for (const match of matches) {
+      const key = match[2].trim();
+      const value = match[3].trim();
+      this.prefs[key] = value;
+    };
   }
 
   public async read(path: string) {
@@ -42,9 +41,9 @@ export class PrefsManager {
         cleanValue = `${value}`;
       }
       else if (typeof value === "string") {
-        cleanValue = `"${value.replace("\n", "\\n")}"`;
+        cleanValue = `${value.replace("\n", "\\n")}`;
       }
-      else {
+      else if (typeof value === "number") {
         cleanValue = value.toString();
       }
 
@@ -54,6 +53,7 @@ export class PrefsManager {
 
   public async write(path: string) {
     const content = this.renderPrefjs();
+    // console.log(content);
     await outputFile(path, content, "utf-8");
     logger.debug("The <profile>/prefs.js has been modified.");
   }
