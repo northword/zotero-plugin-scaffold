@@ -12,9 +12,9 @@ import { build as buildAsync } from "esbuild";
 import { copy, emptyDir, move, outputFile, outputJSON, readJSON, writeJson } from "fs-extra/esm";
 import { glob } from "tinyglobby";
 import { generateHash } from "../utils/crypto.js";
+import { PrefsManager, renderPluginPrefsDts } from "../utils/prefs.js";
 import { dateFormat, replaceInFile, toArray } from "../utils/string.js";
 import { Base } from "./base.js";
-import { parsePrefs, renderDts } from "./builders/prefs.js";
 
 export default class Build extends Base {
   private buildTime: string;
@@ -248,15 +248,16 @@ export default class Build extends Base {
     if (!existsSync(prefsFilePath))
       return;
 
-    const prefsContent = await readFile(prefsFilePath, "utf-8");
-    const prefsMap = parsePrefs(prefsContent);
+    const prefsManager = new PrefsManager("pref");
+    await prefsManager.read(prefsFilePath);
+    const prefs = prefsManager.getPrefs();
 
     if (this.ctx.build.prefs.prefixPrefKeys) {
       //
     }
 
     if (this.ctx.build.prefs.dts) {
-      const dtsContent = renderDts(prefsMap, this.ctx.build.prefs.prefix);
+      const dtsContent = renderPluginPrefsDts(prefs, this.ctx.build.prefs.prefix);
 
       let dtsFilePath = `typings/prefs.d.ts`;
       if (typeof this.ctx.build.prefs.dts === "string")
