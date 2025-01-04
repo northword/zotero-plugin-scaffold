@@ -13,7 +13,6 @@ export default class Serve extends Base {
   private runner?: ZoteroRunner;
 
   private _zoteroBinPath?: string;
-  private _profilePath?: string;
 
   constructor(ctx: Context) {
     super(ctx);
@@ -27,23 +26,33 @@ export default class Serve extends Base {
     process.on("SIGINT", this.exit);
 
     this.runner = new ZoteroRunner({
-      binaryPath: this.zoteroBinPath,
-      profilePath: this.profilePath,
-      dataDir: this.dataDir,
-      plugins: [{
-        id: this.ctx.id,
-        sourceDir: join(this.ctx.dist, "addon"),
-      }],
-      asProxy: this.ctx.server.asProxy,
-      devtools: this.ctx.server.devtools,
-      binaryArgs: this.ctx.server.startArgs,
+      binary: {
+        path: this.zoteroBinPath,
+        devtools: this.ctx.server.devtools,
+        args: this.ctx.server.startArgs,
+      },
+      profile: {
+        path: this.profilePath,
+        dataDir: this.dataDir,
+        // keepChanges: this.ctx.server.keepProfileChanges,
+        createIfMissing: this.ctx.server.createProfileIfMissing,
+      },
+      plugins: {
+        list: [{
+          id: this.ctx.id,
+          sourceDir: join(this.ctx.dist, "addon"),
+        }],
+        asProxy: this.ctx.server.asProxy,
+      },
     });
 
     await this.ctx.hooks.callHook("serve:init", this.ctx);
 
     // prebuild
-    await this.builder.run();
-    await this.ctx.hooks.callHook("serve:prebuild", this.ctx);
+    if (this.ctx.server.prebuild) {
+      await this.builder.run();
+      await this.ctx.hooks.callHook("serve:prebuild", this.ctx);
+    }
 
     // start Zotero
     await this.runner.run();
@@ -133,17 +142,10 @@ export default class Serve extends Base {
   }
 
   get profilePath() {
-    if (this._profilePath)
-      return this._profilePath;
-
-    this._profilePath = process.env.ZOTERO_PLUGIN_PROFILE_PATH;
-    if (!this._profilePath || !existsSync(this._profilePath))
-      throw new Error("The Zotero profile not found.");
-
-    return this._profilePath;
+    return process.env.ZOTERO_PLUGIN_PROFILE_PATH;
   }
 
   get dataDir() {
-    return process.env.ZOTERO_PLUGIN_DATA_DIR ?? "";
+    return process.env.ZOTERO_PLUGIN_DATA_DIR;
   }
 }

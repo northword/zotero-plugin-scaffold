@@ -347,6 +347,11 @@ export interface ServerConfig {
    * @default false
    */
   asProxy: boolean;
+
+  prebuild: boolean;
+  // keepProfileChanges: boolean;
+  createProfileIfMissing: boolean;
+
   /**
    * The lifecycle hook.
    */
