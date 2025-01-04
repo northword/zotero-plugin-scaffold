@@ -1,27 +1,39 @@
 import type { ChildProcessWithoutNullStreams } from "node:child_process";
+import type { RecursivePickOptional, RecursiveRequired } from "../types/utils.js";
 import { execSync, spawn } from "node:child_process";
-import { readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import process from "node:process";
-import { delay } from "es-toolkit";
-import { outputFile, outputJSON, pathExists, readJSON, remove } from "fs-extra/esm";
+import { delay, toMerged } from "es-toolkit";
+import { copy, ensureDir, outputFile, outputJSON, pathExists, readJSON, remove } from "fs-extra/esm";
 import { isLinux, isMacOS, isWindows } from "std-env";
 import { logger } from "./log.js";
+import { PrefsManager } from "./prefs.js";
 import { isRunning } from "./process.js";
-import { prefs } from "./zotero/preference.js";
 import { findFreeTcpPort, RemoteFirefox } from "./zotero/remote-zotero.js";
 
 export interface ZoteroRunnerOptions {
-  binaryPath: string;
-  profilePath: string;
-  dataDir: string;
-  customPrefs?: { [key: string]: string | number | boolean };
+  binary: BinaryOptions;
+  profile: ProfileOptions;
+  plugins: PluginsOptions;
+}
 
-  plugins: PluginInfo[];
-  asProxy?: boolean;
+interface ProfileOptions {
+  path?: string;
+  dataDir?: string;
+  keepChanges?: boolean;
+  createIfMissing?: boolean;
+  customPrefs?: Record<string, string | number | boolean>;
+}
 
+interface BinaryOptions {
+  path: string;
+  args?: string[];
   devtools?: boolean;
-  binaryArgs?: string[];
+}
+
+interface PluginsOptions {
+  asProxy?: boolean;
+  list: PluginInfo[];
 }
 
 interface PluginInfo {
@@ -29,26 +41,62 @@ interface PluginInfo {
   sourceDir: string;
 }
 
+type InternalZoteroRunnerOptions = RecursiveRequired<ZoteroRunnerOptions>;
+type DefaultZoteroRunnerOptions = RecursivePickOptional<ZoteroRunnerOptions>;
+
+const default_options = {
+  binary: {
+    // path: "",
+    args: [],
+    devtools: true,
+  },
+  profile: {
+    path: "./.scaffold/profile",
+    dataDir: "",
+    keepChanges: true,
+    createIfMissing: true,
+    customPrefs: {},
+  },
+  plugins: {
+    asProxy: false,
+    list: [],
+  },
+} satisfies DefaultZoteroRunnerOptions;
+
 export class ZoteroRunner {
-  private options: ZoteroRunnerOptions;
-  private remoteFirefox: RemoteFirefox;
+  private options: InternalZoteroRunnerOptions;
+  private remoteFirefox = new RemoteFirefox();
   public zotero?: ChildProcessWithoutNullStreams;
 
   constructor(options: ZoteroRunnerOptions) {
-    this.options = options;
-    this.remoteFirefox = new RemoteFirefox();
+    this.options = toMerged(default_options, options);
+
+    if (!options.binary.path)
+      throw new Error("Binary path must be provided.");
+
+    if (options.profile.path === this.default_profile_path && !options.profile.keepChanges)
+      logger.warn("不支持");
+
+    if (!options.profile.path && !options.profile.dataDir)
+      this.options.profile.dataDir = "./.scaffold/data";
+
+    logger.debug(this.options);
+  }
+
+  get default_profile_path() {
+    return default_options.profile.path;
   }
 
   async run() {
     // Get a Zotero profile with the custom Prefs set (a new or a cloned one)
     // Pre-install extensions as proxy if needed (and disable auto-reload if you do)
-    await this.setupProfileDir();
+    await this.setupProfile();
 
     // Start Zotero process and connect to the Zotero instance on RDP
     await this.startZoteroInstance();
 
     // Install any extension if not in proxy mode
-    if (!this.options.asProxy)
+    if (!this.options.plugins.asProxy)
       await this.installTemporaryPlugins();
   }
 
@@ -59,58 +107,66 @@ export class ZoteroRunner {
    *
    * @see https://www.zotero.org/support/dev/client_coding/plugin_development#setting_up_a_plugin_development_environment
    */
-  private async setupProfileDir() {
-    if (!this.options.profilePath) {
-      // Create profile
+  private async setupProfile() {
+    const { path, createIfMissing, keepChanges } = this.options.profile;
+
+    // Ensure profile
+    if (!await pathExists(path)) {
+      if (createIfMissing)
+        await this.createProfile(this.default_profile_path);
+      else
+        throw new Error("The 'profile.path' must be provided when 'createIfMissing' is false.");
+    }
+    else {
+      if (!keepChanges && path !== this.default_profile_path) {
+        await this.copyProfile(path);
+      }
     }
 
     // Setup prefs.js
-    const defaultPrefs = Object.entries(prefs).map(([key, value]) => {
-      return `user_pref("${key}", ${JSON.stringify(value)});`;
+    const prefsPath = join(this.options.profile.path, "prefs.js");
+    const prefsManager = new PrefsManager("user_pref");
+    if (await pathExists(prefsPath))
+      prefsManager.read(prefsPath);
+    prefsManager.setPrefs(this.options.profile.customPrefs);
+    prefsManager.setPrefs({
+      "extensions.lastAppBuildId": null,
+      "extensions.lastAppVersion": null,
     });
-    const customPrefs = Object.entries(this.options.customPrefs || []).map(([key, value]) => {
-      return `user_pref("${key}", ${JSON.stringify(value)});`;
-    });
-
-    let exsitedPrefs: string[] = [];
-    const prefsPath = join(this.options.profilePath, "prefs.js");
-    if (await pathExists(prefsPath)) {
-      const PrefsLines = (await readFile(prefsPath, "utf-8")).split("\n");
-      exsitedPrefs = PrefsLines.map((line: string) => {
-        if (
-          line.includes("extensions.lastAppBuildId")
-          || line.includes("extensions.lastAppVersion")
-        ) {
-          return "";
-        }
-        return line;
-      });
-    }
-    const updatedPrefs = [...defaultPrefs, ...exsitedPrefs, ...customPrefs].join("\n");
-    await outputFile(prefsPath, updatedPrefs, "utf-8");
-    logger.debug("The <profile>/prefs.js has been modified.");
+    prefsManager.write(prefsPath);
 
     // Install plugins in proxy file mode
-    if (this.options.asProxy) {
+    if (this.options.plugins.asProxy) {
       await this.installProxyPlugins();
     }
+  }
+
+  private async createProfile(path: string) {
+    logger.debug(`Creating profile at ${this.default_profile_path}...`);
+    await ensureDir(path);
+  }
+
+  private async copyProfile(from: string, to = this.default_profile_path) {
+    logger.debug(`Copying profile from '${this.options.profile.path}' to ${this.default_profile_path}...`);
+    await copy(from, to);
+    this.options.profile.path = to;
   }
 
   private async startZoteroInstance() {
     // Build args
     let args: string[] = ["--purgecaches", "no-remote"];
-    if (this.options.profilePath) {
-      args.push("-profile", resolve(this.options.profilePath));
+    if (this.options.profile.path) {
+      args.push("-profile", resolve(this.options.profile.path));
     }
-    if (this.options.dataDir) {
+    if (this.options.profile.dataDir) {
       // '--dataDir' required absolute path
-      args.push("--dataDir", resolve(this.options.dataDir));
+      args.push("--dataDir", resolve(this.options.profile.dataDir));
     }
-    if (this.options.devtools) {
+    if (this.options.binary.devtools) {
       args.push("--jsdebugger");
     }
-    if (this.options.binaryArgs) {
-      args = [...args, ...this.options.binaryArgs];
+    if (this.options.binary.args) {
+      args = [...args, ...this.options.binary.args];
     }
 
     // support for starting the remote debugger server
@@ -125,9 +181,12 @@ export class ZoteroRunner {
       NS_TRACE_MALLOC_DISABLE_STACKS: "1",
     };
 
+    if (!await pathExists(this.options.binary.path))
+      throw new Error("The Zotero binary not found.");
+
     // Using `spawn` so we can stream logging as they come in, rather than
     // buffer them up until the end, which can easily hit the max buffer size.
-    this.zotero = spawn(this.options.binaryPath, args, { env });
+    this.zotero = spawn(this.options.binary.path, args, { env });
     logger.debug("Zotero started, pid:", this.zotero.pid);
 
     // Handle Zotero log, necessary on macOS
@@ -140,7 +199,7 @@ export class ZoteroRunner {
 
   private async installTemporaryPlugins() {
     // Install all the temporary addons.
-    for (const plugin of this.options.plugins) {
+    for (const plugin of this.options.plugins.list) {
       const addonId = await this.remoteFirefox
         .installTemporaryAddon(resolve(plugin.sourceDir))
         .then((installResult) => {
@@ -155,7 +214,7 @@ export class ZoteroRunner {
 
   private async installProxyPlugin(id: string, sourceDir: string) {
     // Create a proxy file
-    const addonProxyFilePath = join(this.options.profilePath, `extensions/${id}`);
+    const addonProxyFilePath = join(this.options.profile.path, `extensions/${id}`);
     const buildPath = resolve(sourceDir);
 
     await outputFile(addonProxyFilePath, buildPath);
@@ -168,14 +227,14 @@ export class ZoteroRunner {
     );
 
     // Delete XPI file
-    const addonXpiFilePath = join(this.options.profilePath, `extensions/${id}.xpi`);
+    const addonXpiFilePath = join(this.options.profile.path, `extensions/${id}.xpi`);
     if (await pathExists(addonXpiFilePath)) {
       await remove(addonXpiFilePath);
       logger.debug(`XPI file found, removed.`);
     }
 
     // Force enable plugin in extensions.json
-    const addonInfoFilePath = join(this.options.profilePath, "extensions.json");
+    const addonInfoFilePath = join(this.options.profile.path, "extensions.json");
     if (await pathExists(addonInfoFilePath)) {
       const content = await readJSON(addonInfoFilePath);
       content.addons = content.addons.map((addon: any) => {
@@ -191,7 +250,7 @@ export class ZoteroRunner {
   }
 
   private async installProxyPlugins() {
-    for (const { id, sourceDir } of this.options.plugins) {
+    for (const { id, sourceDir } of this.options.plugins.list) {
       await this.installProxyPlugin(id, sourceDir);
     }
   }
@@ -201,7 +260,7 @@ export class ZoteroRunner {
   }
 
   public async reloadTemporaryPluginBySourceDir(sourceDir: string) {
-    const addonId = this.options.plugins.find(p => p.sourceDir === sourceDir)?.id;
+    const addonId = this.options.plugins.list.find(p => p.sourceDir === sourceDir)?.id;
 
     if (!addonId) {
       return {
@@ -227,7 +286,7 @@ export class ZoteroRunner {
   }
 
   private async reloadAllTemporaryPlugins() {
-    for (const { sourceDir } of this.options.plugins) {
+    for (const { sourceDir } of this.options.plugins.list) {
       const res = await this.reloadTemporaryPluginBySourceDir(sourceDir);
       if (res.reloadError instanceof Error) {
         logger.error(res.reloadError);
@@ -255,7 +314,7 @@ export class ZoteroRunner {
     const url = `zotero://ztoolkit-debug/?run=${encodeURIComponent(
       reloadScript,
     )}`;
-    const startZoteroCmd = `"${this.options.binaryPath}" --purgecaches -profile "${this.options.profilePath}"`;
+    const startZoteroCmd = `"${this.options.binary.path}" --purgecaches -profile "${this.options.profile.path}"`;
     const command = `${startZoteroCmd} -url "${url}"`;
     execSync(command);
   }
@@ -263,14 +322,14 @@ export class ZoteroRunner {
   // Do not use this method if possible,
   // as frequent execSync can cause Zotero to crash.
   private async reloadAllProxyPlugins() {
-    for (const { id } of this.options.plugins) {
+    for (const { id } of this.options.plugins.list) {
       await this.reloadProxyPluginByZToolkit(id, id, id);
       await delay(2000);
     }
   }
 
   public async reloadAllPlugins() {
-    if (this.options.asProxy)
+    if (this.options.plugins.asProxy)
       await this.reloadAllProxyPlugins();
     else
       await this.reloadAllTemporaryPlugins();

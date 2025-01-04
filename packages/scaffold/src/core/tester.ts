@@ -561,19 +561,25 @@ export default class Test extends Base {
 
   async startZotero() {
     this.runner = new ZoteroRunner({
-      binaryPath: this.zoteroBinPath,
-      profilePath: this.profilePath,
-      dataDir: this.dataDir,
-      plugins: [{
-        id: this.ctx.id,
-        sourceDir: join(this.ctx.dist, "addon"),
-      }, {
-        id: this.testPluginID,
-        sourceDir: this.testPluginDir,
-      }],
-      devtools: this.ctx.server.devtools,
-      binaryArgs: this.ctx.server.startArgs,
-      customPrefs: this.prefs,
+      binary: {
+        path: this.zoteroBinPath,
+        devtools: this.ctx.server.devtools,
+        args: this.ctx.server.startArgs,
+      },
+      profile: {
+        path: this.profilePath,
+        dataDir: this.dataDir,
+        customPrefs: this.prefs,
+      },
+      plugins: {
+        list: [{
+          id: this.ctx.id,
+          sourceDir: join(this.ctx.dist, "addon"),
+        }, {
+          id: this.testPluginID,
+          sourceDir: this.testPluginDir,
+        }],
+      },
     });
 
     await this.runner.run();
