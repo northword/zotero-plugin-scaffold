@@ -1,7 +1,6 @@
 import type { Context } from "../types/index.js";
 import type { Manifest } from "../types/manifest.js";
 import type { UpdateJSON } from "../types/update-json.js";
-import type { Prefs } from "../utils/prefs-manager.js";
 import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
