@@ -139,7 +139,7 @@ const defaultConfig = {
     startArgs: [],
     asProxy: false,
     prebuild: true,
-    keepProfileChanges: true,
+    // keepProfileChanges: true,
     createProfileIfMissing: true,
     hooks: {},
   },

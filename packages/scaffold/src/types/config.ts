@@ -349,7 +349,7 @@ export interface ServerConfig {
   asProxy: boolean;
 
   prebuild: boolean;
-  keepProfileChanges: boolean;
+  // keepProfileChanges: boolean;
   createProfileIfMissing: boolean;
 
   /**

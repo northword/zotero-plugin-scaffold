@@ -34,7 +34,7 @@ export default class Serve extends Base {
       profile: {
         path: this.profilePath,
         dataDir: this.dataDir,
-        keepChanges: this.ctx.server.keepProfileChanges,
+        // keepChanges: this.ctx.server.keepProfileChanges,
         createIfMissing: this.ctx.server.createProfileIfMissing,
       },
       plugins: {

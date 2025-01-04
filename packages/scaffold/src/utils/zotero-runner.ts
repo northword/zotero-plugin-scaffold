@@ -4,7 +4,7 @@ import { execSync, spawn } from "node:child_process";
 import { join, resolve } from "node:path";
 import process from "node:process";
 import { delay, toMerged } from "es-toolkit";
-import { copy, ensureDir, outputFile, outputJSON, pathExists, readJSON, remove } from "fs-extra/esm";
+import { ensureDir, outputFile, outputJSON, pathExists, readJSON, remove } from "fs-extra/esm";
 import { isLinux, isMacOS, isWindows } from "std-env";
 import { logger } from "./log.js";
 import { PrefsManager } from "./prefs.js";
@@ -20,7 +20,7 @@ export interface ZoteroRunnerOptions {
 interface ProfileOptions {
   path?: string;
   dataDir?: string;
-  keepChanges?: boolean;
+  // keepChanges?: boolean;
   createIfMissing?: boolean;
   customPrefs?: Record<string, string | number | boolean>;
 }
@@ -53,7 +53,7 @@ const default_options = {
   profile: {
     path: "./.scaffold/profile",
     dataDir: "",
-    keepChanges: true,
+    // keepChanges: true,
     createIfMissing: true,
     customPrefs: {},
   },
@@ -74,8 +74,8 @@ export class ZoteroRunner {
     if (!options.binary.path)
       throw new Error("Binary path must be provided.");
 
-    if (options.profile.path === this.default_profile_path && !options.profile.keepChanges)
-      logger.warn("不支持");
+    // if (options.profile.path === this.default_profile_path && !options.profile.keepChanges)
+    //   logger.warn("Profile at '.scaffold/profile' does not support discarding changes.");
 
     if (!options.profile.path && !options.profile.dataDir)
       this.options.profile.dataDir = "./.scaffold/data";
@@ -108,7 +108,7 @@ export class ZoteroRunner {
    * @see https://www.zotero.org/support/dev/client_coding/plugin_development#setting_up_a_plugin_development_environment
    */
   private async setupProfile() {
-    const { path, createIfMissing, keepChanges } = this.options.profile;
+    const { path, createIfMissing } = this.options.profile;
 
     // Ensure profile
     if (!await pathExists(path)) {
@@ -117,11 +117,13 @@ export class ZoteroRunner {
       else
         throw new Error("The 'profile.path' must be provided when 'createIfMissing' is false.");
     }
-    else {
-      if (!keepChanges && path !== this.default_profile_path) {
-        await this.copyProfile(path);
-      }
-    }
+
+    // const dataDir = prefsManager.getPref("extensions.zotero.dataDir");
+    // if (!keepChanges && path !== this.default_profile_path) {
+    //   await this.copyProfile(path);
+    //   if (dataDir)
+    //     await this.copyProfile(dataDir as string, this.default_data_dir);
+    // }
 
     // Setup prefs.js
     const prefsPath = join(this.options.profile.path, "prefs.js");
@@ -146,11 +148,11 @@ export class ZoteroRunner {
     await ensureDir(path);
   }
 
-  private async copyProfile(from: string, to = this.default_profile_path) {
-    logger.debug(`Copying profile from '${this.options.profile.path}' to ${this.default_profile_path}...`);
-    await copy(from, to);
-    this.options.profile.path = to;
-  }
+  // private async copyProfile(from: string, to = this.default_profile_path) {
+  //   logger.debug(`Copying profile from '${this.options.profile.path}' to ${this.default_profile_path}...`);
+  //   await copy(from, to);
+  //   this.options.profile.path = to;
+  // }
 
   private async startZoteroInstance() {
     // Build args
