@@ -222,18 +222,37 @@ export interface BuildConfig {
   };
   prefs: {
     /**
-     * Add
+     * Prefixes the keys of preferences in `prefs.js` and
+     * the value of the `preference` attribute in XHTML files.
+     *
+     * 为 `prefs.js` 中的首选项键和 XHTML 文件中的 `preference` 属性的值
+     * 添加前缀。
      *
      * @default true
      */
     prefixPrefKeys: boolean;
     /**
-     * Add
+     * Prefixes for Preference Keys, no dot at the end.
      *
-     * @default 'extensions.zotero.${namespace}'
+     * 首选项键的前缀，结尾不需要加点号。
+     *
+     * @default 'extensions.${namespace}'
      */
     prefix: string;
-    dts: boolean | string;
+    /**
+     * Generate prefs.d.ts form prefs.js.
+     *
+     * - false: disable
+     * - string: path of dts file
+     *
+     * 为首选项生成类型声明文件。
+     *
+     * - false: 禁用
+     * - string：dts 文件路径
+     *
+     * @default 'typings/prefs.d.ts'
+     */
+    dts: false | string;
   };
   /**
    * Configurations of esbuild.

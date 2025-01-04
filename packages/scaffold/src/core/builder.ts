@@ -1,6 +1,7 @@
 import type { Context } from "../types/index.js";
 import type { Manifest } from "../types/manifest.js";
 import type { UpdateJSON } from "../types/update-json.js";
+import type { Prefs } from "../utils/prefs-manager.js";
 import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
@@ -12,7 +13,7 @@ import { build as buildAsync } from "esbuild";
 import { copy, emptyDir, move, outputFile, outputJSON, readJSON, writeJson } from "fs-extra/esm";
 import { glob } from "tinyglobby";
 import { generateHash } from "../utils/crypto.js";
-import { PrefsManager, renderPluginPrefsDts } from "../utils/prefs.js";
+import { PrefsManager, renderPluginPrefsDts } from "../utils/prefs-manager.js";
 import { dateFormat, replaceInFile, toArray } from "../utils/string.js";
 import { Base } from "./base.js";
 
@@ -241,29 +242,57 @@ export default class Build extends Base {
   }
 
   async preparePrefs() {
-    if (!this.ctx.build.prefs.prefixPrefKeys && !this.ctx.build.prefs.dts)
+    const { dts, prefixPrefKeys, prefix } = this.ctx.build.prefs;
+    const { dist } = this.ctx;
+
+    // Skip if not enable this builder
+    if (!prefixPrefKeys && !dts)
       return;
 
-    const prefsFilePath = join(this.ctx.dist, "addon", "prefs.js");
+    // Skip if no prefs.js
+    const prefsFilePath = join(dist, "addon", "prefs.js");
     if (!existsSync(prefsFilePath))
       return;
 
+    // Parse prefs.js
     const prefsManager = new PrefsManager("pref");
     await prefsManager.read(prefsFilePath);
-    const prefs = prefsManager.getPrefs();
+    const prefsWithPrefix = prefsManager.getPrefsWithPrefix(prefix);
+    const prefsWithoutPrefix = prefsManager.getPrefsWithoutPrefix(prefix);
 
-    if (this.ctx.build.prefs.prefixPrefKeys) {
-      //
+    // Generate prefs.d.ts
+    if (dts) {
+      const dtsContent = renderPluginPrefsDts(prefsWithoutPrefix, prefix);
+      await outputFile(dts, dtsContent, "utf-8");
     }
 
-    if (this.ctx.build.prefs.dts) {
-      const dtsContent = renderPluginPrefsDts(prefs, this.ctx.build.prefs.prefix);
+    // Generate prefixed prefs.js
+    if (prefixPrefKeys) {
+      prefsManager.clearPrefs();
+      prefsManager.setPrefs(prefsWithPrefix);
+      await prefsManager.write(prefsFilePath);
+    }
 
-      let dtsFilePath = `typings/prefs.d.ts`;
-      if (typeof this.ctx.build.prefs.dts === "string")
-        dtsFilePath = this.ctx.build.prefs.dts;
-
-      await outputFile(dtsFilePath, dtsContent, "utf-8");
+    // Prefix pref keys in xhtml
+    if (prefixPrefKeys) {
+      const HTML_PREFERENCE_PATTERN = new RegExp(`preference="((?!${prefix})\\S*)"`, "g");
+      const xhtmlPaths = await glob(`${dist}/addon/**/*.xhtml`);
+      await Promise.all(xhtmlPaths.map(async (path) => {
+        let content = await readFile(path, "utf-8");
+        const matchs = [...content.matchAll(HTML_PREFERENCE_PATTERN)];
+        for (const match of matchs) {
+          const [matched, key] = match;
+          if (!prefsWithoutPrefix[key] && !prefsWithoutPrefix[key]) {
+            this.logger.warn(`preference key '${key}' in ${path} not init in prefs.js`);
+            continue;
+          }
+          if (key.startsWith(prefix))
+            continue;
+          else
+            content = content.replace(matched, `preference="${prefix}.${key}"`);
+        }
+        await outputFile(path, content, "utf-8");
+      }));
     }
   }
 

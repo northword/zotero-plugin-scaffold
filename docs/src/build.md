@@ -193,7 +193,7 @@ export default defineConfig({
     prefs: {
       prefixPrefKeys: true,
       prefix: "Your Plugin's Preference Key Prefix",
-      dts: true
+      dts: "typings/prefs.d.ts"
     }
   }
 });
