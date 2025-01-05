@@ -129,7 +129,6 @@ export default class Build extends Base {
       ...(version && { version }),
       manifest_version: 2,
       applications: {
-        // @ts-expect-error 此处不包含版本限制
         zotero: {
           id,
           update_url: updateURL,
@@ -332,7 +331,7 @@ export default class Build extends Base {
               }),
               applications: {
                 zotero: {
-                  strict_min_version: min,
+                  ...(min && { strict_min_version: min }),
                   ...(max && { strict_max_version: max }),
                 },
               },

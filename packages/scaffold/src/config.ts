@@ -110,26 +110,12 @@ const defaultConfig = {
       enable: true,
       template: {
         manifest_version: 2,
-        name: "__addonName__",
-        version: "__buildVersion__",
-        description: "__description__",
-        homepage_url: "__homepage__",
-        author: "__author__",
-        icons: {
-          48: "content/icons/favicon@0.5x.png",
-          96: "content/icons/favicon.png",
-        },
+        name: "",
+        version: "",
         applications: {
           zotero: {
-            id: "__addonID__",
-            update_url: "__updateURL__",
-            strict_min_version: "6.999",
-            strict_max_version: "7.0.*",
-          },
-          gecko: {
-            id: "__addonID__",
-            update_url: "__updateURL__",
-            strict_min_version: "102",
+            id: "",
+            update_url: "",
           },
         },
       },

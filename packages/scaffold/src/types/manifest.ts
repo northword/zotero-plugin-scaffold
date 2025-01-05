@@ -11,13 +11,8 @@ export interface Manifest {
     zotero: {
       id: string;
       update_url: string;
-      strict_min_version: string;
+      strict_min_version?: string;
       strict_max_version?: string;
-    };
-    gecko: {
-      id: string;
-      update_url: string;
-      strict_min_version: string;
     };
   };
 }

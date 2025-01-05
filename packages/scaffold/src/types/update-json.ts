@@ -17,7 +17,7 @@ export interface UpdateJSON {
         update_hash?: string;
         applications: {
           zotero: {
-            strict_min_version: string;
+            strict_min_version?: string;
             strict_max_version?: string;
           };
           [application: string]: {
