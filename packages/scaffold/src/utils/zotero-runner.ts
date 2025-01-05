@@ -7,8 +7,9 @@ import { delay, toMerged } from "es-toolkit";
 import { ensureDir, outputFile, outputJSON, pathExists, readJSON, remove } from "fs-extra/esm";
 import { isLinux, isMacOS, isWindows } from "std-env";
 import { logger } from "./log.js";
-import { PrefsManager } from "./prefs.js";
+import { PrefsManager } from "./prefs-manager.js";
 import { isRunning } from "./process.js";
+import { prefs as defaultPrefs } from "./zotero/preference.js";
 import { findFreeTcpPort, RemoteFirefox } from "./zotero/remote-zotero.js";
 
 export interface ZoteroRunnerOptions {
@@ -128,9 +129,10 @@ export class ZoteroRunner {
     // Setup prefs.js
     const prefsPath = join(this.options.profile.path, "prefs.js");
     const prefsManager = new PrefsManager("user_pref");
+    prefsManager.setPrefs(defaultPrefs);
+    prefsManager.setPrefs(this.options.profile.customPrefs);
     if (await pathExists(prefsPath))
       await prefsManager.read(prefsPath);
-    prefsManager.setPrefs(this.options.profile.customPrefs);
     prefsManager.setPrefs({
       "extensions.lastAppBuildId": null,
       "extensions.lastAppVersion": null,

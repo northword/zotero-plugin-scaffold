@@ -1,16 +1,18 @@
 import type { Context } from "../types/index.js";
 import type { Manifest } from "../types/manifest.js";
 import type { UpdateJSON } from "../types/update-json.js";
+import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
-import { basename, dirname } from "node:path";
+import { basename, dirname, join } from "node:path";
 import process from "node:process";
 import AdmZip from "adm-zip";
 import chalk from "chalk";
 import { toMerged } from "es-toolkit";
 import { build as buildAsync } from "esbuild";
-import { copy, emptyDir, move, outputJSON, readJSON, writeJson } from "fs-extra/esm";
+import { copy, emptyDir, move, outputFile, outputJSON, readJSON, writeJson } from "fs-extra/esm";
 import { glob } from "tinyglobby";
 import { generateHash } from "../utils/crypto.js";
+import { PrefsManager, renderPluginPrefsDts } from "../utils/prefs-manager.js";
 import { dateFormat, replaceInFile, toArray } from "../utils/string.js";
 import { Base } from "./base.js";
 
@@ -51,6 +53,8 @@ export default class Build extends Base {
     this.logger.debug("Preparing locale files");
     await this.prepareLocaleFiles();
     await this.ctx.hooks.callHook("build:fluent", this.ctx);
+
+    await this.preparePrefs();
 
     this.logger.tip("Bundling scripts");
     await this.esbuild();
@@ -234,6 +238,61 @@ export default class Build extends Base {
         this.logger.warn(`HTML data-l10n-id "${messageInHTML}" is missing in locales: ${missingLocales.join(", ")}`);
       }
     });
+  }
+
+  async preparePrefs() {
+    const { dts, prefixPrefKeys, prefix } = this.ctx.build.prefs;
+    const { dist } = this.ctx;
+
+    // Skip if not enable this builder
+    if (!prefixPrefKeys && !dts)
+      return;
+
+    // Skip if no prefs.js
+    const prefsFilePath = join(dist, "addon", "prefs.js");
+    if (!existsSync(prefsFilePath))
+      return;
+
+    // Parse prefs.js
+    const prefsManager = new PrefsManager("pref");
+    await prefsManager.read(prefsFilePath);
+    const prefsWithPrefix = prefsManager.getPrefsWithPrefix(prefix);
+    const prefsWithoutPrefix = prefsManager.getPrefsWithoutPrefix(prefix);
+
+    // Generate prefs.d.ts
+    if (dts) {
+      const dtsContent = renderPluginPrefsDts(prefsWithoutPrefix, prefix);
+      await outputFile(dts, dtsContent, "utf-8");
+    }
+
+    // Generate prefixed prefs.js
+    if (prefixPrefKeys) {
+      prefsManager.clearPrefs();
+      prefsManager.setPrefs(prefsWithPrefix);
+      await prefsManager.write(prefsFilePath);
+    }
+
+    // Prefix pref keys in xhtml
+    if (prefixPrefKeys) {
+      const HTML_PREFERENCE_PATTERN = new RegExp(`preference="((?!${prefix})\\S*)"`, "g");
+      const xhtmlPaths = await glob(`${dist}/addon/**/*.xhtml`);
+      await Promise.all(xhtmlPaths.map(async (path) => {
+        let content = await readFile(path, "utf-8");
+        const matchs = [...content.matchAll(HTML_PREFERENCE_PATTERN)];
+        for (const match of matchs) {
+          const [matched, key] = match;
+          if (!prefsWithoutPrefix[key] && !prefsWithoutPrefix[key]) {
+            this.logger.warn(`preference key '${key}' in ${path} not init in prefs.js`);
+            continue;
+          }
+          if (key.startsWith(prefix))
+            continue;
+          else
+            content = content.replace(matched, `preference="${prefix}.${key}"`);
+        }
+        await outputFile(path, content, "utf-8");
+      }));
+    }
   }
 
   esbuild() {
