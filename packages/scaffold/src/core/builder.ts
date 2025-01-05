@@ -173,7 +173,7 @@ export default class Build extends Base {
             const namespacedMessage = `${namespace}-${message}`;
             localeMessages.add(message);
             allMessages.add(message);
-            ftlContent = ftlContent.replace(message, namespacedMessage);
+            ftlContent = ftlContent.replace(new RegExp(`^${message}`, "gm"), namespacedMessage);
           }
         }
 
