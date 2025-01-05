@@ -180,10 +180,10 @@ export default defineConfig({
 
 ### Preference Management
 
-> In development.
+- Supports prefixing preference keys in `prefs.js`.
+- Generates TypeScript declaration files (`.d.ts`) for preferences.
 
-- Supports prefixing preference keys in `prefs.js` with a custom namespace.
-- Optionally generates TypeScript declaration files (`.d.ts`) for preferences.
+Configure via `build.prefs`:
 
 ```ts twoslash
 import { defineConfig } from "zotero-plugin-scaffold";
@@ -192,14 +192,50 @@ export default defineConfig({
   build: {
     prefs: {
       prefixPrefKeys: true,
-      prefix: "Your Plugin's Preference Key Prefix",
+      prefix: "extensions.myPlugin",
       dts: "typings/prefs.d.ts"
     }
   }
 });
 ```
 
-Helpers for geting and setting prefs:
+#### Adding Prefixes
+
+When `build.prefs.prefixPrefKeys` is enabled, preferences should be written as follows:
+
+::: code-group
+
+```js [src/prefs.js]
+pref("lintOnAdded", true);
+```
+
+```html [src/preference.xhtml]
+<vbox>
+  <groupbox>
+    <checkbox preference="lintOnAdded" data-l10n-id="linter-lint-on-item-added" native="true" />
+  </groupbox>
+</vbox>
+```
+
+```js [dist/prefs.js]
+pref("extensions.myPlugin.lintOnAdded", true);
+```
+
+```html [dist/preference.xhtml]
+<vbox>
+  <groupbox>
+    <checkbox preference="extensions.myPlugin.lintOnAdded" data-l10n-id="linter-lint-on-item-added" native="true" />
+  </groupbox>
+</vbox>
+```
+
+:::
+
+#### Generating DTS Files
+
+Relies on the `zotero-types` package to provide type declarations for `Zotero.Prefs`.
+
+You can also use the following helper to get or set preferences while omitting the prefix, simplifying your code.
 
 ```ts
 const PREFS_PREFIX = "extensions.myPlugin";
