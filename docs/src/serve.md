@@ -22,7 +22,8 @@ ZOTERO_PLUGIN_PROFILE_PATH=/path/to/profile
 ZOTERO_PLUGIN_DATA_DIR=/path/to/data
 ```
 
-- **Zotero binary file path** and **profile path** are mandatory.
+- `ZOTERO_PLUGIN_ZOTERO_BIN_PATH` is required.
+- `ZOTERO_PLUGIN_PROFILE_PATH` and `ZOTERO_PLUGIN_DATA_DIR` are optional, a blank profile will be automatically created if not provided.
 - If you manage multiple plugins, these paths can be stored in system/user environment variables. However, paths defined in `.env` currently do not override system/user-level variables. This behavior may change in future versions.
 
 ## Launch Arguments and Developer Tools
