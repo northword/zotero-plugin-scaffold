@@ -20,16 +20,21 @@ pnpm create zotero-plugin
 
 You can install `zotero-plugin-scaffold` using your preferred package manager:
 
-```bash
-# npm
+::: code-group
+
+```bash [npm]
 npm install -D zotero-plugin-scaffold
+```
 
-# yarn
+```bash [yarn]
 yarn add -D zotero-plugin-scaffold
+```
 
-# pnpm
+```bash [pnpm]
 pnpm add -D zotero-plugin-scaffold
 ```
+
+:::
 
 ### 02. Create a Configuration File
 

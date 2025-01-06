@@ -5,7 +5,7 @@ layout: home
 hero:
   name: "Scaffold"
   text: "Zotero Plugins"
-  tagline: "Delivering a Modern and Elegant Development Experience for Zotero Plugins."
+  tagline: "The Modern and Elegant Development Experience for Zotero Plugins."
   actions:
     - theme: brand
       text: "Quick Start"

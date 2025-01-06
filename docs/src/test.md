@@ -37,8 +37,6 @@ If Scaffold detects a local Mocha installation, it uses it; otherwise, it fetche
 Write test cases using [Mocha](https://mochajs.org/) and [Chai](https://www.chaijs.com/) syntax in `test/*.spec.{js,ts}`:
 
 ```js
-import { expect } from "chai";
-
 describe("Example Test", () => {
   it("should pass", () => {
     expect(1 + 1).to.equal(2);
