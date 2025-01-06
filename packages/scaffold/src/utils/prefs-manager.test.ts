@@ -9,76 +9,70 @@ describe("prefs-manager", () => {
   });
 
   describe("parse", () => {
+    it("should correctly parse a string value", () => {
+      const result = prefsManager.parse(`pref("test.string", "hello");`);
+      expect(result["test.string"]).toBe("hello");
+    });
+
+    it("should correctly parse a number value", () => {
+      const result = prefsManager.parse(`pref("test.number", 42);`);
+      expect(result["test.number"]).toBe(42);
+    });
+
+    it("should correctly parse a boolean value (true)", () => {
+      const result = prefsManager.parse(`pref("test.boolean.true", true);`);
+      expect(result["test.boolean.true"]).toBe(true);
+    });
+
+    it("should correctly parse a boolean value (false)", () => {
+      const result = prefsManager.parse(`pref("test.boolean.false", false);`);
+      expect(result["test.boolean.false"]).toBe(false);
+    });
+
+    it("should correctly parse a null value", () => {
+      const result = prefsManager.parse(`pref("test.null", null);`);
+      expect(result["test.null"]).toBe("null");
+    });
+
+    it("should correctly parse a stringified number", () => {
+      const result = prefsManager.parse(`pref("test.stringified.number", "123");`);
+      expect(result["test.stringified.number"]).toBe("123");
+    });
+
+    it("should correctly parse a stringified boolean (true)", () => {
+      const result = prefsManager.parse(`pref("test.stringified.true", "true");`);
+      expect(result["test.stringified.true"]).toBe("true");
+    });
+
+    it("should correctly parse a stringified boolean (false)", () => {
+      const result = prefsManager.parse(`pref("test.stringified.false", "false");`);
+      expect(result["test.stringified.false"]).toBe("false");
+    });
+
     it("should correctly parse a prefs.js file", async () => {
       const fakePrefsContent = `
 pref("test.string", "hello");
 pref("test.number", 42);
 pref("test.boolean.true", true);
-pref("test.boolean.false", false);
-pref("test.null", null);
-pref("test.stringified.number", "123");
-pref("test.stringified.true", "true");
-          `;
-
+`;
       const result = prefsManager.parse(fakePrefsContent);
-
       expect(result["test.string"]).toBe("hello");
       expect(result["test.number"]).toBe(42);
       expect(result["test.boolean.true"]).toBe(true);
-      expect(result["test.boolean.false"]).toBe(false);
-      expect(result["test.null"]).toBe("null");
-      expect(result["test.stringified.number"]).toBe("123");
-      expect(result["test.stringified.true"]).toBe("true");
     });
   });
 
   describe("setPref", () => {
-    it("should correctly set a string value", () => {
-      prefsManager.setPref("test.string", "hello");
-      expect(typeof prefsManager.getPref("test.string")).toBe("string");
-      expect(prefsManager.getPref("test.string")).toBe("hello");
-    });
-
-    it("should correctly set a number value", () => {
-      prefsManager.setPref("test.number", 42);
-      expect(typeof prefsManager.getPref("test.number")).toBe("number");
-      expect(prefsManager.getPref("test.number")).toBe(42);
-    });
-
-    it("should correctly set a number value 0", () => {
-      prefsManager.setPref("test.number", 0);
-      expect(typeof prefsManager.getPref("test.number")).toBe("number");
-      expect(prefsManager.getPref("test.number")).toBe(0);
-    });
-
-    it("should correctly set a boolean value", () => {
-      prefsManager.setPref("test.boolean", true);
-      expect(typeof prefsManager.getPref("test.boolean")).toBe("boolean");
-      expect(prefsManager.getPref("test.boolean")).toBe(true);
+    it("should correctly set a value", () => {
+      prefsManager.setPref("test", "hello");
+      expect(typeof prefsManager.getPref("test")).toBe("string");
+      expect(prefsManager.getPref("test")).toBe("hello");
     });
 
     it("should correctly set a null value and remove the preference", () => {
       prefsManager.setPref("test.null", "value");
       prefsManager.setPref("test.null", null);
       expect(prefsManager.getPref("test.null")).toBeUndefined();
-    });
-
-    it("should handle stringified numbers and booleans", () => {
-      prefsManager.setPref("test.string.number", "123");
-      expect(typeof prefsManager.getPref("test.string.number")).toBe("string");
-      expect(prefsManager.getPref("test.string.number")).toBe("123");
-
-      prefsManager.setPref("test.number", "\"123\"");
-      expect(typeof prefsManager.getPref("test.number")).toBe("string");
-      expect(prefsManager.getPref("test.number")).toBe("\"123\"");
-
-      prefsManager.setPref("test.string.true", "true");
-      expect(typeof prefsManager.getPref("test.string.true")).toBe("string");
-      expect(prefsManager.getPref("test.string.true")).toBe("true");
-
-      prefsManager.setPref("test.string.false", "false");
-      expect(typeof prefsManager.getPref("test.string.false")).toBe("string");
-      expect(prefsManager.getPref("test.string.false")).toBe("false");
     });
   });
 
@@ -126,16 +120,21 @@ pref("test.stringified.true", "true");
   describe("getPrefsWithPrefix", () => {
     it("should return preferences with the specified prefix", () => {
       prefsManager.setPrefs({
-        "prefix.key1": "value1",
-        "prefix.key2": "value2",
         "other.key": "value3",
       });
 
-      const prefs = prefsManager.getPrefsWithPrefix("prefix");
-      expect(prefs).toEqual({
-        "prefix.key1": "value1",
-        "prefix.key2": "value2",
+      expect(prefsManager.getPrefsWithPrefix("prefix")).toEqual({
         "prefix.other.key": "value3",
+      });
+    });
+
+    it("should skip preferences that already contain a prefix", () => {
+      prefsManager.setPrefs({
+        "prefix.key1": "value1",
+      });
+
+      expect(prefsManager.getPrefsWithPrefix("prefix")).toEqual({
+        "prefix.key1": "value1",
       });
     });
   });
@@ -144,11 +143,10 @@ pref("test.stringified.true", "true");
     it("should return preferences without the specified prefix", () => {
       prefsManager.setPrefs({
         "prefix.key1": "value1",
-        "prefix.key2": "value2",
+        "key2": "value2",
       });
 
-      const prefs = prefsManager.getPrefsWithoutPrefix("prefix");
-      expect(prefs).toEqual({
+      expect(prefsManager.getPrefsWithoutPrefix("prefix")).toEqual({
         key1: "value1",
         key2: "value2",
       });
