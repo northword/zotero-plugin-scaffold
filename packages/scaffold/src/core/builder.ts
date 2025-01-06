@@ -7,7 +7,7 @@ import { basename, dirname, join } from "node:path";
 import process from "node:process";
 import AdmZip from "adm-zip";
 import chalk from "chalk";
-import { toMerged } from "es-toolkit";
+import { escapeRegExp, toMerged } from "es-toolkit";
 import { build as buildAsync } from "esbuild";
 import { copy, emptyDir, move, outputFile, outputJSON, readJSON, writeJson } from "fs-extra/esm";
 import { glob } from "tinyglobby";
@@ -168,12 +168,11 @@ export default class Build extends Base {
         const matches = [...ftlContent.matchAll(FTL_MESSAGE_PATTERN)];
 
         for (const match of matches) {
-          const message = match.groups?.message;
+          const [matched, message, _pattern] = match;
           if (message) {
-            const namespacedMessage = `${namespace}-${message}`;
             localeMessages.add(message);
             allMessages.add(message);
-            ftlContent = ftlContent.replace(new RegExp(`^${message}`, "gm"), namespacedMessage);
+            ftlContent = ftlContent.replace(new RegExp(`^${escapeRegExp(matched)}`, "gm"), `${namespace}-${matched}`);
           }
         }
 
