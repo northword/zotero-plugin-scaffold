@@ -116,14 +116,17 @@ export function renderPluginPrefsDts(prefs: Prefs, prefix: string) {
 /* eslint-disable */
 // @ts-nocheck
 
+// prettier-ignore
 type _PluginPrefsMap = {
   ${Object.entries(prefs).map(([key, value]) => {
     return `"${key}": ${typeof value};`;
   }).join("\n  ")}
 };
 
+// prettier-ignore
 type PluginPrefKey<K extends keyof _PluginPrefsMap> = \`${prefix}.\${K}\`;
 
+// prettier-ignore
 type PluginPrefsMap = {
   [K in keyof _PluginPrefsMap as PluginPrefKey<K>]: _PluginPrefsMap[K]
 };
