@@ -1,5 +1,4 @@
 import { readFile } from "node:fs/promises";
-import { isNotNil } from "es-toolkit";
 import { outputFile } from "fs-extra/esm";
 import { logger } from "./log.js";
 
@@ -20,27 +19,14 @@ export class PrefsManager {
     for (const match of matches) {
       const key = match[2].trim();
       const value = match[3].trim();
-      this.prefs[key] = value;
+
+      this.setPref(key, value);
     };
   }
 
   private render() {
     return Object.entries(this.prefs).map(([key, value]) => {
-      if (!isNotNil(value))
-        return "";
-
-      let cleanValue = "";
-      if (typeof value === "boolean") {
-        cleanValue = `${value}`;
-      }
-      else if (typeof value === "string") {
-        cleanValue = value; // `${value.replace("\n", "\\n")}`;
-      }
-      else if (typeof value === "number") {
-        cleanValue = value.toString();
-      }
-
-      return `${this.namespace}("${key}", ${cleanValue});`;
+      return `${this.namespace}("${key}", ${value});`;
     }).filter(c => !!c).join("\n");
   }
 
@@ -57,7 +43,33 @@ export class PrefsManager {
   }
 
   setPref(key: string, value: any) {
-    this.prefs[key] = value;
+    let cleanValue: any;
+    if (value === null || value === undefined) {
+      if (key in this.prefs)
+        delete this.prefs[key];
+      else
+        return;
+    }
+    else if (value === "true") {
+      cleanValue = true;
+    }
+    else if (value === "false") {
+      cleanValue = false;
+    }
+    else if (typeof value === "boolean") {
+      cleanValue = value;
+    }
+    else if (typeof value === "string") {
+      cleanValue = value; // `${value.replace("\n", "\\n")}`;
+    }
+    else if (typeof value === "number") {
+      cleanValue = value;
+    }
+    else {
+      cleanValue = value;
+    }
+
+    this.prefs[key] = cleanValue;
   };
 
   setPrefs(prefs: Prefs) {
@@ -115,13 +127,15 @@ type PluginPrefKey<K extends keyof _PluginPrefsMap> = \`${prefix}.\${K}\`;
 type PluginPrefsMap = {
   [K in keyof _PluginPrefsMap as PluginPrefKey<K>]: _PluginPrefsMap[K]
 };
-
-declare namespace _ZoteroTypes {
-  interface Prefs {
-    get: <K extends keyof PluginPrefsMap>(key: K, global?: boolean) => PluginPrefsMap[K];
-    set: <K extends keyof PluginPrefsMap>(key: K, value: PluginPrefsMap[K], global?: boolean) => any;
-  }
-}
 `;
   return dtsContent;
 }
+
+const _backup = `
+// declare namespace _ZoteroTypes {
+//   interface Prefs {
+//     get: <K extends keyof PluginPrefsMap>(key: K, global?: boolean) => PluginPrefsMap[K];
+//     set: <K extends keyof PluginPrefsMap>(key: K, value: PluginPrefsMap[K], global?: boolean) => any;
+//   }
+// }
+`;

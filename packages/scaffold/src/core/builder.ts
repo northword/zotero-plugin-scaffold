@@ -279,7 +279,7 @@ export default class Build extends Base {
         const matchs = [...content.matchAll(HTML_PREFERENCE_PATTERN)];
         for (const match of matchs) {
           const [matched, key] = match;
-          if (!prefsWithoutPrefix[key] && !prefsWithoutPrefix[key]) {
+          if (!(key in prefsWithoutPrefix) && !(key in prefsWithoutPrefix)) {
             this.logger.warn(`preference key '${key}' in ${path.replace(`${dist}/`, "")} not init in prefs.js`);
             continue;
           }
