@@ -59,11 +59,14 @@ export class PrefsManager {
     else if (typeof value === "boolean") {
       cleanValue = value;
     }
-    else if (typeof value === "string") {
-      cleanValue = value; // `${value.replace("\n", "\\n")}`;
+    else if (!Number.isNaN(Number(value))) {
+      cleanValue = Number(value);
     }
     else if (typeof value === "number") {
       cleanValue = value;
+    }
+    else if (typeof value === "string") {
+      cleanValue = value; // `${value.replace("\n", "\\n")}`;
     }
     else {
       cleanValue = value;
