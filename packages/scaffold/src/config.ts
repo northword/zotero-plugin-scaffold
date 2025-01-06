@@ -45,7 +45,8 @@ function resolveConfig(config: Config): Context {
   config.id ||= config.name;
   config.namespace ||= config.name;
   config.xpiName ||= kebabCase(config.name);
-  config.build.prefs.prefix ||= `extensions.${config.namespace}`;
+  // Patch to maintain compatibility for zotero-plugin-template users
+  config.build.prefs.prefix ||= pkgUser.config.prefsPrefix || `extensions.${config.namespace}`;
 
   // Parse template strings in config
   const isPreRelease = version.includes("-");

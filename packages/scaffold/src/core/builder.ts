@@ -280,13 +280,20 @@ export default class Build extends Base {
         for (const match of matchs) {
           const [matched, key] = match;
           if (!prefsWithoutPrefix[key] && !prefsWithoutPrefix[key]) {
-            this.logger.warn(`preference key '${key}' in ${path} not init in prefs.js`);
+            this.logger.warn(`preference key '${key}' in ${path.replace(`${dist}/`, "")} not init in prefs.js`);
             continue;
           }
-          if (key.startsWith(prefix))
+          if (key.startsWith(prefix)) {
             continue;
-          else
+          }
+          // else if (key.startsWith("extensions.")) {
+          //   this.logger.warn(`Pref key '${key}' in ${path} starts with 'extensions' but not ${prefix}.`);
+          //   this.logger.debug(`Skip prefixing '${key}' since it starts with 'extensions'.`);
+          //   continue;
+          // }
+          else {
             content = content.replace(matched, `preference="${prefix}.${key}"`);
+          }
         }
         await outputFile(path, content, "utf-8");
       }));
