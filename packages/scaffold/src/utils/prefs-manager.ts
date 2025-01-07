@@ -42,7 +42,7 @@ export class PrefsManager {
     return Object.entries(this.prefs).map(([key, value]) => {
       const _v = typeof value === "string" ? `"${value}"` : value;
       return `${this.namespace}("${key}", ${_v});`;
-    }).filter(c => !!c).join("\n");
+    }).join("\n");
   }
 
   async read(path: string) {
@@ -66,7 +66,6 @@ export class PrefsManager {
         return;
     }
 
-    // console.log(key, value, typeof value, Number(value), typeof Number(value), Number.isNaN(Number(value)));
     this.prefs[key] = value;
   };
 
