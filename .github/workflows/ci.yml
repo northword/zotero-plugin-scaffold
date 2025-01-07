@@ -149,7 +149,7 @@ jobs:
 
   publish:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref_type == 'tag' && startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
     needs:
       - build
     env:
@@ -181,42 +181,14 @@ jobs:
           registry-url: https://registry.npmjs.org/
           cache: pnpm
 
-      - name: Release
+      - name: Publish to NPM and sync to GitHub
+        if: github.event_name == 'push' && github.ref_type == 'tag' && startsWith(github.ref, 'refs/tags/v')
         run: |
           pnpm -r publish --no-git-checks
           pnpx changelogithub
         env:
           NPM_CONFIG_PROVENANCE: true
 
-  publish-pr:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    needs:
-      - build
-    env:
-      GITHUB_TOKEN: ${{ secrets.GitHub_TOKEN }}
-    permissions:
-      contents: write
-      issues: write
-      pull-requests: write
-      id-token: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Restore Build Result
-        uses: actions/download-artifact@v4
-        with:
-          name: build-result
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-
-      - name: Run pkg-pr-new publish
+      - name: Publish to pkg-pr-new
+        if: github.ref_type != 'tag'
         run: pnpx pkg-pr-new publish --compact --no-template --pnpm './packages/*'
