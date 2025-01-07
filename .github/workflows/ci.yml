@@ -60,7 +60,7 @@ jobs:
           echo "public-hoist-pattern[]=@types*" >> .npmrc
           pnpm install
 
-      - name: Lint
+      - name: Test
         run: |
           pnpm test
 
