@@ -38,6 +38,32 @@ jobs:
         run: |
           pnpm lint:check
 
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GitHub_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install deps
+        run: |
+          echo "public-hoist-pattern[]=@types*" >> .npmrc
+          pnpm install
+
+      - name: Test
+        run: |
+          pnpm test
+
   build:
     runs-on: ubuntu-latest
     env:

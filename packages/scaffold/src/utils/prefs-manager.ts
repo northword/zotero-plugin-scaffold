@@ -12,27 +12,43 @@ export class PrefsManager {
     this.namespace = namespace;
   }
 
-  private parse(content: string) {
+  parse(content: string) {
+    const _map: Prefs = {};
     // eslint-disable-next-line regexp/no-super-linear-backtracking
     const prefPattern = /^(pref|user_pref)\s*\(\s*["']([^"']+)["']\s*,\s*(.+)\s*\)\s*;$/gm;
     const matches = content.matchAll(prefPattern);
     for (const match of matches) {
       const key = match[2].trim();
       const value = match[3].trim();
-
-      this.setPref(key, value);
+      _map[key] = this.cleanValue(value);
     };
+    return _map;
   }
 
-  private render() {
+  cleanValue(value: string) {
+    if (value === "true")
+      return true;
+    else if (value === "false")
+      return false;
+    else if (!Number.isNaN(Number(value)))
+      return Number(value);
+    else if (value.match(/^["'](.*)["']$/))
+      return value.replace(/^["'](.*)["']$/, "$1");
+    else
+      return value;
+  }
+
+  render() {
     return Object.entries(this.prefs).map(([key, value]) => {
-      return `${this.namespace}("${key}", ${value});`;
-    }).filter(c => !!c).join("\n");
+      const _v = typeof value === "string" ? `"${value}"` : value;
+      return `${this.namespace}("${key}", ${_v});`;
+    }).join("\n");
   }
 
   async read(path: string) {
     const content = await readFile(path, "utf-8");
-    this.parse(content);
+    const map = this.parse(content);
+    this.setPrefs(map);
   }
 
   async write(path: string) {
@@ -43,36 +59,14 @@ export class PrefsManager {
   }
 
   setPref(key: string, value: any) {
-    let cleanValue: any;
     if (value === null || value === undefined) {
       if (key in this.prefs)
         delete this.prefs[key];
       else
         return;
     }
-    else if (value === "true") {
-      cleanValue = true;
-    }
-    else if (value === "false") {
-      cleanValue = false;
-    }
-    else if (typeof value === "boolean") {
-      cleanValue = value;
-    }
-    else if (!Number.isNaN(Number(value))) {
-      cleanValue = Number(value);
-    }
-    else if (typeof value === "number") {
-      cleanValue = value;
-    }
-    else if (typeof value === "string") {
-      cleanValue = value; // `${value.replace("\n", "\\n")}`;
-    }
-    else {
-      cleanValue = value;
-    }
 
-    this.prefs[key] = cleanValue;
+    this.prefs[key] = value;
   };
 
   setPrefs(prefs: Prefs) {

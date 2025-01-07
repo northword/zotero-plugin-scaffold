@@ -14,7 +14,7 @@
     "docs:build": "pnpm -C docs run build",
     "release": "bumpp -r --commit \"chore(release): publish v%s\"",
     "update:deps": "pnpx taze minor -w -f -l -r",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest",
     "prepare": "husky"
   },
   "devDependencies": {
@@ -26,7 +26,8 @@
     "husky": "^9.1.7",
     "lint-staged": "^15.3.0",
     "typescript": "^5.7.2",
-    "unbuild": "^3.0.1"
+    "unbuild": "^3.0.1",
+    "vitest": "^2.1.8"
   },
   "workspaces": [
     "packages/*",
