@@ -8,8 +8,8 @@
       "~/packages": [
         "./packages"
       ],
-      "@scaffold": [
-        "packages/scaffold/src/index.ts"
+      "@scaffold/*": [
+        "./packages/scaffold/*"
       ]
     },
     "resolveJsonModule": true,
