@@ -259,7 +259,7 @@ export default class Build extends Base {
 
     // Generate prefs.d.ts
     if (dts) {
-      const dtsContent = renderPluginPrefsDts(prefsWithoutPrefix, prefix);
+      const dtsContent = renderPluginPrefsDts(prefsWithoutPrefix);
       await outputFile(dts, dtsContent, "utf-8");
     }
 

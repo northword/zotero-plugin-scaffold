@@ -238,25 +238,16 @@ Relies on the `zotero-types` package to provide type declarations for `Zotero.Pr
 You can also use the following helper to get or set preferences while omitting the prefix, simplifying your code.
 
 ```ts
-const PREFS_PREFIX = "extensions.myPlugin";
+const PREF_PREFIX = "extensions.myPlugin";
 
-/**
- * Get preference value.
- * Wrapper of `Zotero.Prefs.get`.
- * @param key
- */
-export function getPref<K extends keyof _PluginPrefsMap>(key: K) {
-  return Zotero.Prefs.get(`${PREFS_PREFIX}.${key}` as PluginPrefKey<K>, true);
+type PluginPrefsMap = _ZoteroTypes.Prefs["PluginPrefsMap"];
+
+export function getPref<K extends keyof PluginPrefsMap>(key: K) {
+  return Zotero.Prefs.get(`${PREF_PREFIX}.${key}`, true) as PluginPrefsMap[K];
 }
 
-/**
- * Set preference value.
- * Wrapper of `Zotero.Prefs.set`.
- * @param key
- * @param value
- */
-export function setPref<K extends keyof _PluginPrefsMap>(key: K, value: PluginPrefsMap[PluginPrefKey<K>]) {
-  return Zotero.Prefs.set(`${PREFS_PREFIX}.${key}` as PluginPrefKey<K>, value, true);
+export function setPref<K extends keyof PluginPrefsMap>(key: K, value: PluginPrefsMap[K]) {
+  return Zotero.Prefs.set(`${PREF_PREFIX}.${key}`, value, true);
 }
 ```
 
