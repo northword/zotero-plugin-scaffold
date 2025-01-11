@@ -62,8 +62,7 @@ export class PrefsManager {
     if (value === null || value === undefined) {
       if (key in this.prefs)
         delete this.prefs[key];
-      else
-        return;
+      return;
     }
 
     this.prefs[key] = value;

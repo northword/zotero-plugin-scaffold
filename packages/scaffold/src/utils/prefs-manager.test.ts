@@ -72,6 +72,7 @@ pref("test.boolean.true", true);
     it("should correctly set a null value and remove the preference", () => {
       prefsManager.setPref("test.null", "value");
       prefsManager.setPref("test.null", null);
+      expect(prefsManager.getPrefs()).toEqual({});
       expect(prefsManager.getPref("test.null")).toBeUndefined();
     });
   });
