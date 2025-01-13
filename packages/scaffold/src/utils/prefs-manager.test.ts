@@ -49,6 +49,11 @@ describe("prefs-manager", () => {
       expect(result["test.stringified.false"]).toBe("false");
     });
 
+    it("should correctly parse prefs.js without `;`", () => {
+      const result = prefsManager.parse(`pref("test.withoutsimi", "false")`);
+      expect(result["test.withoutsimi"]).toBe("false");
+    });
+
     it("should correctly parse a prefs.js file", async () => {
       const fakePrefsContent = `
 pref("test.string", "hello");

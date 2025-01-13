@@ -15,7 +15,7 @@ export class PrefsManager {
   parse(content: string) {
     const _map: Prefs = {};
     // eslint-disable-next-line regexp/no-super-linear-backtracking
-    const prefPattern = /^(pref|user_pref)\s*\(\s*["']([^"']+)["']\s*,\s*(.+)\s*\)\s*;$/gm;
+    const prefPattern = /^(pref|user_pref)\s*\(\s*["']([^"']+)["']\s*,\s*(.+)\s*\)\s*;?$/gm;
     const matches = content.matchAll(prefPattern);
     for (const match of matches) {
       const key = match[2].trim();
