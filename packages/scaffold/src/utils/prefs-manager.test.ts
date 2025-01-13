@@ -11,47 +11,52 @@ describe("prefs-manager", () => {
   describe("parse", () => {
     it("should correctly parse a string value", () => {
       const result = prefsManager.parse(`pref("test.string", "hello");`);
-      expect(result["test.string"]).toBe("hello");
+      expect(result).toEqual({ "test.string": "hello" });
     });
 
     it("should correctly parse a number value", () => {
       const result = prefsManager.parse(`pref("test.number", 42);`);
-      expect(result["test.number"]).toBe(42);
+      expect(result).toEqual({ "test.number": 42 });
     });
 
     it("should correctly parse a boolean value (true)", () => {
       const result = prefsManager.parse(`pref("test.boolean.true", true);`);
-      expect(result["test.boolean.true"]).toBe(true);
+      expect(result).toEqual({ "test.boolean.true": true });
     });
 
     it("should correctly parse a boolean value (false)", () => {
       const result = prefsManager.parse(`pref("test.boolean.false", false);`);
-      expect(result["test.boolean.false"]).toBe(false);
+      expect(result).toEqual({ "test.boolean.false": false });
     });
 
     it("should correctly parse a null value", () => {
       const result = prefsManager.parse(`pref("test.null", null);`);
-      expect(result["test.null"]).toBe("null");
+      expect(result).toEqual({ "test.null": "null" });
     });
 
     it("should correctly parse a stringified number", () => {
       const result = prefsManager.parse(`pref("test.stringified.number", "123");`);
-      expect(result["test.stringified.number"]).toBe("123");
+      expect(result).toEqual({ "test.stringified.number": "123" });
     });
 
     it("should correctly parse a stringified boolean (true)", () => {
       const result = prefsManager.parse(`pref("test.stringified.true", "true");`);
-      expect(result["test.stringified.true"]).toBe("true");
+      expect(result).toEqual({ "test.stringified.true": "true" });
     });
 
     it("should correctly parse a stringified boolean (false)", () => {
       const result = prefsManager.parse(`pref("test.stringified.false", "false");`);
-      expect(result["test.stringified.false"]).toBe("false");
+      expect(result).toEqual({ "test.stringified.false": "false" });
     });
 
     it("should correctly parse prefs.js without `;`", () => {
       const result = prefsManager.parse(`pref("test.withoutsimi", "false")`);
-      expect(result["test.withoutsimi"]).toBe("false");
+      expect(result).toEqual({ "test.withoutsimi": "false" });
+    });
+
+    it("should correctly parse prefs.js with space", () => {
+      const result = prefsManager.parse(`pref(  " test.withspace " ,  "abc def");`);
+      expect(result).toEqual({ "test.withspace": "abc def" });
     });
 
     it("should correctly parse a prefs.js file", async () => {
@@ -61,9 +66,11 @@ pref("test.number", 42);
 pref("test.boolean.true", true);
 `;
       const result = prefsManager.parse(fakePrefsContent);
-      expect(result["test.string"]).toBe("hello");
-      expect(result["test.number"]).toBe(42);
-      expect(result["test.boolean.true"]).toBe(true);
+      expect(result).toEqual({
+        "test.string": "hello",
+        "test.number": 42,
+        "test.boolean.true": true,
+      });
     });
   });
 
