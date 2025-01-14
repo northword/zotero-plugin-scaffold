@@ -184,7 +184,7 @@ export default class Build extends Base {
         // rename *.ftl to addonRef-*.ftl
         if (build.fluent.prefixLocaleFiles === true) {
           await move(ftlPath, `${dirname(ftlPath)}/${namespace}-${basename(ftlPath)}`);
-          this.logger.debug(`FTL file '${ftlPath}' is renamed to '${namespace}-${basename(ftlPath)}'`);
+          this.logger.debug(`FTL file '${ftlPath}' is renamed to '${namespace}-${basename(ftlPath)}'.`);
         }
       }));
 
@@ -205,14 +205,14 @@ export default class Build extends Base {
         const [matched, attrKey, attrVal] = match;
 
         if (!allMessages.has(attrVal)) {
-          this.logger.debug(`HTML data-i10n-id ${chalk.blue(attrVal)} in ${chalk.gray(htmlPath)} do not exist in any FTL message, skip to namespace it.`);
+          this.logger.warn(`HTML data-i10n-id '${chalk.blue(attrVal)}' in ${chalk.gray(htmlPath)} do not exist in any FTL message, skip to namespace it.`);
           continue;
         }
 
         messagesInHTML.add(attrVal);
         const namespacedAttr = `${namespace}-${attrVal}`;
         htmlContent = htmlContent.replace(matched, `${attrKey}="${namespacedAttr}"`);
-        this.logger.debug(`HTML data-i10n-id ${chalk.blue(attrVal)} in ${chalk.gray(htmlPath)} is namespaced to ${chalk.blue(namespacedAttr)}`);
+        this.logger.debug(`HTML data-i10n-id '${chalk.blue(attrVal)}' in ${chalk.gray(htmlPath)} is namespaced to ${chalk.blue(namespacedAttr)}.`);
       }
 
       if (build.fluent.prefixFluentMessages)
@@ -220,11 +220,11 @@ export default class Build extends Base {
     }));
 
     // Check miss 1: Cross check in diff locale - seems no need
-    // messagesMap.forEach((messageInThisLang, lang) => {
+    // messagesByLocale.forEach((messageInThisLang, lang) => {
     //   // Needs Nodejs 22
     //   const diff = allMessages.difference(messageInThisLang);
     //   if (diff.size)
-    //     this.logger.warn(`FTL messages "${Array.from(diff).join(", ")} don't exist the locale ${lang}"`);
+    //     this.logger.warn(`FTL messages '${Array.from(diff).join(", ")}' don't exist the locale '${lang}'`);
     // });
 
     // Check miss 2: Check ids in HTML but not in ftl
@@ -234,7 +234,7 @@ export default class Build extends Base {
         .map(([locale]) => locale);
 
       if (missingLocales.length > 0) {
-        this.logger.warn(`HTML data-l10n-id "${chalk.blue(messageInHTML)}" is missing in locales: ${missingLocales.join(", ")}`);
+        this.logger.warn(`HTML data-l10n-id '${chalk.blue(messageInHTML)}' is missing in locales: ${missingLocales.join(", ")}.`);
       }
     });
   }
