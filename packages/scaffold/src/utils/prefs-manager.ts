@@ -55,7 +55,7 @@ export class PrefsManager {
     const content = this.render();
     // console.log(content);
     await outputFile(path, content, "utf-8");
-    logger.debug("The <profile>/prefs.js has been modified.");
+    logger.debug("The prefs.js has been modified.");
   }
 
   setPref(key: string, value: any) {

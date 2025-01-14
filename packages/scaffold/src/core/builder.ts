@@ -184,7 +184,7 @@ export default class Build extends Base {
         // rename *.ftl to addonRef-*.ftl
         if (build.fluent.prefixLocaleFiles === true) {
           await move(ftlPath, `${dirname(ftlPath)}/${namespace}-${basename(ftlPath)}`);
-          this.logger.debug(`Prefix filename: ${ftlPath}`);
+          this.logger.debug(`FTL file '${ftlPath}' is renamed to '${namespace}-${basename(ftlPath)}'`);
         }
       }));
 
@@ -205,13 +205,14 @@ export default class Build extends Base {
         const [matched, attrKey, attrVal] = match;
 
         if (!allMessages.has(attrVal)) {
-          this.logger.debug(`HTML data-i10n-id ${attrVal} do not exist in any FTL message, skip to namespace`);
+          this.logger.debug(`HTML data-i10n-id ${chalk.blue(attrVal)} in ${chalk.gray(htmlPath)} do not exist in any FTL message, skip to namespace it.`);
           continue;
         }
 
         messagesInHTML.add(attrVal);
         const namespacedAttr = `${namespace}-${attrVal}`;
         htmlContent = htmlContent.replace(matched, `${attrKey}="${namespacedAttr}"`);
+        this.logger.debug(`HTML data-i10n-id ${chalk.blue(attrVal)} in ${chalk.gray(htmlPath)} is namespaced to ${chalk.blue(namespacedAttr)}`);
       }
 
       if (build.fluent.prefixFluentMessages)
@@ -233,7 +234,7 @@ export default class Build extends Base {
         .map(([locale]) => locale);
 
       if (missingLocales.length > 0) {
-        this.logger.warn(`HTML data-l10n-id "${messageInHTML}" is missing in locales: ${missingLocales.join(", ")}`);
+        this.logger.warn(`HTML data-l10n-id "${chalk.blue(messageInHTML)}" is missing in locales: ${missingLocales.join(", ")}`);
       }
     });
   }
@@ -272,28 +273,29 @@ export default class Build extends Base {
 
     // Prefix pref keys in xhtml
     if (prefixPrefKeys) {
-      const HTML_PREFERENCE_PATTERN = new RegExp(`preference="((?!${prefix})\\S*)"`, "g");
+      const HTML_PREFERENCE_PATTERN = /preference="(\S*)"/g;
       const xhtmlPaths = await glob(`${dist}/addon/**/*.xhtml`);
       await Promise.all(xhtmlPaths.map(async (path) => {
         let content = await readFile(path, "utf-8");
         const matchs = [...content.matchAll(HTML_PREFERENCE_PATTERN)];
         for (const match of matchs) {
           const [matched, key] = match;
-          if (!(key in prefsWithoutPrefix) && !(key in prefsWithoutPrefix)) {
-            this.logger.warn(`preference key '${key}' in ${path.replace(`${dist}/`, "")} not init in prefs.js`);
-            content = content.replace(matched, `preference="${prefix}.${key}"`);
-            continue;
-          }
           if (key.startsWith(prefix)) {
+            this.logger.debug(`Pref key '${chalk.blue(key)}' is already starts with '${prefix}', skip prefixing it.`);
             continue;
           }
-          // else if (key.startsWith("extensions.")) {
-          //   this.logger.warn(`Pref key '${key}' in ${path} starts with 'extensions' but not ${prefix}.`);
-          //   this.logger.debug(`Skip prefixing '${key}' since it starts with 'extensions'.`);
-          //   continue;
-          // }
+          else if (key.startsWith("extensions.")) {
+            this.logger.warn(`Pref key '${chalk.blue(key)}' in ${chalk.gray(path)} starts with 'extensions.' but not '${chalk.blue(prefix)}', skip prefixing it.`);
+            continue;
+          }
+          else if (!(key in prefsWithPrefix) && !(key in prefsWithoutPrefix)) {
+            this.logger.warn(`Pref key '${chalk.blue(key)}' in ${chalk.gray(path)} is not found in prefs.js, skip prefixing it.`);
+            continue;
+          }
           else {
-            content = content.replace(matched, `preference="${prefix}.${key}"`);
+            const prefixed = `${prefix}.${key}`;
+            this.logger.debug(`Pref key '${chalk.blue(key)}' in ${chalk.gray(path)} is prefixed to ${chalk.blue(prefixed)}.`);
+            content = content.replace(matched, `preference="${prefixed}"`);
           }
         }
         await outputFile(path, content, "utf-8");
