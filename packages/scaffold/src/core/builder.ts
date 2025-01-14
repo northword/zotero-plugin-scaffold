@@ -281,6 +281,7 @@ export default class Build extends Base {
           const [matched, key] = match;
           if (!(key in prefsWithoutPrefix) && !(key in prefsWithoutPrefix)) {
             this.logger.warn(`preference key '${key}' in ${path.replace(`${dist}/`, "")} not init in prefs.js`);
+            content = content.replace(matched, `preference="${prefix}.${key}"`);
             continue;
           }
           if (key.startsWith(prefix)) {
