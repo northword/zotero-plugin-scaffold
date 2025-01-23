@@ -119,12 +119,12 @@ export default class GitHub extends ReleaseBase {
 
     const release
       = (await this.getReleaseByTag(updater))
-      ?? (await this.createRelease({
-        ...this.remote,
-        tag_name: updater,
-        prerelease: true,
-        make_latest: "false",
-      }));
+        ?? (await this.createRelease({
+          ...this.remote,
+          tag_name: updater,
+          prerelease: true,
+          make_latest: "false",
+        }));
 
     if (!release)
       throw new Error("Get or create 'release' failed.");
