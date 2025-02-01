@@ -18,7 +18,7 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^3.16.0",
+    "@antfu/eslint-config": "^4.1.0",
     "@types/node": "^22.10.9",
     "bumpp": "^9.10.2",
     "eslint": "^9.18.0",
