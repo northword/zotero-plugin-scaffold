@@ -46,7 +46,7 @@
     "dist"
   ],
   "engines": {
-    "node": ">=18"
+    "node": ">=22.13.1"
   },
   "scripts": {
     "dev": "unbuild --stub",
