@@ -69,14 +69,14 @@
     }
   },
   "dependencies": {
-    "@commander-js/extra-typings": "^13.0.0",
+    "@commander-js/extra-typings": "^13.1.0",
     "adm-zip": "^0.5.16",
-    "bumpp": "^9.10.2",
+    "bumpp": "^9.11.1",
     "c12": "^2.0.1",
     "chalk": "^5.4.1",
     "chokidar": "^4.0.3",
     "commander": "^13.1.0",
-    "es-toolkit": "^1.31.0",
+    "es-toolkit": "^1.32.0",
     "esbuild": "^0.24.2",
     "fs-extra": "^11.3.0",
     "hookable": "^5.5.3",
