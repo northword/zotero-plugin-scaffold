@@ -20,7 +20,7 @@
   "devDependencies": {
     "@antfu/eslint-config": "^4.1.0",
     "@types/node": "^22.13.0",
-    "bumpp": "^9.11.1",
+    "bumpp": "^10.0.1",
     "eslint": "^9.19.0",
     "eslint-plugin-format": "^1.0.1",
     "husky": "^9.1.7",
