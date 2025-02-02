@@ -2,8 +2,8 @@ import fs from "node:fs";
 import { basename, join } from "node:path";
 import { env } from "node:process";
 import { OpenAPI, RepositoriesService } from "@gitee/typescript-sdk-v5";
-import { globbySync } from "globby";
-import { ofetch } from "ofetch";
+// import { ofetch } from "ofetch";
+import { globSync } from "tinyglobby";
 import { ReleaseBase } from "./base.js";
 
 export default class Gitee extends ReleaseBase {
@@ -43,7 +43,7 @@ export default class Gitee extends ReleaseBase {
     }
 
     const { dist, version } = this.ctx;
-    const assets = globbySync(`${dist}/update*.json`).map(p => basename(p));
+    const assets = globSync(`${dist}/update*.json`).map(p => basename(p));
     const release = await this.refreshRelease(
       updater,
       "Zotero Auto Update Manifest",
@@ -133,28 +133,28 @@ export default class Gitee extends ReleaseBase {
   //   };
   // }
 
-  _fetch = ofetch.create({ baseURL: "https://gitee.com/api/v5", params: {
-    access_token: this.token,
-    ...this.remote,
-  } });
+  // _fetch = ofetch.create({ baseURL: "https://gitee.com/api/v5", params: {
+  //   access_token: this.token,
+  //   ...this.remote,
+  // } });
 
-  /**
-   * @see https://gitee.com/api/v5/swagger#/getV5ReposOwnerRepoReleasesTagsTag
-   */
-  private async getReleaseByTag(tag: string): Promise<{
-    body: string;
-    created_at: string;
-    id: number;
-    name: string;
-    prerelease: boolean;
-    tag_name: string;
-    target_commitish: string;
-  }> {
-    // return (await _fetch(`/repos/{owner}/{repo}/releases/tags/{tag}`, { params: this.getParams({ tag }) }));
-    return (await this._fetch(`/repos/{owner}/{repo}/releases/tags/{tag}`, { params: { tag } }));
-  }
+  // /**
+  //  * @see https://gitee.com/api/v5/swagger#/getV5ReposOwnerRepoReleasesTagsTag
+  //  */
+  // private async getReleaseByTag(tag: string): Promise<{
+  //   body: string;
+  //   created_at: string;
+  //   id: number;
+  //   name: string;
+  //   prerelease: boolean;
+  //   tag_name: string;
+  //   target_commitish: string;
+  // }> {
+  //   // return (await _fetch(`/repos/{owner}/{repo}/releases/tags/{tag}`, { params: this.getParams({ tag }) }));
+  //   return (await this._fetch(`/repos/{owner}/{repo}/releases/tags/{tag}`, { params: { tag } }));
+  // }
 
-  private async createRelease(tag_name: string, name: string, body: string, prerelease: boolean = false) {
-    //
-  }
+  // private async createRelease(tag_name: string, name: string, body: string, prerelease: boolean = false) {
+  //   //
+  // }
 }
