@@ -87,6 +87,7 @@
     "xvfb-ts": "^1.1.0"
   },
   "devDependencies": {
+    "@gitee/typescript-sdk-v5": "^5.4.86",
     "@types/adm-zip": "^0.5.7",
     "@types/fs-extra": "^11.0.4"
   }
