@@ -50,5 +50,6 @@
   // markdownlint
   "markdownlint.config": {
     "no-inline-html": false
-  }
+  },
+  "typescript.tsdk": "node_modules/typescript/lib"
 }
