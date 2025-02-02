@@ -71,7 +71,7 @@
   "dependencies": {
     "@commander-js/extra-typings": "^13.1.0",
     "adm-zip": "^0.5.16",
-    "bumpp": "^9.11.1",
+    "bumpp": "^10.0.1",
     "c12": "^2.0.1",
     "chalk": "^5.4.1",
     "chokidar": "^4.0.3",
