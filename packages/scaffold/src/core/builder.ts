@@ -145,6 +145,8 @@ export default class Build extends Base {
   async prepareLocaleFiles() {
     const { dist, namespace, build } = this.ctx;
 
+    const ignores = toArray(build.fluent.ignore);
+
     // https://regex101.com/r/lQ9x5p/1
     // eslint-disable-next-line regexp/no-super-linear-backtracking
     const FTL_MESSAGE_PATTERN = /^(?<message>[a-z]\S*)( *= *)(?<pattern>.*)$/gim;
@@ -204,6 +206,11 @@ export default class Build extends Base {
       for (const match of matches) {
         const [matched, attrKey, attrVal] = match;
 
+        if (ignores.includes(attrVal)) {
+          this.logger.debug(`HTML data-i10n-id ${attrVal} is in ignore list, skip to namespace`);
+          continue;
+        }
+
         if (!allMessages.has(attrVal)) {
           this.logger.warn(`HTML data-i10n-id '${chalk.blue(attrVal)}' in ${chalk.gray(htmlPath)} do not exist in any FTL message, skip to namespace it.`);
           continue;
@@ -229,6 +236,9 @@ export default class Build extends Base {
 
     // Check miss 2: Check ids in HTML but not in ftl
     messagesInHTML.forEach((messageInHTML) => {
+      if (ignores.includes(messageInHTML))
+        return;
+
       const missingLocales = [...messagesByLocale.entries()]
         .filter(([_, messages]) => !messages.has(messageInHTML))
         .map(([locale]) => locale);

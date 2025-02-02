@@ -100,6 +100,7 @@ const defaultConfig = {
     fluent: {
       prefixFluentMessages: true,
       prefixLocaleFiles: true,
+      ignore: [],
     },
     prefs: {
       prefix: "",

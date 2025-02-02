@@ -219,6 +219,14 @@ export interface BuildConfig {
      * @default true
      */
     prefixFluentMessages: boolean;
+    /**
+     * Messages to ignore.
+     *
+     * 需要忽略的 Fluent Messages。
+     *
+     * @default []
+     */
+    ignore: string[];
   };
   prefs: {
     /**
