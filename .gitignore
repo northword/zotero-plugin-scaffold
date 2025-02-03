@@ -10,3 +10,10 @@ build
 # vitepress
 **/.vitepress/dist
 **/.vitepress/cache
+
+# e2e
+packages/scaffold/test/e2e/fixtures/dist
+packages/scaffold/test/e2e/fixtures/.scaffold
+packages/scaffold/test/e2e/fixtures/typings
+packages/scaffold/test/e2e/fixtures/.gitignore
+!packages/scaffold/test/e2e/snap/dist

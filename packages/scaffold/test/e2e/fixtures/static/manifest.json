@@ -1,0 +1,9 @@
+{
+  "manifest_version": 2,
+  "applications": {
+    "zotero": {
+      "strict_min_version": "6.999",
+      "strict_max_version": "7.*"
+    }
+  }
+}

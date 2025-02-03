@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { PrefsManager, renderPluginPrefsDts } from "./prefs-manager.js";
+import { PrefsManager, renderPluginPrefsDts } from "../../src/utils/prefs-manager.js";
 
 describe("prefs-manager", () => {
   let prefsManager: PrefsManager;
