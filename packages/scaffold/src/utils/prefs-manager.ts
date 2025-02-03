@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import { parseSync } from "@swc/core";
 import { outputFile } from "fs-extra/esm";
 import { logger } from "./log.js";
 
@@ -12,16 +13,72 @@ export class PrefsManager {
     this.namespace = namespace;
   }
 
+  /**
+   * Parse Method 3 - Using AST
+   */
   parse(content: string) {
     const _map: Prefs = {};
+    const ast = parseSync(content, { syntax: "ecmascript" });
+    for (const node of ast.body) {
+      if (
+        node.type !== "ExpressionStatement"
+        || node.expression.type !== "CallExpression"
+        || node.expression.callee.type !== "Identifier"
+        || node.expression.callee.value !== this.namespace
+        || node.expression.arguments.length !== 2
+      ) {
+        throw new Error("Invalid prefs.js file.");
+      }
+
+      if (node.expression.arguments[0].expression.type !== "StringLiteral") {
+        throw new Error("Invalid prefs.js file - unsupported key type.");
+      }
+
+      if (node.expression.arguments[1].expression.type !== "StringLiteral"
+        && node.expression.arguments[1].expression.type !== "NumericLiteral"
+        && node.expression.arguments[1].expression.type !== "BooleanLiteral"
+      ) {
+        throw new Error("Invalid prefs.js file - unsupported value type.");
+      }
+
+      const key = node.expression.arguments[0].expression.value.trim();
+      const value = node.expression.arguments[1].expression.value;
+
+      _map[key] = value;
+    }
+
+    return _map;
+  }
+
+  /**
+   * Parse Method 1 - Using RegExp
+   * @deprecated
+   */
+  private parseByRegExp(content: string) {
+    const _map: Prefs = {};
     // eslint-disable-next-line regexp/no-super-linear-backtracking
-    const prefPattern = /^(pref|user_pref)\s*\(\s*["']([^"']+)["']\s*,\s*(.+)\s*\)\s*;?$/gm;
+    const prefPattern = /^(pref|user_pref)\s*\(\s*["']([^"']+)["']\s*,\s*(.+)\s*,?\s*\)\s*;?$/gm;
     const matches = content.matchAll(prefPattern);
     for (const match of matches) {
       const key = match[2].trim();
       const value = match[3].trim();
       _map[key] = this.cleanValue(value);
+    }
+    return _map;
+  }
+
+  /**
+   * Parse Method 2 - Using eval
+   * @deprecated
+   */
+  private parseByEval(content: string) {
+    const _map: Prefs = {};
+    // eslint-disable-next-line unused-imports/no-unused-vars
+    const pref = (key: any, value: any) => {
+      _map[key.trim()] = this.cleanValue(value.trim());
     };
+    // eslint-disable-next-line no-eval
+    eval(content);
     return _map;
   }
 

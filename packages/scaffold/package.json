@@ -70,6 +70,7 @@
   },
   "dependencies": {
     "@commander-js/extra-typings": "^13.1.0",
+    "@swc/core": "^1.10.12",
     "adm-zip": "^0.5.16",
     "bumpp": "^10.0.1",
     "c12": "^2.0.1",
