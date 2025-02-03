@@ -1,0 +1,21 @@
+{
+  "name": "e2e",
+  "type": "module",
+  "version": "1.0.0",
+  "private": "true",
+  "packageManager": "pnpm@9.15.4",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/northword/zotero-plugin-scaffold.git"
+  },
+  "scripts": {
+    "dev": "vitest",
+    "test": "vitest",
+    "plugin:build": "cd fixtures && tsx build.ts && cd .."
+  },
+  "devDependencies": {
+    "tinyglobby": "^0.2.10",
+    "tsx": "^4.19.2",
+    "zotero-plugin-scaffold": "workspace:^"
+  }
+}

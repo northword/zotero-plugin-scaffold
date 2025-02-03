@@ -1,0 +1,10 @@
+{
+  "name": "test-plugin",
+  "type": "module",
+  "version": "1.0.0",
+  "private": "true",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/northword/zotero-plugin-scaffold.git"
+  }
+}

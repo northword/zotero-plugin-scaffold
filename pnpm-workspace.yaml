@@ -2,3 +2,4 @@ packages:
   - "packages/**"
   - "!**/dist/**"
   - docs
+  - e2e

@@ -10,3 +10,10 @@ build
 # vitepress
 **/.vitepress/dist
 **/.vitepress/cache
+
+# e2e
+e2e/fixtures/dist
+e2e/fixtures/.scaffold
+e2e/fixtures/typings
+e2e/fixtures/.gitignore
+!e2e/snap/dist
