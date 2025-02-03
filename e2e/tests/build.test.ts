@@ -8,7 +8,7 @@ const SNAPSHOT_DIR = join(__dirname, "../snap"); // 预期的快照目录
 const FIXTURES_DIR = join(__dirname, "../fixtures"); // 测试用例目录
 
 describe("#build", () => {
-  const stdout = execSync("tsx build.ts", {
+  const stdout = execSync("pnpm tsx build.ts", {
     cwd: FIXTURES_DIR,
     env: { ...process.env, NODE_ENV: "production" },
   });
