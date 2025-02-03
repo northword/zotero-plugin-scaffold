@@ -12,8 +12,8 @@ build
 **/.vitepress/cache
 
 # e2e
-e2e/fixtures/dist
-e2e/fixtures/.scaffold
-e2e/fixtures/typings
-e2e/fixtures/.gitignore
-!e2e/snap/dist
+packages/scaffold/test/e2e/fixtures/dist
+packages/scaffold/test/e2e/fixtures/.scaffold
+packages/scaffold/test/e2e/fixtures/typings
+packages/scaffold/test/e2e/fixtures/.gitignore
+!packages/scaffold/test/e2e/snap/dist

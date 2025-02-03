@@ -1,4 +1,4 @@
-import { Build, Config } from "../../packages/scaffold/src/index.js";
+import { Build, Config } from "../../../src/index.js";
 
 async function main() {
   const config = await Config.loadConfig({

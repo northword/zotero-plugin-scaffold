@@ -19,6 +19,6 @@
     "esModuleInterop": true,
     "skipLibCheck": true
   },
-  "include": ["packages", "docs", "e2e"],
+  "include": ["packages", "docs"],
   "exclude": ["node_modules", ".temp", "lib", "dist"]
 }
