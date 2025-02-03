@@ -29,6 +29,9 @@ importers:
       lint-staged:
         specifier: ^15.4.3
         version: 15.4.3
+      tsx:
+        specifier: ^4.19.2
+        version: 4.19.2
       typescript:
         specifier: ^5.7.3
         version: 5.7.3
@@ -56,9 +59,6 @@ importers:
       tinyglobby:
         specifier: ^0.2.10
         version: 0.2.10
-      tsx:
-        specifier: ^4.19.2
-        version: 4.19.2
       zotero-plugin-scaffold:
         specifier: workspace:^
         version: link:../packages/scaffold
