@@ -3,7 +3,13 @@ import { parseSync } from "@swc/core";
 import { outputFile } from "fs-extra/esm";
 import { logger } from "./log.js";
 
-export type Prefs = Record<string, string | number | boolean | undefined | null>;
+/**
+ * type of pref value only supports string (Char, String), number (Int), and boolean (Boolean)
+ *
+ * @see https://firefox-source-docs.mozilla.org/devtools/preferences.html#preference-types
+ */
+type PrefValue = string | number | boolean;
+export type Prefs = Record<string, PrefValue>;
 
 export class PrefsManager {
   private namespace: "pref" | "user_pref";
@@ -30,32 +36,32 @@ export class PrefsManager {
         throw new Error("Invalid prefs.js file.");
       }
 
-      if (node.expression.arguments[0].expression.type !== "StringLiteral") {
+      const [arg1, arg2] = node.expression.arguments;
+
+      if (arg1.expression.type !== "StringLiteral") {
         throw new Error("Invalid prefs.js file - unsupported key type.");
       }
-      const key = node.expression.arguments[0].expression.value.trim();
+      const key = arg1.expression.value.trim();
 
-      // https://firefox-source-docs.mozilla.org/devtools/preferences.html#preference-types
-      let value: string | number | boolean;
-      switch (node.expression.arguments[1].expression.type) {
+      let value: PrefValue;
+      switch (arg2.expression.type) {
         // https://babeljs.io/docs/babel-parser#output
         case "StringLiteral":
         case "NumericLiteral":
         case "BooleanLiteral":
-          value = node.expression.arguments[1].expression.value;
+          value = arg2.expression.value;
           break;
 
         // https://github.com/estree/estree/blob/master/es5.md#unaryexpression
         // https://github.com/northword/zotero-plugin-scaffold/issues/98
         case "UnaryExpression":
-          if (node.expression.arguments[1].expression.argument.type !== "NumericLiteral") {
+          if (arg2.expression.argument.type !== "NumericLiteral")
             throw new Error("Invalid prefs.js file - unsupported value type.");
-          }
 
-          if (node.expression.arguments[1].expression.operator === "-")
-            value = -node.expression.arguments[1].expression.argument.value;
-          else if (node.expression.arguments[1].expression.operator === "+")
-            value = node.expression.arguments[1].expression.argument.value;
+          if (arg2.expression.operator === "-")
+            value = -arg2.expression.argument.value;
+          else if (arg2.expression.operator === "+")
+            value = arg2.expression.argument.value;
           else
             throw new Error("Invalid prefs.js file - unsupported value type.");
           break;
@@ -130,12 +136,11 @@ export class PrefsManager {
 
   async write(path: string) {
     const content = this.render();
-    // console.log(content);
     await outputFile(path, content, "utf-8");
     logger.debug("The prefs.js has been modified.");
   }
 
-  setPref(key: string, value: any) {
+  setPref(key: string, value: PrefValue | undefined | null) {
     if (value === null || value === undefined) {
       if (key in this.prefs)
         delete this.prefs[key];
