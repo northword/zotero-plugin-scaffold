@@ -2,7 +2,7 @@
   "name": "zotero-plugin-scaffold",
   "type": "module",
   "version": "0.2.3",
-  "packageManager": "pnpm@9.15.4",
+  "packageManager": "pnpm@10.2.0",
   "description": "A scaffold for Zotero plugin development.",
   "author": "northword",
   "license": "AGPL-3.0-or-later",
@@ -70,7 +70,7 @@
   },
   "dependencies": {
     "@commander-js/extra-typings": "^13.1.0",
-    "@swc/core": "^1.10.12",
+    "@swc/core": "^1.10.14",
     "adm-zip": "^0.5.16",
     "bumpp": "^10.0.1",
     "c12": "^2.0.1",

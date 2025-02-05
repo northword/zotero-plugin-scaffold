@@ -3,7 +3,7 @@
   "type": "module",
   "version": "0.2.3",
   "private": true,
-  "packageManager": "pnpm@9.15.4",
+  "packageManager": "pnpm@10.2.0",
   "author": "northword",
   "scripts": {
     "dev": "pnpm -r --filter=./packages/* --parallel run dev",
@@ -18,8 +18,8 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^4.1.0",
-    "@types/node": "^22.13.0",
+    "@antfu/eslint-config": "^4.1.1",
+    "@types/node": "^22.13.1",
     "bumpp": "^10.0.1",
     "eslint": "^9.19.0",
     "eslint-plugin-format": "^1.0.1",
@@ -28,7 +28,7 @@
     "tsx": "^4.19.2",
     "typescript": "^5.7.3",
     "unbuild": "^3.3.1",
-    "vitest": "^3.0.4"
+    "vitest": "^3.0.5"
   },
   "workspaces": [
     "packages/*",
