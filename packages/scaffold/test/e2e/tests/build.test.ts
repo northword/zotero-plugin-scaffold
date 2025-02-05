@@ -1,17 +1,22 @@
+import type { Buffer } from "node:buffer";
 import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { globSync } from "tinyglobby";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
-const SNAPSHOT_DIR = join(__dirname, "../snap"); // 预期的快照目录
-const FIXTURES_DIR = join(__dirname, "../fixtures"); // 测试用例目录
+const SNAPSHOT_DIR = join(__dirname, "../snap");
+const FIXTURES_DIR = join(__dirname, "../fixtures");
 
 describe("#build", () => {
-  const stdout = execSync("pnpm tsx build.ts", {
-    cwd: FIXTURES_DIR,
-    env: { ...process.env, NODE_ENV: "production" },
+  let stdout: Buffer;
+  beforeAll(() => {
+    stdout = execSync("pnpm tsx build.ts", {
+      cwd: FIXTURES_DIR,
+      env: { ...process.env, NODE_ENV: "production" },
+    });
   });
+
   it("should output correct files", async () => {
     const paths = [...globSync(["dist/**/*", "!**/*.xpi", "typings"], { cwd: FIXTURES_DIR })];
 
