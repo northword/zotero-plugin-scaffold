@@ -97,16 +97,16 @@ export class PrefsManager {
    * Parse Method 2 - Using eval
    * @deprecated
    */
-  private parseByEval(content: string) {
-    const _map: Prefs = {};
-    // eslint-disable-next-line unused-imports/no-unused-vars
-    const pref = (key: any, value: any) => {
-      _map[key.trim()] = this.cleanValue(value.trim());
-    };
-    // eslint-disable-next-line no-eval
-    eval(content);
-    return _map;
-  }
+  // private parseByEval(content: string) {
+  //   const _map: Prefs = {};
+  //   // eslint-disable-next-line unused-imports/no-unused-vars
+  //   const pref = (key: any, value: any) => {
+  //     _map[key.trim()] = this.cleanValue(value.trim());
+  //   };
+  //   // eslint-disable-next-line no-eval
+  //   eval(content);
+  //   return _map;
+  // }
 
   cleanValue(value: string) {
     if (value === "true")
@@ -150,7 +150,7 @@ export class PrefsManager {
     this.prefs[key] = value;
   };
 
-  setPrefs(prefs: Prefs) {
+  setPrefs(prefs: Record<string, PrefValue | undefined | null>) {
     Object.entries(prefs).forEach(([key, value]) => {
       this.setPref(key, value);
     });
