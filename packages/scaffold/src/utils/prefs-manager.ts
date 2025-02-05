@@ -33,16 +33,36 @@ export class PrefsManager {
       if (node.expression.arguments[0].expression.type !== "StringLiteral") {
         throw new Error("Invalid prefs.js file - unsupported key type.");
       }
-
-      if (node.expression.arguments[1].expression.type !== "StringLiteral"
-        && node.expression.arguments[1].expression.type !== "NumericLiteral"
-        && node.expression.arguments[1].expression.type !== "BooleanLiteral"
-      ) {
-        throw new Error("Invalid prefs.js file - unsupported value type.");
-      }
-
       const key = node.expression.arguments[0].expression.value.trim();
-      const value = node.expression.arguments[1].expression.value;
+
+      // https://firefox-source-docs.mozilla.org/devtools/preferences.html#preference-types
+      let value: string | number | boolean;
+      switch (node.expression.arguments[1].expression.type) {
+        // https://babeljs.io/docs/babel-parser#output
+        case "StringLiteral":
+        case "NumericLiteral":
+        case "BooleanLiteral":
+          value = node.expression.arguments[1].expression.value;
+          break;
+
+        // https://github.com/estree/estree/blob/master/es5.md#unaryexpression
+        // https://github.com/northword/zotero-plugin-scaffold/issues/98
+        case "UnaryExpression":
+          if (node.expression.arguments[1].expression.argument.type !== "NumericLiteral") {
+            throw new Error("Invalid prefs.js file - unsupported value type.");
+          }
+
+          if (node.expression.arguments[1].expression.operator === "-")
+            value = -node.expression.arguments[1].expression.argument.value;
+          else if (node.expression.arguments[1].expression.operator === "+")
+            value = node.expression.arguments[1].expression.argument.value;
+          else
+            throw new Error("Invalid prefs.js file - unsupported value type.");
+          break;
+
+        default:
+          throw new Error("Invalid prefs.js file - unsupported value type.");
+      }
 
       _map[key] = value;
     }

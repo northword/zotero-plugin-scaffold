@@ -34,6 +34,11 @@ describe("prefs-manager", () => {
       expect(result).toEqual({ "test.null": "null" });
     });
 
+    it("should correctly parse -1", () => {
+      const result = prefsManager.parse(`pref("test.unary-expression", -1);`);
+      expect(result).toEqual({ "test.unary-expression": -1 });
+    });
+
     it("should correctly parse a stringified number", () => {
       const result = prefsManager.parse(`pref("test.stringified.number", "123");`);
       expect(result).toEqual({ "test.stringified.number": "123" });
