@@ -103,7 +103,7 @@ async function main() {
   // globalOpts = cli.optsWithGlobals();
 }
 
-export default async function run() {
+export default async function mainWithErrorHandler() {
   main()
     .then(() => {
       checkGitIgnore();
@@ -115,5 +115,11 @@ export default async function run() {
 
 function onError(err: Error) {
   logger.error(err);
+  // For tinyexec - bumpp
+  // @ts-expect-error tinyexec's NonZeroExitError has output.stderr
+  if (err.output) {
+    // @ts-expect-error tinyexec's NonZeroExitError has output.stderr
+    logger.log(err.output.stderr);
+  }
   process.exit(1);
 }
