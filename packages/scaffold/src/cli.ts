@@ -103,17 +103,21 @@ async function main() {
   // globalOpts = cli.optsWithGlobals();
 }
 
-export default async function run() {
-  main()
-    .then(() => {
-      checkGitIgnore();
-    })
-    .catch(onError);
+main()
+  .then(() => {
+    checkGitIgnore();
+  })
+  .catch(onError);
 
-  process.on("uncaughtException", onError);
-}
+process.on("uncaughtException", onError);
 
 function onError(err: Error) {
   logger.error(err);
+  // For tinyexec - bumpp
+  // @ts-expect-error tinyexec's NonZeroExitError has output.stderr
+  if (err.output) {
+    // @ts-expect-error tinyexec's NonZeroExitError has output.stderr
+    logger.log(err.output?.stderr);
+  }
   process.exit(1);
 }
