@@ -119,7 +119,7 @@ function onError(err: Error) {
   // @ts-expect-error tinyexec's NonZeroExitError has output.stderr
   if (err.output) {
     // @ts-expect-error tinyexec's NonZeroExitError has output.stderr
-    logger.log(err.output?.stderr);
+    logger.log(err.output.stderr);
   }
   process.exit(1);
 }
