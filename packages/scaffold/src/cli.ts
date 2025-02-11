@@ -103,13 +103,15 @@ async function main() {
   // globalOpts = cli.optsWithGlobals();
 }
 
-main()
-  .then(() => {
-    checkGitIgnore();
-  })
-  .catch(onError);
+export default function mainWithErrorHandler() {
+  main()
+    .then(() => {
+      checkGitIgnore();
+    })
+    .catch(onError);
 
-process.on("uncaughtException", onError);
+  process.on("uncaughtException", onError);
+}
 
 function onError(err: Error) {
   logger.error(err);
