@@ -69,7 +69,6 @@
     }
   },
   "dependencies": {
-    "@commander-js/extra-typings": "^13.1.0",
     "@swc/core": "^1.10.14",
     "adm-zip": "^0.5.16",
     "bumpp": "^10.0.1",
@@ -88,6 +87,7 @@
     "xvfb-ts": "^1.1.0"
   },
   "devDependencies": {
+    "@commander-js/extra-typings": "^13.1.0",
     "@types/adm-zip": "^0.5.7",
     "@types/fs-extra": "^11.0.4"
   }
