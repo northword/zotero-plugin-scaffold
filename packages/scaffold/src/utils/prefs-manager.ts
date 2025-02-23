@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { parseSync } from "@swc/core";
 import { outputFile } from "fs-extra/esm";
-import { logger } from "./log.js";
+import { logger } from "./logger.js";
 
 /**
  * type of pref value only supports string (Char, String), number (Int), and boolean (Boolean)

@@ -22,7 +22,7 @@
 
 import net from "node:net";
 
-import { logger } from "../log.js";
+import { logger } from "../logger.js";
 import { MessagingClient } from "./rdp-client.js";
 
 const MAX_RETRIES = 150;
@@ -112,7 +112,7 @@ export class RemoteFirefox {
       return response;
     }
     catch (err) {
-      logger.debug(`Client responded to '${request}' request with error:`, err);
+      logger.debug(`Client responded to '${request}' request with error: ${err}`);
       const message = requestErrorToMessage(err);
       throw new Error(`Remote Firefox: addonRequest() error: ${message}`);
     }
@@ -134,7 +134,7 @@ export class RemoteFirefox {
     }
     catch (err) {
       // Fallback to listTabs otherwise, Firefox 49 - 77 (bug 1618691).
-      logger.debug("Falling back to listTabs because getRoot failed", err);
+      logger.debug(`Falling back to listTabs because getRoot failed", ${err}`);
     }
 
     try {
@@ -156,7 +156,7 @@ export class RemoteFirefox {
       return response.addonsActor;
     }
     catch (err) {
-      logger.debug("listTabs error", err);
+      logger.debug(`listTabs error: ${err}`);
       const message = requestErrorToMessage(err);
       throw new Error(`Remote Firefox: listTabs() error: ${message}`);
     }

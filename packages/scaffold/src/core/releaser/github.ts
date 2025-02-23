@@ -71,7 +71,8 @@ export default class GitHub extends ReleaseBase {
   async createRelease(
     options: Parameters<Octokit["rest"]["repos"]["createRelease"]>[0],
   ) {
-    this.logger.debug("Creating release...", options);
+    this.logger.debug("Creating release...");
+    this.logger.debug(options);
     return await this.client.rest.repos
       .createRelease(options)
       .catch((e) => {

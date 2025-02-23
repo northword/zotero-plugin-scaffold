@@ -1,7 +1,7 @@
 import { execSync } from "node:child_process";
 import process from "node:process";
 import { isDebug, isLinux } from "std-env";
-import { LOG_LEVEL, logger } from "./log.js";
+import { LOG_LEVEL, logger } from "./logger.js";
 
 function isPackageInstalled(packageName: string): boolean {
   try {
@@ -14,14 +14,14 @@ function isPackageInstalled(packageName: string): boolean {
 }
 
 function installPackage(packageName: string): void {
-  const debug = isDebug || logger.level <= LOG_LEVEL.debug;
+  const debug = isDebug || logger.level <= LOG_LEVEL.DEBUG;
   try {
     logger.debug(`Installing ${packageName}...`);
     execSync(`sudo apt update && sudo apt install -y ${packageName}`, { stdio: debug ? "inherit" : "pipe" });
     logger.debug(`${packageName} installed successfully.`);
   }
   catch (error) {
-    logger.fail(`Failed to install ${packageName}.`, error);
+    logger.fail(`Failed to install ${packageName}. ${error}`);
     throw error;
   }
 }

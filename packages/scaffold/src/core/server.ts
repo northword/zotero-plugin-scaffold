@@ -94,7 +94,8 @@ export default class Serve extends Base {
         await onChangeDebounced(path);
       })
       .on("error", (err) => {
-        this.logger.error("Server start failed!", err);
+        this.logger.fail("Server start failed!");
+        this.logger.error(err);
       });
   }
 

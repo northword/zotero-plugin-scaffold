@@ -43,7 +43,7 @@ export default class Release extends Base {
       this.ctx.release.bumpp.execute ||= "npm run build";
     }
 
-    this.logger.debug("Release config: ", this.ctx.release);
+    this.logger.debug(`Release config: ", ${this.ctx.release}`);
 
     // Releaser ready
     await this.ctx.hooks.callHook("release:init", this.ctx);

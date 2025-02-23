@@ -1,5 +1,5 @@
 import type { Hookable } from "hookable";
-import type { Log } from "../utils/log.js";
+import type { Logger } from "../utils/logger.js";
 import type { Hooks } from "./config.js";
 import type { RecursivePartial } from "./utils.js";
 import { Config } from "./config.js";
@@ -17,7 +17,7 @@ export interface Context extends Config {
   pkgUser: any;
   version: string;
   hooks: Hookable<Hooks>;
-  logger: InstanceType<typeof Log>;
+  logger: Logger;
   templateData: TemplateData;
 }
 

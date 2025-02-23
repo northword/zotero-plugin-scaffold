@@ -101,7 +101,7 @@ export default class Build extends Base {
         define[key],
       ]),
     );
-    this.logger.debug("replace map: ", replaceMap);
+    this.logger.debug(`replace map: ${replaceMap}`);
     await replaceInFile({
       files: newPaths,
       from: Array.from(replaceMap.keys()),
@@ -137,7 +137,7 @@ export default class Build extends Base {
     };
 
     const data: Manifest = toMerged(userData, template);
-    this.logger.debug("manifest: ", JSON.stringify(data, null, 2));
+    this.logger.debug(`manifest: ${JSON.stringify(data, null, 2)}`);
 
     outputJSON(`${dist}/addon/manifest.json`, data, { spaces: 2 });
   }
@@ -155,7 +155,7 @@ export default class Build extends Base {
     // Get locale names
     const localePaths = await glob(`${dist}/addon/locale/*`, { onlyDirectories: true });
     const localeNames = localePaths.map(locale => basename(locale));
-    this.logger.debug("Locale names:", localeNames);
+    this.logger.debug(`Locale names:", ${localeNames}`);
 
     const allMessages = new Set<string>();
     const messagesByLocale = new Map<string, Set<string>>();

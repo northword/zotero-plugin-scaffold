@@ -6,7 +6,7 @@ import process from "node:process";
 import { delay, toMerged } from "es-toolkit";
 import { ensureDir, outputFile, outputJSON, pathExists, readJSON, remove } from "fs-extra/esm";
 import { isLinux, isMacOS, isWindows } from "std-env";
-import { logger } from "./log.js";
+import { logger } from "./logger.js";
 import { PrefsManager } from "./prefs-manager.js";
 import { isRunning } from "./process.js";
 import { prefs as defaultPrefs } from "./zotero/preference.js";
@@ -177,7 +177,7 @@ export class ZoteroRunner {
     const remotePort = await findFreeTcpPort();
     args.push("-start-debugger-server", String(remotePort));
 
-    logger.debug("Zotero start args: ", args);
+    logger.debug(`Zotero start args: ${args}`);
 
     const env = {
       ...process.env,
@@ -191,7 +191,7 @@ export class ZoteroRunner {
     // Using `spawn` so we can stream logging as they come in, rather than
     // buffer them up until the end, which can easily hit the max buffer size.
     this.zotero = spawn(this.options.binary.path, args, { env });
-    logger.debug("Zotero started, pid:", this.zotero.pid);
+    logger.debug(`Zotero started, pid: ${this.zotero.pid}`);
 
     // Handle Zotero log, necessary on macOS
     this.zotero.stdout?.on("data", (_data) => {});

@@ -3,7 +3,7 @@ import { loadConfig as c12 } from "c12";
 import { kebabCase, mapValues } from "es-toolkit";
 import { readJsonSync } from "fs-extra/esm";
 import { createHooks } from "hookable";
-import { logger } from "./utils/log.js";
+import { logger } from "./utils/logger.js";
 import { dateFormat, parseRepoUrl, template } from "./utils/string.js";
 
 /**
@@ -175,7 +175,7 @@ const defaultConfig = {
     watch: false,
     hooks: {},
   },
-  logLevel: "info",
+  logLevel: "INFO",
 } satisfies Config;
 
 const getDefaultConfig = () => <Config>defaultConfig;

@@ -28,7 +28,7 @@ export default class Bump extends Base {
     this.ctx.release.bumpp.tag = result.tag || this.ctx.release.bumpp.tag.toString().replace("%s", result.newVersion);
     this.ctx.release.bumpp.commit = result.commit || this.ctx.release.bumpp.commit.toString().replace("%s", result.newVersion);
 
-    this.logger.debug("The release context after bump: ", this.ctx.release);
+    this.logger.debug(`The release context after bump: ", ${this.ctx.release}`);
   }
 
   /**
