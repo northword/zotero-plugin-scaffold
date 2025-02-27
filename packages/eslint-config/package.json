@@ -34,10 +34,7 @@
     "build": "unbuild",
     "build:typegen": "tsx scripts/typegen.ts",
     "build:inspector": "eslint-config-inspector build --config eslint-inspector.config.ts",
-    "lint": "eslint --flag unstable_ts_config .",
-    "lint:fix": "pnpm run lint --fix",
-    "typecheck": "tsc --noEmit",
-    "prepublishOnly": "pnpm run build"
+    "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
     "eslint": "^9.5.0"
