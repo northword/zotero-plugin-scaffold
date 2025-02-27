@@ -1,9 +1,16 @@
 import { writeFile } from "node:fs/promises";
 import { flatConfigsToRulesDTS } from "eslint-typegen/core";
+import { builtinRules } from "eslint/use-at-your-own-risk";
 import zotero from "../src";
 
 const dts = await flatConfigsToRulesDTS(
-  zotero(),
+  await zotero(
+    {
+      overrides: {
+        plugins: { "": { rules: Object.fromEntries(builtinRules) } },
+      },
+    },
+  ),
   { includeAugmentation: false, exportTypeName: "Rules" },
 );
 
