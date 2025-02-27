@@ -5,7 +5,18 @@ import { GLOB_EXCLUDE } from "../globs.js";
 export const ignores: Linter.Config[] = [
   {
     name: "zotero-plugin/global-ignores",
-    ignores: [...GLOB_EXCLUDE, "**/build/**", "**/.scaffold/**"],
+    ignores: [
+      // glob
+      ...GLOB_EXCLUDE,
+
+      // scaffold generated files
+      "**/build/**",
+      "**/.scaffold/**",
+
+      // dts
+      "**/prefs.d.ts",
+      "**/i10n.d.ts",
+    ],
   },
   {
     ...pluginIgnore({ strict: false }),

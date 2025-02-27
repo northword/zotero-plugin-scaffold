@@ -13,6 +13,8 @@ export const specialCases: Config[] = [
     name: "zotero-plugin/special/bootstrap",
     rules: {
       "no-undef": "off",
+      "no-unused-vars": "off",
+      "unused-imports/no-unused-vars": "off",
     },
   },
 ];

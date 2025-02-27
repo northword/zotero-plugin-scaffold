@@ -2,7 +2,7 @@
   "name": "@zotero-plugin/eslint-config",
   "type": "module",
   "version": "0.2.0-beta.19",
-  "packageManager": "pnpm@9.15.2",
+  "packageManager": "pnpm@10.2.0",
   "description": "ESLint config for zotero plugin.",
   "license": "AGPL-3.0-or-later",
   "homepage": "https://github.com/northword/zotero-plugin-scaffold#readme",
@@ -29,7 +29,8 @@
     "node": "^18.18.0 || >=20.0.0"
   },
   "scripts": {
-    "dev": "eslint-config-inspector --config eslint-inspector.config.ts",
+    "dev": "unbuild --stub",
+    "dev:inspector": "eslint-config-inspector --config eslint-inspector.config.ts",
     "build": "unbuild",
     "build:typegen": "tsx scripts/typegen.ts",
     "build:inspector": "eslint-config-inspector build --config eslint-inspector.config.ts",
@@ -44,10 +45,12 @@
   "dependencies": {
     "@eslint/js": "^9.17.0",
     "eslint-config-flat-gitignore": "^0.3.0",
+    "eslint-plugin-mocha": "^10.5.0",
     "typescript-eslint": "^8.18.2"
   },
   "devDependencies": {
     "@eslint/config-inspector": "^0.6.0",
+    "@types/eslint-plugin-mocha": "^10.4.0",
     "eslint-typegen": "^0.3.2",
     "importx": "^0.5.1"
   }

@@ -6,6 +6,8 @@ export const GLOB_JSX = "**/*.?([cm])jsx";
 
 export const GLOB_TS = "**/*.?([cm])ts";
 export const GLOB_TSX = "**/*.tsx";
+export const GLOB_DTS = "**/*.d.ts";
+export const GLOB_TEST = "**/*.[test|spec].?([cm])[jt]s?(x)";
 
 export const GLOB_STYLE = "**/*.{c,le,sc}ss";
 export const GLOB_CSS = "**/*.css";
@@ -57,6 +59,7 @@ export const GLOB_EXCLUDE: string[] = [
   "**/.output",
   "**/.vite-inspect",
   "**/.nitro",
+  "**/.scaffold",
 
   "**/CHANGELOG*.md",
   "**/*.min.*",
