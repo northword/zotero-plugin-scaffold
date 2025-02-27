@@ -17,3 +17,7 @@ packages/scaffold/test/e2e/fixtures/.scaffold
 packages/scaffold/test/e2e/fixtures/typings
 packages/scaffold/test/e2e/fixtures/.gitignore
 !packages/scaffold/test/e2e/snap/dist
+
+# eslint-config
+.eslint-config-inspector
+packages/eslint-config/src/typegen.ts

@@ -19,3 +19,7 @@ import zotero from "@zotero-plugin/eslint-config";
 
 export default zotero();
 ```
+
+## Thanks
+
+- [`sxzz/eslint-config`](https://github.com/sxzz/eslint-config)

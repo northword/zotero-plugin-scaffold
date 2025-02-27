@@ -31,7 +31,8 @@
   "scripts": {
     "dev": "unbuild --stub",
     "dev:inspector": "eslint-config-inspector --config eslint-inspector.config.ts",
-    "build": "unbuild",
+    "build": "pnpm build:typegen && pnpm build:unbuild",
+    "build:unbuild": "unbuild",
     "build:typegen": "tsx scripts/typegen.ts",
     "build:inspector": "eslint-config-inspector build --config eslint-inspector.config.ts",
     "typecheck": "tsc --noEmit"

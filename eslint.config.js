@@ -9,4 +9,5 @@ export default antfu({
     quotes: "double",
   },
   formatters: true,
+  ignores: ["packages/eslint-config/src/typegen.ts"],
 });
