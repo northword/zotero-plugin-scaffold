@@ -1,7 +1,7 @@
 {
   "name": "create-zotero-plugin-scaffold",
   "type": "module",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "private": "true",
   "packageManager": "pnpm@10.2.0",
   "description": "A scaffold for Zotero plugin development.",
