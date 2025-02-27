@@ -1,4 +1,4 @@
-# ESLint Config Preset
+# ES Lint Config for Zotero
 
 ## Features
 
@@ -18,13 +18,4 @@ npm install -D @zotero-plugin/eslint-config
 import zotero from "@zotero-plugin/eslint-config";
 
 export default zotero();
-```
-
-### Integration with Other ESLint Configurations
-
-```js
-import antfu from "@antfu/eslint-config";
-import { specialCases } from "@zotero-plugin/eslint-config";
-
-export default antfu().append(specialCases);
 ```
