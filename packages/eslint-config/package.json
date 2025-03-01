@@ -47,7 +47,7 @@
     "typescript-eslint": "^8.18.2"
   },
   "devDependencies": {
-    "@eslint/config-inspector": "^0.6.0",
+    "@eslint/config-inspector": "^1.0.1",
     "@types/eslint-plugin-mocha": "^10.4.0",
     "eslint-typegen": "^0.3.2",
     "importx": "^0.5.1"
