@@ -10,5 +10,13 @@
     ":enableVulnerabilityAlerts"
   ],
   "labels": ["dependencies"],
-  "rangeStrategy": "bump"
+  "rangeStrategy": "bump",
+  "packageRules": [
+    {
+      "description": "Don't bump engines field in package.json",
+      "matchPackageNames": ["node"],
+      "matchDepTypes": ["engines"],
+      "rangeStrategy": "auto"
+    }
+  ]
 }
