@@ -34,6 +34,11 @@
     "packages/*",
     "docs"
   ],
+  "pnpm": {
+    "overrides": {
+      "@types/eslint": "npm:eslint@^9.21.0"
+    }
+  },
   "lint-staged": {
     "*": "eslint --fix"
   }
