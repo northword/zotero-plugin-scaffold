@@ -3,7 +3,7 @@
   "type": "module",
   "version": "0.2.8",
   "private": "true",
-  "packageManager": "pnpm@10.2.0",
+  "packageManager": "pnpm@10.5.2",
   "description": "A scaffold for Zotero plugin development.",
   "author": "northword",
   "license": "AGPL-3.0-or-later",

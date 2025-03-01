@@ -7,7 +7,11 @@ const dts = await flatConfigsToRulesDTS(
   await zotero(
     {
       overrides: {
-        plugins: { "": { rules: Object.fromEntries(builtinRules) } },
+        plugins: {
+          "": {
+            rules: Object.fromEntries(builtinRules),
+          },
+        },
       },
     },
   ),

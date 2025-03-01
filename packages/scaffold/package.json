@@ -2,7 +2,7 @@
   "name": "zotero-plugin-scaffold",
   "type": "module",
   "version": "0.2.8",
-  "packageManager": "pnpm@10.2.0",
+  "packageManager": "pnpm@10.5.2",
   "description": "A scaffold for Zotero plugin development.",
   "author": "northword",
   "license": "AGPL-3.0-or-later",
@@ -46,7 +46,7 @@
     "dist"
   ],
   "engines": {
-    "node": ">=18"
+    "node": ">=18.20.7"
   },
   "scripts": {
     "dev": "unbuild --stub",
@@ -69,21 +69,21 @@
     }
   },
   "dependencies": {
-    "@swc/core": "^1.10.14",
+    "@swc/core": "^1.11.5",
     "adm-zip": "^0.5.16",
-    "bumpp": "^10.0.1",
+    "bumpp": "^10.0.3",
     "c12": "^3.0.2",
     "chalk": "^5.4.1",
     "chokidar": "^4.0.3",
     "commander": "^13.1.0",
     "es-toolkit": "^1.32.0",
-    "esbuild": "^0.24.2",
+    "esbuild": "^0.25.0",
     "fs-extra": "^11.3.0",
     "hookable": "^5.5.3",
-    "octokit": "^4.1.0",
+    "octokit": "^4.1.2",
     "std-env": "^3.8.0",
     "tiny-update-notifier": "^2.0.0",
-    "tinyglobby": "^0.2.10",
+    "tinyglobby": "^0.2.12",
     "xvfb-ts": "^1.1.0"
   },
   "devDependencies": {
