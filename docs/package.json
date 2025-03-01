@@ -10,7 +10,7 @@
     "preview": "vitepress preview src"
   },
   "devDependencies": {
-    "@shikijs/vitepress-twoslash": "^2.3.1",
+    "@shikijs/vitepress-twoslash": "^3.1.0",
     "vitepress": "^1.6.3",
     "zotero-plugin-scaffold": "workspace:^"
   }
