@@ -28,7 +28,7 @@ export interface Config {
    * 脚手架将在 `${dist}/addon` 存放构建后打包前的代码。
    * 在 `${dist}/${xpiName}.xpi` 存放打包结果。
    *
-   * @default "build"
+   * @default ".scaffold/build"
    */
   dist: string;
 
