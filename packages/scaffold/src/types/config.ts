@@ -265,7 +265,15 @@ export interface BuildConfig {
   /**
    * Configurations of esbuild.
    *
+   * Paths should be relative to the root directory of the project.
+   * And if `outfile` and `outdir` not start with `dist`,
+   * `dist/` will be automatically added as a prefix.
+   *
    * esbuild 配置。
+   *
+   * 路径应相对于项目根目录。
+   * 其中“outfile”和“outdir”若不以 `dist` 开头，
+   * 则会自动添加 `dist/` 前缀。
    *
    * @default []
    *

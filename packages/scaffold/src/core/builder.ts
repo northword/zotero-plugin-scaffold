@@ -314,10 +314,23 @@ export default class Build extends Base {
   }
 
   esbuild() {
-    const { build: { esbuildOptions } } = this.ctx;
+    const { dist, build: { esbuildOptions } } = this.ctx;
 
     if (esbuildOptions.length === 0)
       return;
+
+    // ensure outfile and outdir are in dist folder
+    esbuildOptions.map((option, i) => {
+      if (option.outfile && !option.outfile.startsWith(dist)) {
+        this.logger.debug(`'outfile' of esbuildOptions[${i}] is not in dist folder, it will be overwritten.`);
+        option.outfile = `${dist}/${option.outfile}`;
+      }
+      if (option.outdir && !option.outdir.startsWith(dist)) {
+        this.logger.debug(`'outdir' of esbuildOptions[${i}] is not in dist folder, it will be overwritten.`);
+        option.outdir = `${dist}/${option.outdir}`;
+      }
+      return option;
+    });
 
     return Promise.all(
       esbuildOptions.map(esbuildOption =>
