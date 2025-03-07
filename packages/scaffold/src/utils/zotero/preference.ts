@@ -103,7 +103,7 @@ const prefsFirefox = {
   "datareporting.policy.firstRunURL": "",
 };
 
-const zoteroPrefs = {
+const prefsZotero = {
   "extensions.experiments.enabled": true,
   "extensions.autoDisableScopes": 0,
 
@@ -115,11 +115,11 @@ const zoteroPrefs = {
   // Inherit the default test settings from Zotero
   // https://github.com/zotero/zotero/blob/8a06edab49f07b84d07056ccd594c87920ef2c5e/test/runtests.sh#L127-L147
   // "app.update.enabled": false,
-  "extensions.zotero.sync.server.compressData": false,
-  "extensions.zotero.automaticScraperUpdates": false,
-  "extensions.zotero.debug.log": 5,
-  "extensions.zotero.debug.level": 5,
-  "extensions.zotero.debug.time": 5,
+  // "extensions.zotero.sync.server.compressData": false,
+  // "extensions.zotero.automaticScraperUpdates": false,
+  // "extensions.zotero.debug.log": 5,
+  // "extensions.zotero.debug.level": 5,
+  // "extensions.zotero.debug.time": 5,
   "extensions.zotero.firstRun.skipFirefoxProfileAccessCheck": true,
   "extensions.zotero.firstRunGuidance": false,
   "extensions.zotero.firstRun2": false,
@@ -127,17 +127,16 @@ const zoteroPrefs = {
   "extensions.zotero.httpServer.enabled": true,
   "extensions.zotero.httpServer.port": 23124, // ascii "ZT"
   "extensions.zotero.httpServer.localAPI.enabled": true,
-  "extensions.zotero.backup.numBackups": 0,
+  // "extensions.zotero.backup.numBackups": 0,
   // "extensions.zotero.sync.autoSync": false,
   "extensions.zoteroMacWordIntegration.installed": true,
   "extensions.zoteroMacWordIntegration.skipInstallation": true,
   "extensions.zoteroWinWordIntegration.skipInstallation": true,
   "extensions.zoteroOpenOfficeIntegration.skipInstallation": true,
-
 };
 
 export const prefs = {
   ...prefsCommon,
   ...prefsFirefox,
-  ...zoteroPrefs,
+  ...prefsZotero,
 };
