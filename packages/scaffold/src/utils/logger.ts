@@ -1,7 +1,7 @@
 import process from "node:process";
 import readline from "node:readline";
-import chalk from "chalk";
 import { isPlainObject } from "es-toolkit";
+import styleText from "node-style-text";
 import { isDebug } from "std-env";
 
 /**
@@ -19,13 +19,13 @@ export type LogLevelType = keyof typeof LOG_LEVEL;
 
 // Configuration constants
 const SYMBOLS = {
-  SUCCESS: chalk.green("✔"),
-  INFO: chalk.blue("ℹ"),
-  FAIL: chalk.red("✖"),
-  TIP: chalk.blue("→"),
-  ERROR: chalk.bgRed(" ERROR "),
-  WARN: chalk.bgYellow(" WARN "),
-  DEBUG: chalk.grey("⚙"),
+  SUCCESS: styleText.green("✔"),
+  INFO: styleText.blue("ℹ"),
+  FAIL: styleText.red("✖"),
+  TIP: styleText.blue("→"),
+  ERROR: styleText.bgRed(" ERROR "),
+  WARN: styleText.bgYellow(" WARN "),
+  DEBUG: styleText.grey("⚙"),
   NONE: "",
 };
 
@@ -136,7 +136,7 @@ export class Logger {
   }
 
   private formatError(error: Error): string {
-    return `${chalk.red(error.name)}: ${chalk.red(error.message)}\n${error.stack}`;
+    return `${styleText.red(error.name)}: ${styleText.red(error.message)}\n${error.stack}`;
   }
 
   /**
@@ -195,8 +195,8 @@ export class Logger {
     this.logInternal(content, LOG_METHODS_CONFIG.fail, options);
   }
 
-  public ready(content: unknown): void {
-    this.logInternal(chalk.green(content), LOG_METHODS_CONFIG.success);
+  public ready(content: string): void {
+    this.logInternal(styleText.green(content), LOG_METHODS_CONFIG.success);
   }
 
   public clear(): void {

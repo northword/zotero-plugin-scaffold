@@ -24,20 +24,20 @@
   ],
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./dist/index.d.mts",
       "import": "./dist/index.mjs"
     },
     "./cli": {
       "import": "./dist/cli.mjs"
     },
     "./vendor": {
-      "types": "./dist/vendor/index.d.ts",
+      "types": "./dist/vendor/index.d.mts",
       "import": "./dist/vendor/index.mjs"
     }
   },
   "main": "./dist/index.mjs",
   "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
+  "types": "./dist/index.d.mts",
   "bin": {
     "zotero-plugin": "./bin/zotero-plugin.mjs"
   },
@@ -46,7 +46,7 @@
     "dist"
   ],
   "engines": {
-    "node": ">=18.20.7"
+    "node": ">=22.8.0"
   },
   "scripts": {
     "dev": "unbuild --stub",
@@ -73,7 +73,6 @@
     "adm-zip": "^0.5.16",
     "bumpp": "^10.0.3",
     "c12": "^3.0.2",
-    "chalk": "^5.4.1",
     "chokidar": "^4.0.3",
     "commander": "^13.1.0",
     "es-toolkit": "^1.32.0",
@@ -89,6 +88,7 @@
   "devDependencies": {
     "@commander-js/extra-typings": "^13.1.0",
     "@types/adm-zip": "^0.5.7",
-    "@types/fs-extra": "^11.0.4"
+    "@types/fs-extra": "^11.0.4",
+    "node-style-text": "^0.0.7"
   }
 }

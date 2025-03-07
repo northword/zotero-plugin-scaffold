@@ -1,7 +1,7 @@
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
-      NODE_ENV: "development" | "peoduction";
+      NODE_ENV: "development" | "production" | "test";
       GITHUB_TOKEN?: string;
       ZOTERO_PLUGIN_ZOTERO_BIN_PATH?: string;
       ZOTERO_PLUGIN_PROFILE_PATH?: string;
@@ -10,3 +10,5 @@ declare global {
     }
   }
 }
+
+export {};

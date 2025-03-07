@@ -104,9 +104,6 @@ importers:
       c12:
         specifier: ^3.0.2
         version: 3.0.2
-      chalk:
-        specifier: ^5.4.1
-        version: 5.4.1
       chokidar:
         specifier: ^4.0.3
         version: 4.0.3
@@ -153,6 +150,9 @@ importers:
       '@types/fs-extra':
         specifier: ^11.0.4
         version: 11.0.4
+      node-style-text:
+        specifier: ^0.0.7
+        version: 0.0.7
 
   packages/scaffold/test/e2e/fixtures: {}
 
@@ -3014,6 +3014,9 @@ packages:
 
   node-releases@2.0.19:
     resolution: {integrity: sha512-xxOWJsBKtzAq7DY0J+DTzuz58K8e7sJbdgwkbMWQe8UYB6ekmsQ45q0M/tJDsGaZmbC+l7n57UV8Hl5tHxO9uw==}
+
+  node-style-text@0.0.7:
+    resolution: {integrity: sha512-Nl9GeP2qEG8NM7rgjSi6nhuBdiciYRL5eHKn25+UlpclBWYRzMVfSyhB5vR87uOcSvWGSwpjucLl8PGiGjs7XQ==}
 
   normalize-package-data@6.0.2:
     resolution: {integrity: sha512-V6gygoYb/5EmNI+MEGrWkC+e6+Rr7mTmfHrxDbLzxQogBkgzo76rkok0Am6thgSF7Mv2nLOajAJj5vDJZEFn7g==}
@@ -7116,6 +7119,8 @@ snapshots:
   node-mock-http@1.0.0: {}
 
   node-releases@2.0.19: {}
+
+  node-style-text@0.0.7: {}
 
   normalize-package-data@6.0.2:
     dependencies:

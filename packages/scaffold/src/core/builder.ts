@@ -6,10 +6,10 @@ import { readFile, writeFile } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
 import process from "node:process";
 import AdmZip from "adm-zip";
-import chalk from "chalk";
 import { escapeRegExp, toMerged } from "es-toolkit";
 import { build as buildAsync } from "esbuild";
 import { copy, emptyDir, move, outputFile, outputJSON, readJSON, writeJson } from "fs-extra/esm";
+import styleText from "node-style-text";
 import { glob } from "tinyglobby";
 import { generateHash } from "../utils/crypto.js";
 import { PrefsManager, renderPluginPrefsDts } from "../utils/prefs-manager.js";
@@ -35,7 +35,7 @@ export default class Build extends Base {
     const t = new Date();
     this.buildTime = dateFormat("YYYY-mm-dd HH:MM:SS", t);
     this.logger.info(
-      `Building version ${chalk.blue(version)} to ${chalk.blue(dist)} at ${chalk.blue(this.buildTime)} in ${chalk.blue(process.env.NODE_ENV)} mode.`,
+      `Building version ${styleText.blue(version)} to ${styleText.blue(dist)} at ${styleText.blue(this.buildTime)} in ${styleText.blue(process.env.NODE_ENV)} mode.`,
     );
     await this.ctx.hooks.callHook("build:init", this.ctx);
 
@@ -212,14 +212,14 @@ export default class Build extends Base {
         }
 
         if (!allMessages.has(attrVal)) {
-          this.logger.warn(`HTML data-i10n-id '${chalk.blue(attrVal)}' in ${chalk.gray(htmlPath)} do not exist in any FTL message, skip to namespace it.`);
+          this.logger.warn(`HTML data-i10n-id '${styleText.blue(attrVal)}' in ${styleText.gray(htmlPath)} do not exist in any FTL message, skip to namespace it.`);
           continue;
         }
 
         messagesInHTML.add(attrVal);
         const namespacedAttr = `${namespace}-${attrVal}`;
         htmlContent = htmlContent.replace(matched, `${attrKey}="${namespacedAttr}"`);
-        this.logger.debug(`HTML data-i10n-id '${chalk.blue(attrVal)}' in ${chalk.gray(htmlPath)} is namespaced to ${chalk.blue(namespacedAttr)}.`);
+        this.logger.debug(`HTML data-i10n-id '${styleText.blue(attrVal)}' in ${styleText.gray(htmlPath)} is namespaced to ${styleText.blue(namespacedAttr)}.`);
       }
 
       if (build.fluent.prefixFluentMessages)
@@ -244,7 +244,7 @@ export default class Build extends Base {
         .map(([locale]) => locale);
 
       if (missingLocales.length > 0) {
-        this.logger.warn(`HTML data-l10n-id '${chalk.blue(messageInHTML)}' is missing in locales: ${missingLocales.join(", ")}.`);
+        this.logger.warn(`HTML data-l10n-id '${styleText.blue(messageInHTML)}' is missing in locales: ${missingLocales.join(", ")}.`);
       }
     });
   }
@@ -291,20 +291,20 @@ export default class Build extends Base {
         for (const match of matchs) {
           const [matched, key] = match;
           if (key.startsWith(prefix)) {
-            this.logger.debug(`Pref key '${chalk.blue(key)}' is already starts with '${prefix}', skip prefixing it.`);
+            this.logger.debug(`Pref key '${styleText.blue(key)}' is already starts with '${prefix}', skip prefixing it.`);
             continue;
           }
           else if (key.startsWith("extensions.")) {
-            this.logger.warn(`Pref key '${chalk.blue(key)}' in ${chalk.gray(path)} starts with 'extensions.' but not '${chalk.blue(prefix)}', skip prefixing it.`);
+            this.logger.warn(`Pref key '${styleText.blue(key)}' in ${styleText.gray(path)} starts with 'extensions.' but not '${styleText.blue(prefix)}', skip prefixing it.`);
             continue;
           }
           else if (!(key in prefsWithPrefix) && !(key in prefsWithoutPrefix)) {
-            this.logger.warn(`Pref key '${chalk.blue(key)}' in ${chalk.gray(path)} is not found in prefs.js, skip prefixing it.`);
+            this.logger.warn(`Pref key '${styleText.blue(key)}' in ${styleText.gray(path)} is not found in prefs.js, skip prefixing it.`);
             continue;
           }
           else {
             const prefixed = `${prefix}.${key}`;
-            this.logger.debug(`Pref key '${chalk.blue(key)}' in ${chalk.gray(path)} is prefixed to ${chalk.blue(prefixed)}.`);
+            this.logger.debug(`Pref key '${styleText.blue(key)}' in ${styleText.gray(path)} is prefixed to ${styleText.blue(prefixed)}.`);
             content = content.replace(matched, `preference="${prefixed}"`);
           }
         }
