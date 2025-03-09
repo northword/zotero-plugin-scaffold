@@ -1,19 +1,24 @@
-import { readFile, writeFile } from "node:fs/promises";
-import { ensureFile, pathExists } from "fs-extra";
+import { readFile } from "node:fs/promises";
+import { pathExists } from "fs-extra";
+import { logger } from "./logger.js";
 
 export async function checkGitIgnore() {
   if (!pathExists(".git"))
     return;
 
-  await ensureFile(".gitignore");
-  const contents = (await readFile(".gitignore", "utf-8")).split("\n");
+  if (!pathExists(".gitignore")) {
+    logger.warn("No .gitignore file found");
+    return;
+  }
 
+  const contents = await readFile(".gitignore", "utf-8");
   const ignores = ["node_modules", ".env", ".scaffold"];
+  const miss = ignores.filter(ignore => !contents.match(ignore));
 
-  ignores.forEach((ignore) => {
-    if (!contents.includes(ignore))
-      contents.push(ignore);
-  });
-
-  await writeFile(".gitignore", contents.join("\n"));
+  // since this is just a simple reminder, we don't operate the user's
+  // .gitignore file anymore, but prompt the user to add it manually.
+  // this can avoid problems such as modifying the user's line breaks,
+  // and it is not too complicated to implement.
+  if (miss.length !== 0)
+    logger.warn(`We recommend adding the following to your .gitignore file: ${miss.join(", ")}`);
 }
