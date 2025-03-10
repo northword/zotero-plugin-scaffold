@@ -3,7 +3,7 @@ import type { Manifest } from "../types/manifest.js";
 import type { UpdateJSON } from "../types/update-json.js";
 import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
-import { basename, dirname, join } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import process from "node:process";
 import AdmZip from "adm-zip";
 import { escapeRegExp, toMerged } from "es-toolkit";
@@ -315,17 +315,18 @@ export default class Build extends Base {
 
   esbuild() {
     const { dist, build: { esbuildOptions } } = this.ctx;
+    const distAbsolute = resolve(dist);
 
     if (esbuildOptions.length === 0)
       return;
 
     // ensure outfile and outdir are in dist folder
     esbuildOptions.map((option, i) => {
-      if (option.outfile && !option.outfile.startsWith(dist)) {
+      if (option.outfile && !resolve(option.outfile).startsWith(distAbsolute)) {
         this.logger.debug(`'outfile' of esbuildOptions[${i}] is not in dist folder, it will be overwritten.`);
         option.outfile = `${dist}/${option.outfile}`;
       }
-      if (option.outdir && !option.outdir.startsWith(dist)) {
+      if (option.outdir && !resolve(option.outdir).startsWith(distAbsolute)) {
         this.logger.debug(`'outdir' of esbuildOptions[${i}] is not in dist folder, it will be overwritten.`);
         option.outdir = `${dist}/${option.outdir}`;
       }
