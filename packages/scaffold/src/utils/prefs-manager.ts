@@ -1,6 +1,6 @@
-import { writeFileSync } from "node:fs";
+import type { Program } from "@swc/core";
 import { readFile } from "node:fs/promises";
-import { parseSync } from "@swc/core";
+import { parseSync, printSync } from "@swc/core";
 import { outputFile } from "fs-extra/esm";
 import { logger } from "./logger.js";
 
@@ -26,7 +26,6 @@ export class PrefsManager {
   parse(content: string) {
     const _map: Prefs = {};
     const ast = parseSync(content, { syntax: "ecmascript" });
-    writeFileSync("ast.json", JSON.stringify(ast, null, 2));
     for (const node of ast.body) {
       if (
         node.type !== "ExpressionStatement"
@@ -123,52 +122,82 @@ export class PrefsManager {
       return value;
   }
 
+  /**
+   * Parse Method 2 - Using swc
+   */
   render() {
-    // function getValueNode(value: unknown) {
-    //   if (typeof value === "string") {
-    //     return { type: "StringLiteral", value };
-    //   }
-    //   else if (typeof value === "number") {
-    //     if (value < 0) {
-    //       // 处理负数，生成 UnaryExpression
-    //       return {
-    //         type: "UnaryExpression",
-    //         operator: "-",
-    //         argument: { type: "NumericLiteral", value: Math.abs(value) },
-    //       };
-    //     }
-    //     return { type: "NumericLiteral", value };
-    //   }
-    //   else if (typeof value === "boolean") {
-    //     return { type: "BooleanLiteral", value };
-    //   }
-    //   throw new Error(`Unsupported value type: ${typeof value}`);
-    // }
-    // const defaultSpan = { start: 0, end: 0, ctxt: 0 };
+    const span = { start: 0, end: 0, ctxt: 0 };
 
-    // const ast: Program = {
-    //   type: "Module",
-    //   span: defaultSpan,
-    //   // interpreter: null,
-    //   body: Object.entries(this.prefs).map(([key, value]) => ({
-    //     type: "ExpressionStatement",
-    //     span: defaultSpan,
-    //     ctxt: 0,
-    //     expression: {
-    //       type: "CallExpression",
-    //       span: defaultSpan,
-    //       ctxt: 0,
-    //       callee: { type: "Identifier", value: this.namespace, span: defaultSpan, ctxt: 0, optional: false },
-    //       arguments: [
-    //         { type: "StringLiteral", value: key, span: defaultSpan, ctxt: 0 },
-    //         { ...getValueNode(value), span: defaultSpan, ctxt: 0 },
-    //       ],
-    //     },
-    //   })),
-    // };
-    // const { code } = printSync(ast);
-    // return code;
+    function getExpression(value: unknown) {
+      switch (typeof value) {
+        case "string":
+          return {
+            type: "StringLiteral",
+            span,
+            value,
+          };
+        case "boolean":
+          return {
+            type: "BooleanLiteral",
+            span,
+            value,
+          };
+        case "number":
+          if (value < 0) {
+            return {
+              type: "UnaryExpression",
+              span,
+              operator: "-",
+              argument: {
+                type: "NumericLiteral",
+                value: Math.abs(value),
+              },
+            };
+          }
+          return {
+            type: "NumericLiteral",
+            span,
+            value,
+          };
+        default:
+          throw new Error(`Unsupported value type: ${typeof value}`);
+      }
+    }
 
+    const ast: Program = {
+      type: "Module",
+      span,
+      // @ts-expect-error no raw property
+      body: Object.entries(this.prefs).map(([key, value]) => ({
+        type: "ExpressionStatement",
+        span,
+        expression: {
+          type: "CallExpression",
+          span,
+          ctxt: 0,
+          callee: {
+            type: "Identifier",
+            span,
+            ctxt: 0,
+            value: this.namespace,
+            optional: false,
+          },
+          arguments: [
+            { expression: getExpression(key) },
+            { expression: getExpression(value) },
+          ],
+        },
+      })),
+    };
+    const { code } = printSync(ast);
+    return code;
+  }
+
+  /**
+   * Parse Method 1 - Using string
+   * @deprecated
+   */
+  private renderByString() {
     return Object.entries(this.prefs).map(([key, value]) => {
       const _v = typeof value === "string"
         ? `"${value
@@ -273,3 +302,133 @@ declare namespace _ZoteroTypes {
 //     set: <K extends keyof PluginPrefsMap>(key: K, value: PluginPrefsMap[K], global?: boolean) => any;
 //   }
 // }
+
+/**
+ * AST example
+ *
+ * @example
+ * pref("key2", "value")
+ * pref("key1", -1)
+ */
+const _ast_example = {
+  type: "Module",
+  span: {
+    start: 0,
+    end: 39,
+  },
+  body: [
+    {
+      type: "ExpressionStatement",
+      span: {
+        start: 0,
+        end: 21,
+      },
+      expression: {
+        type: "CallExpression",
+        span: {
+          start: 0,
+          end: 21,
+        },
+        ctxt: 0,
+        callee: {
+          type: "Identifier",
+          span: {
+            start: 0,
+            end: 4,
+          },
+          ctxt: 1,
+          value: "pref",
+          optional: false,
+        },
+        arguments: [
+          {
+            spread: null,
+            expression: {
+              type: "StringLiteral",
+              span: {
+                start: 5,
+                end: 11,
+              },
+              value: "key2",
+              raw: "\"key2\"",
+            },
+          },
+          {
+            spread: null,
+            expression: {
+              type: "StringLiteral",
+              span: {
+                start: 13,
+                end: 20,
+              },
+              value: "value",
+              raw: "\"value\"",
+            },
+          },
+        ],
+        typeArguments: null,
+      },
+    },
+    {
+      type: "ExpressionStatement",
+      span: {
+        start: 23,
+        end: 39,
+      },
+      expression: {
+        type: "CallExpression",
+        span: {
+          start: 23,
+          end: 39,
+        },
+        ctxt: 0,
+        callee: {
+          type: "Identifier",
+          span: {
+            start: 23,
+            end: 27,
+          },
+          ctxt: 1,
+          value: "pref",
+          optional: false,
+        },
+        arguments: [
+          {
+            spread: null,
+            expression: {
+              type: "StringLiteral",
+              span: {
+                start: 28,
+                end: 34,
+              },
+              value: "key1",
+              raw: "\"key1\"",
+            },
+          },
+          {
+            spread: null,
+            expression: {
+              type: "UnaryExpression",
+              span: {
+                start: 36,
+                end: 38,
+              },
+              operator: "-",
+              argument: {
+                type: "NumericLiteral",
+                span: {
+                  start: 37,
+                  end: 38,
+                },
+                value: 1,
+                raw: "1",
+              },
+            },
+          },
+        ],
+        typeArguments: null,
+      },
+    },
+  ],
+  interpreter: null,
+};
