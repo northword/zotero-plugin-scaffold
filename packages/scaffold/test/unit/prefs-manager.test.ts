@@ -192,11 +192,15 @@ pref("test.boolean.true", true);
       prefsManager.setPrefs({
         "test.string": "hello",
         "test.number": 42,
+        "test.queto": "{\"key\": \"value\"}",
+        "test.path": "C:\\path\\to\\file",
       });
 
       const result = [
         "pref(\"test.string\", \"hello\");",
         "pref(\"test.number\", 42);",
+        "pref(\"test.queto\", \"{\\\"key\\\": \\\"value\\\"}\");",
+        "pref(\"test.path\", \"C:\\\\path\\\\to\\\\file\");",
       ].join("\n");
 
       expect(prefsManager.render()).toBe(result);

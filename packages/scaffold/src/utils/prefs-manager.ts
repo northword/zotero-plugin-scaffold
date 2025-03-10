@@ -1,3 +1,4 @@
+import { writeFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { parseSync } from "@swc/core";
 import { outputFile } from "fs-extra/esm";
@@ -25,6 +26,7 @@ export class PrefsManager {
   parse(content: string) {
     const _map: Prefs = {};
     const ast = parseSync(content, { syntax: "ecmascript" });
+    writeFileSync("ast.json", JSON.stringify(ast, null, 2));
     for (const node of ast.body) {
       if (
         node.type !== "ExpressionStatement"
@@ -122,8 +124,57 @@ export class PrefsManager {
   }
 
   render() {
+    // function getValueNode(value: unknown) {
+    //   if (typeof value === "string") {
+    //     return { type: "StringLiteral", value };
+    //   }
+    //   else if (typeof value === "number") {
+    //     if (value < 0) {
+    //       // 处理负数，生成 UnaryExpression
+    //       return {
+    //         type: "UnaryExpression",
+    //         operator: "-",
+    //         argument: { type: "NumericLiteral", value: Math.abs(value) },
+    //       };
+    //     }
+    //     return { type: "NumericLiteral", value };
+    //   }
+    //   else if (typeof value === "boolean") {
+    //     return { type: "BooleanLiteral", value };
+    //   }
+    //   throw new Error(`Unsupported value type: ${typeof value}`);
+    // }
+    // const defaultSpan = { start: 0, end: 0, ctxt: 0 };
+
+    // const ast: Program = {
+    //   type: "Module",
+    //   span: defaultSpan,
+    //   // interpreter: null,
+    //   body: Object.entries(this.prefs).map(([key, value]) => ({
+    //     type: "ExpressionStatement",
+    //     span: defaultSpan,
+    //     ctxt: 0,
+    //     expression: {
+    //       type: "CallExpression",
+    //       span: defaultSpan,
+    //       ctxt: 0,
+    //       callee: { type: "Identifier", value: this.namespace, span: defaultSpan, ctxt: 0, optional: false },
+    //       arguments: [
+    //         { type: "StringLiteral", value: key, span: defaultSpan, ctxt: 0 },
+    //         { ...getValueNode(value), span: defaultSpan, ctxt: 0 },
+    //       ],
+    //     },
+    //   })),
+    // };
+    // const { code } = printSync(ast);
+    // return code;
+
     return Object.entries(this.prefs).map(([key, value]) => {
-      const _v = typeof value === "string" ? `"${value}"` : value;
+      const _v = typeof value === "string"
+        ? `"${value
+          .replaceAll("\\", "\\\\")
+          .replaceAll("\"", "\\\"")}"`
+        : value;
       return `${this.namespace}("${key}", ${_v});`;
     }).join("\n");
   }
