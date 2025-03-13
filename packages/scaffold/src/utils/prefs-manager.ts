@@ -150,6 +150,7 @@ export class PrefsManager {
               operator: "-",
               argument: {
                 type: "NumericLiteral",
+                span,
                 value: Math.abs(value),
               },
             };

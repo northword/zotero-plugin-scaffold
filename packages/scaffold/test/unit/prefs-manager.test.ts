@@ -191,18 +191,22 @@ pref("test.boolean.true", true);
     it("should correctly render a prefs.js", () => {
       prefsManager.setPrefs({
         "test.string": "hello",
-        "test.number": 42,
         "test.quote": "{\"key\": \"value\"}",
         "test.singleQuote": "{key: value}",
         "test.path": "C:\\path\\to\\file",
+        "test.number": 42,
+        "test.-1": -1,
+        "test.boolean": true,
       });
 
       const result = [
         "pref(\"test.string\", \"hello\");",
-        "pref(\"test.number\", 42);",
         "pref(\"test.quote\", '{\"key\": \"value\"}');",
         "pref(\"test.singleQuote\", \"{key: value}\");",
         "pref(\"test.path\", \"C:\\\\path\\\\to\\\\file\");",
+        "pref(\"test.number\", 42);",
+        "pref(\"test.-1\", -1);",
+        "pref(\"test.boolean\", true);",
         "",
       ].join("\n");
 
