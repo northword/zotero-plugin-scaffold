@@ -82,7 +82,7 @@ export default class Release extends Base {
         .on("end", () => {
           changelog = changelog
             .split("\n")
-            .filter(line => !line.match(/^## .*/) || !line.match(/^# .*/))
+            .filter(line => !line.match(/^## .*/) && !line.match(/^# .*/))
             .join("\n")
             .trim();
           resolve(changelog);
