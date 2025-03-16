@@ -4,12 +4,12 @@ import process from "node:process";
 import { emptyDir } from "fs-extra/esm";
 import { resolve } from "pathe";
 import { isCI } from "std-env";
+import { TESTER_DATA_DIR, TESTER_PLUGIN_DIR, TESTER_PLUGIN_ID, TESTER_PROFILE_DIR } from "../../constant.js";
 import { toArray } from "../../utils/string.js";
 import { watch } from "../../utils/watcher.js";
 import { ZoteroRunner } from "../../utils/zotero-runner.js";
 import { Base } from "../base.js";
 import Build from "../builder.js";
-import { TESTER_DATA_DIR, TESTER_PLUGIN_DIR, TESTER_PLUGIN_ID, TESTER_PROFILE_DIR } from "../constant.js";
 import { prepareHeadless } from "./headless.js";
 import { HttpReporter } from "./reporter.js";
 import { TestRunnerPlugin } from "./test-runner-plugin.js";
@@ -29,6 +29,7 @@ export default class Test extends Base {
     if (isCI) {
       this.ctx.test.exitOnFinish = true;
       this.ctx.test.headless = true;
+      this.ctx.test.watch = false;
     }
   }
 
@@ -46,7 +47,6 @@ export default class Test extends Base {
     // prebuild
     await this.builder.run();
     await this.ctx.hooks.callHook("test:prebuild", this.ctx);
-    this.logger.clear();
 
     // Start a HTTP server to receive test results
     // This is useful for CI/CD environments

@@ -1,4 +1,4 @@
-import { TESTER_PLUGIN_ID, TESTER_PLUGIN_REF } from "../../constant.js";
+import { TESTER_PLUGIN_ID, TESTER_PLUGIN_REF } from "../../../constant.js";
 
 export function generateBootstrap(options: {
   port: number;

@@ -3,10 +3,10 @@ import type { Context } from "../..//types/index.js";
 import { context } from "esbuild";
 import { copy, outputFile, outputJSON, pathExists } from "fs-extra/esm";
 import { glob } from "tinyglobby";
+import { CACHE_DIR, TESTER_PLUGIN_DIR } from "../../constant.js";
 import { saveResource } from "../../utils/file.js";
 import { logger } from "../../utils/logger.js";
 import { toArray } from "../../utils/string.js";
-import { CACHE_DIR, TESTER_PLUGIN_DIR } from "../constant.js";
 import { generateBootstrap, generateManifest } from "./create-proxy-plugin/bootsrtap.js";
 import { generateHtml, generateMochaSetup } from "./create-proxy-plugin/mocha-setup.js";
 
