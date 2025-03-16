@@ -1,15 +1,51 @@
 import http from "node:http";
+import styleText from "node-style-text";
 import { logger } from "../../utils/logger.js";
 import { findFreeTcpPort } from "../../utils/zotero/remote-zotero.js";
 
-interface TestResult {
-  type: "start" | "suite" | "suite end" | "pending" | "pass" | "fail" | "end" | "debug";
-  data?: { title: string; str: string; duration?: number; stack?: string };
+interface ResultS {
+  type: "start" | "pending" | "end" | "debug";
+  data?: any;
 }
+
+interface ResultSuite {
+  type: "suite" | "suite end";
+  data: {
+    title: string;
+    root: boolean;
+  };
+}
+
+interface ResultTestData {
+  title: string;
+  fullTitle: string;
+  duration: number;
+}
+
+interface ResultTestPass {
+  type: "pass";
+  data: ResultTestData;
+}
+
+interface ResultTestFail {
+  type: "fail";
+  data: ResultTestData & {
+    error: {
+      message: string;
+      actual: unknown;
+      exprct: unknown;
+      operator: string;
+      stack: string;
+    };
+  };
+}
+
+type Result = ResultS | ResultSuite | ResultTestPass | ResultTestFail;
 
 export class HttpReporter {
   private _server?: http.Server;
   private _port?: number;
+  private indent: number = 0;
 
   constructor(
     private onFailed?: () => void,
@@ -72,35 +108,44 @@ export class HttpReporter {
       }
   }
 
-  async onData(body: TestResult) {
-    if (body.type === "debug" && body.data?.str) {
-      for (const line of body.data?.str.split("\n")) {
-        logger.log(line);
+  async onData(body: Result) {
+    const { type, data } = body;
+
+    switch (type) {
+      case "debug":
+        logger.log(data);
+        break;
+      case "start":
         logger.newLine();
-      }
-    }
-    const str = body.data?.str.replaceAll("\n", "");
-    if (body.type === "start") {
-      logger.newLine();
-    }
-    else if (body.type === "suite" && !!str) {
-      logger.tip(str);
-    }
-    if (body.type === "pass" && !!str) {
-      logger.log(str);
-    }
-    else if (body.type === "fail") {
-      logger.error(str);
-      if (this.onFailed)
-        this.onFailed();
-    }
-    else if (body.type === "suite end") {
-      logger.newLine();
-    }
-    else if (body.type === "end") {
-      logger.success("Test run completed");
-      if (this.onEnd)
-        this.onEnd();
+        break;
+      case "suite":
+        if (data.title)
+          logger.tip(data.title, { space: this.indent });
+        this.indent++;
+        break;
+      case "pass":
+        logger.success(`${data.title} ${styleText.gray(`${data.duration}ms`)}`, { space: this.indent });
+        break;
+      case "fail":
+        logger.fail(styleText.red(`${data.title}, ${body.data?.error?.message}`), { space: this.indent });
+        // if (this.onFailed)
+        //   this.onFailed();
+        break;
+      case "pending":
+        logger.info(`${data.title} pending`, { space: this.indent });
+        break;
+      case "suite end":
+        this.indent--;
+        break;
+      case "end":
+        logger.newLine();
+        logger.success("Test run completed");
+        //   if (this.onEnd)
+        //     this.onEnd();
+        break;
+      default:
+        logger.log(data);
+        break;
     }
   }
 
