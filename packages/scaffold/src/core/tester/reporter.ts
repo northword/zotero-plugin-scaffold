@@ -3,33 +3,34 @@ import styleText from "node-style-text";
 import { logger } from "../../utils/logger.js";
 import { findFreeTcpPort } from "../../utils/zotero/remote-zotero.js";
 
+interface ResultDataBase {
+  title: string;
+  indents: number;
+}
+
 interface ResultS {
   type: "start" | "pending" | "end" | "debug";
-  data?: any;
+  data?: ResultDataBase | any;
 }
 
 interface ResultSuite {
   type: "suite" | "suite end";
-  data: {
-    title: string;
+  data: ResultDataBase & {
     root: boolean;
   };
 }
 
-interface ResultTestData {
-  title: string;
-  fullTitle: string;
-  duration: number;
-}
-
 interface ResultTestPass {
   type: "pass";
-  data: ResultTestData;
+  data: ResultDataBase & {
+    fullTitle: string;
+    duration: number;
+  };
 }
 
 interface ResultTestFail {
   type: "fail";
-  data: ResultTestData & {
+  data: ResultTestPass["data"] & {
     error: {
       message: string;
       actual: unknown;
@@ -45,7 +46,6 @@ type Result = ResultS | ResultSuite | ResultTestPass | ResultTestFail;
 export class HttpReporter {
   private _server?: http.Server;
   private _port?: number;
-  private indent: number = 0;
 
   constructor(
     private onFailed?: () => void,
@@ -110,6 +110,7 @@ export class HttpReporter {
 
   async onData(body: Result) {
     const { type, data } = body;
+    const logger_option = { space: data.indents - 1 };
 
     switch (type) {
       case "debug":
@@ -120,22 +121,20 @@ export class HttpReporter {
         break;
       case "suite":
         if (data.title)
-          logger.tip(data.title, { space: this.indent });
-        this.indent++;
+          logger.tip(data.title, logger_option);
         break;
       case "pass":
-        logger.success(`${data.title} ${styleText.gray(`${data.duration}ms`)}`, { space: this.indent });
+        logger.success(`${data.title} ${styleText.gray(`${data.duration}ms`)}`, logger_option);
         break;
       case "fail":
-        logger.fail(styleText.red(`${data.title}, ${body.data?.error?.message}`), { space: this.indent });
+        logger.fail(styleText.red(`${data.title}, ${body.data?.error?.message}`), logger_option);
         // if (this.onFailed)
         //   this.onFailed();
         break;
       case "pending":
-        logger.info(`${data.title} pending`, { space: this.indent });
+        logger.info(`${data.title} pending`, logger_option);
         break;
       case "suite end":
-        this.indent--;
         break;
       case "end":
         logger.newLine();

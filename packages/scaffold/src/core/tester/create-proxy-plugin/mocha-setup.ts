@@ -37,18 +37,19 @@ window.debug = function (data) {
   send({ type: "debug", data });
 };
 
+let indents = 0,
+  passed = 0,
+  failed = 0,
+  aborted = false;
+
 // Inherit the default test settings from Zotero
 function Reporter(runner) {
-  var indents = 0,
-    passed = 0,
-    failed = 0,
-    aborted = false;
-
   function indent() {
     return "  ".repeat(indents);
   }
 
   function dump(str) {
+    // console.log(str)
     // const p = document.createElement("p")
     // p.textContent = str
     // document.querySelector("#mocha").append(p)
@@ -57,7 +58,7 @@ function Reporter(runner) {
 
   runner.on("start", async function () {
     console.log("start")
-    await send({ type: "start" });
+    await send({ type: "start", data: { indents } });
   });
 
   runner.on("suite", async function (suite) {
@@ -65,7 +66,7 @@ function Reporter(runner) {
     indents++;
     const str = indent() + suite.title + "\\n";
     dump(str);
-    await send({ type: "suite", data: { title: suite.title, root: suite.root } });
+    await send({ type: "suite", data: { title: suite.title, root: suite.root, indents } });
   });
 
   runner.on("suite end", async function (suite) {
@@ -73,14 +74,14 @@ function Reporter(runner) {
     indents--;
     const str = indents === 1 ? "\\n" : "";
     dump(str);
-    await send({ type: "suite end", data: { title: suite.title, root: suite.root } });
+    await send({ type: "suite end", data: { title: suite.title, root: suite.root, indents } });
   });
 
   runner.on("pending", async function (test) {
     console.log("pending", test)
     const str = indent() + "pending  -" + test.title + "\\n";
     dump(str);
-    await send({ type: "pending", data: { title: test.title, fulltest: test.fullTitle(), duration: test.duration } });
+    await send({ type: "pending", data: { title: test.title, fulltest: test.fullTitle(), duration: test.duration, indents: indents + 1 } });
   });
 
   runner.on("pass", async function (test) {
@@ -92,7 +93,7 @@ function Reporter(runner) {
     }
     str += "\\n";
     dump(str);
-    await send({ type: "pass", data: { title: test.title, fulltest: test.fullTitle(), duration: test.duration } });
+    await send({ type: "pass", data: { title: test.title, fulltest: test.fullTitle(), duration: test.duration, indents: indents + 1 } });
 
   });
 
@@ -121,7 +122,7 @@ function Reporter(runner) {
       "\\n\\n";
     dump(str);
 
-    await send({ type: "fail", data: { title: test.title, fulltest: test.fullTitle(), duration: test.duration, error } });
+    await send({ type: "fail", data: { title: test.title, fulltest: test.fullTitle(), duration: test.duration, error, indents: indents + 1 } });
 
   });
 
@@ -138,7 +139,7 @@ function Reporter(runner) {
 
     await send({
       type: "end",
-      data: { passed: passed, failed: failed, aborted: aborted, str },
+      data: { passed: passed, failed: failed, aborted: aborted, str, indents },
     });
 
     // Must exit on Zotero side, otherwise the exit code will not be 0 and CI will fail
