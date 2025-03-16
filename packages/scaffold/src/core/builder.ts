@@ -42,28 +42,28 @@ export default class Build extends Base {
     await emptyDir(dist);
     await this.ctx.hooks.callHook("build:mkdir", this.ctx);
 
-    this.logger.tip("Preparing static assets");
+    this.logger.tip("Preparing static assets", { space: 1 });
     await this.makeAssets();
     await this.ctx.hooks.callHook("build:copyAssets", this.ctx);
 
-    this.logger.debug("Preparing manifest");
+    this.logger.debug("Preparing manifest", { space: 2 });
     await this.makeManifest();
     await this.ctx.hooks.callHook("build:makeManifest", this.ctx);
 
-    this.logger.debug("Preparing locale files");
+    this.logger.debug("Preparing locale files", { space: 2 });
     await this.prepareLocaleFiles();
     await this.ctx.hooks.callHook("build:fluent", this.ctx);
 
     await this.preparePrefs();
 
-    this.logger.tip("Bundling scripts");
+    this.logger.tip("Bundling scripts", { space: 1 });
     await this.esbuild();
     await this.ctx.hooks.callHook("build:bundle", this.ctx);
 
     /** ======== build resolved =========== */
 
     if (process.env.NODE_ENV === "production") {
-      this.logger.tip("Packing plugin");
+      this.logger.tip("Packing plugin", { space: 1 });
       await this.pack();
       await this.ctx.hooks.callHook("build:pack", this.ctx);
 
