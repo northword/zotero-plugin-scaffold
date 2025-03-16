@@ -2,8 +2,7 @@ import type { Context } from "../types/index.js";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import process from "node:process";
-import chokidar from "chokidar";
-import { debounce } from "es-toolkit";
+import { watch } from "../utils/watcher.js";
 import { ZoteroRunner } from "../utils/zotero-runner.js";
 import { Base } from "./base.js";
 import Build from "./builder.js";
@@ -69,47 +68,32 @@ export default class Serve extends Base {
   async watch() {
     const { source } = this.ctx;
 
-    const watcher = chokidar.watch(source, {
-      ignored: /(^|[/\\])\../, // ignore dotfiles
-      persistent: true,
-    });
+    watch(
+      source,
+      {
+        onReady: async () => {
+          await this.ctx.hooks.callHook("serve:ready", this.ctx);
+          this.logger.clear();
+          this.logger.ready("Server Ready!");
+        },
+        onChange: async (path) => {
+          await this.ctx.hooks.callHook("serve:onChanged", this.ctx, path);
 
-    const onChangeDebounced = debounce(async (path: string) => {
-      await this.onChange(path).catch((err) => {
-        // Do not abort the watcher when errors occur
-        // in builds triggered by the watcher.
-        this.logger.error(err);
-      });
-    }, 500);
+          if (path.endsWith(".ts") || path.endsWith(".tsx")) {
+            await this.builder.esbuild();
+          }
+          else {
+            await this.builder.run();
+          }
 
-    watcher
-      .on("ready", async () => {
-        await this.ctx.hooks.callHook("serve:ready", this.ctx);
-        this.logger.clear();
-        this.logger.ready("Server Ready!");
-      })
-      .on("change", async (path) => {
-        this.logger.clear();
-        this.logger.info(`${path} changed`);
-        await onChangeDebounced(path);
-      })
-      .on("error", (err) => {
-        this.logger.fail("Server start failed!");
-        this.logger.error(err);
-      });
-  }
-
-  async onChange(path: string) {
-    await this.ctx.hooks.callHook("serve:onChanged", this.ctx, path);
-
-    if (path.endsWith(".ts") || path.endsWith(".tsx")) {
-      await this.builder.esbuild();
-    }
-    else {
-      await this.builder.run();
-    }
-
-    await this.reload();
+          await this.reload();
+        },
+        onError: (err) => {
+          this.logger.fail("Server start failed!");
+          this.logger.error(err);
+        },
+      },
+    );
   }
 
   async reload() {
