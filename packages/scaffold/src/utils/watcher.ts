@@ -5,7 +5,7 @@ import { logger } from "./logger.js";
 export function watch(
   source: string | string[],
   event: {
-    onReady: () => any;
+    onReady?: () => any;
     onChange: (path: string) => any | Promise<any>;
     onError?: (err: unknown) => any;
   },
@@ -19,9 +19,14 @@ export function watch(
 
   watcher
     .on("ready", async () => {
-      await event.onReady();
+      logger.clear();
+      logger.ready("Server Ready!");
+      if (event.onReady)
+        await debounce(event.onReady, 500)();
     })
     .on("change", async (path) => {
+      logger.clear();
+      logger.info(`${path} changed`);
       try {
         await onChangeDebounced(path);
       }

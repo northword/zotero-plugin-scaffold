@@ -172,7 +172,7 @@ const defaultConfig = {
     headless: false,
     startupDelay: 1000,
     waitForPlugin: "() => true",
-    watch: false,
+    watch: true,
     hooks: {},
   },
   logLevel: "INFO",

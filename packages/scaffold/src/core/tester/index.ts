@@ -1,0 +1,190 @@
+import type { Context } from "../../types/index.js";
+import { join } from "node:path";
+import process from "node:process";
+import { emptyDir } from "fs-extra/esm";
+import { resolve } from "pathe";
+import { isCI } from "std-env";
+import { toArray } from "../../utils/string.js";
+import { watch } from "../../utils/watcher.js";
+import { ZoteroRunner } from "../../utils/zotero-runner.js";
+import { Base } from "../base.js";
+import Build from "../builder.js";
+import { TESTER_DATA_DIR, TESTER_PLUGIN_DIR, TESTER_PLUGIN_ID, TESTER_PROFILE_DIR } from "../constant.js";
+import { prepareHeadless } from "./headless.js";
+import { HttpReporter } from "./reporter.js";
+import { TestRunnerPlugin } from "./test-runner-plugin.js";
+
+export default class Test extends Base {
+  private builder: Build;
+  private zotero?: ZoteroRunner;
+  private reporter: HttpReporter = new HttpReporter();
+  private testPluginBuilder?: TestRunnerPlugin;
+
+  constructor(ctx: Context) {
+    super(ctx);
+    process.env.NODE_ENV ??= "test";
+
+    this.builder = new Build(ctx);
+
+    if (isCI) {
+      this.ctx.test.exitOnFinish = true;
+      this.ctx.test.headless = true;
+    }
+  }
+
+  async run() {
+    // Handle interrupt signal (Ctrl+C) to gracefully terminate Zotero process
+    // Must be placed at the top to prioritize registration of events to prevent web-ext interference
+    process.on("SIGINT", this.exit);
+
+    // Empty dirs
+    await emptyDir(TESTER_PROFILE_DIR);
+    await emptyDir(TESTER_DATA_DIR);
+    await emptyDir(TESTER_PLUGIN_DIR);
+    await this.ctx.hooks.callHook("test:init", this.ctx);
+
+    // prebuild
+    await this.builder.run();
+    await this.ctx.hooks.callHook("test:prebuild", this.ctx);
+    this.logger.clear();
+
+    // Start a HTTP server to receive test results
+    // This is useful for CI/CD environments
+    await this.reporter.start();
+    await this.ctx.hooks.callHook("test:listen", this.ctx);
+
+    // Create proxy plugin to run tests
+    this.testPluginBuilder = new TestRunnerPlugin(
+      this.ctx,
+      this.reporter.port,
+    );
+    await this.testPluginBuilder.generate();
+    await this.ctx.hooks.callHook("test:copyAssets", this.ctx);
+
+    // Start Zotero
+    await this.startZotero();
+    await this.ctx.hooks.callHook("test:run", this.ctx);
+
+    // Watch mode
+    if (this.ctx.test.watch) {
+      this.watch();
+    }
+  }
+
+  async watch() {
+    const source = toArray(this.ctx.source).map(p => resolve(p));
+    const tests = toArray(this.ctx.test.entries).map(p => resolve(p));
+    function isSource(_path: string) {
+      const path = resolve(_path);
+      const isSource = source.find(s => path.match(s)) || false;
+      const _isTests = tests.find(t => path.match(t)) || false;
+      return isSource;
+    }
+
+    watch(
+      [this.ctx.source, this.ctx.test.entries].flat(),
+      {
+        onChange: async (path) => {
+          if (isSource(path)) {
+            await this.builder.run();
+            await this.testPluginBuilder?.regenerate(path);
+            await this.zotero?.reloadAllPlugins();
+          }
+          else {
+            await this.testPluginBuilder?.regenerate(path);
+            await this.zotero?.reloadTemporaryPluginBySourceDir(TESTER_PLUGIN_DIR);
+          }
+        },
+      },
+    );
+  }
+
+  async startZotero() {
+    if (this.ctx.test.headless) {
+      await prepareHeadless();
+    }
+
+    this.zotero = new ZoteroRunner({
+      binary: {
+        path: this.zoteroBinPath,
+        devtools: this.ctx.server.devtools,
+        args: this.ctx.server.startArgs,
+      },
+      profile: {
+        path: TESTER_PROFILE_DIR,
+        dataDir: TESTER_DATA_DIR,
+        customPrefs: this.prefs,
+      },
+      plugins: {
+        list: [{
+          id: this.ctx.id,
+          sourceDir: join(this.ctx.dist, "addon"),
+        }, {
+          id: TESTER_PLUGIN_ID,
+          sourceDir: TESTER_PLUGIN_DIR,
+        }],
+      },
+    });
+
+    await this.zotero.run();
+  }
+
+  private exit = (code?: string | number) => {
+    this.reporter.stop();
+    this.zotero?.exit();
+
+    this.ctx.hooks.callHook("test:exit", this.ctx);
+
+    if (code === 1) {
+      this.logger.error("Test run failed");
+      process.exit(1);
+    }
+    else if (code === "SIGINT") {
+      this.logger.info("Tester shutdown by user request");
+      process.exit();
+    }
+    else {
+      this.logger.success("Test run completed successfully");
+      process.exit();
+    }
+  };
+
+  private get zoteroBinPath() {
+    if (!process.env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH)
+      throw new Error("No Zotero Found.");
+    return process.env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH;
+  }
+
+  private get prefs() {
+    const defaultPref = {
+      "extensions.experiments.enabled": true,
+      "extensions.autoDisableScopes": 0,
+      // Enable remote-debugging
+      "devtools.debugger.remote-enabled": true,
+      "devtools.debugger.remote-websocket": true,
+      "devtools.debugger.prompt-connection": false,
+      // Inherit the default test settings from Zotero
+      "app.update.enabled": false,
+      "extensions.zotero.sync.server.compressData": false,
+      "extensions.zotero.automaticScraperUpdates": false,
+      "extensions.zotero.debug.log": 5,
+      "extensions.zotero.debug.level": 5,
+      "extensions.zotero.debug.time": 5,
+      "extensions.zotero.firstRun.skipFirefoxProfileAccessCheck": true,
+      "extensions.zotero.firstRunGuidance": false,
+      "extensions.zotero.firstRun2": false,
+      "extensions.zotero.reportTranslationFailure": false,
+      "extensions.zotero.httpServer.enabled": true,
+      "extensions.zotero.httpServer.port": 23124,
+      "extensions.zotero.httpServer.localAPI.enabled": true,
+      "extensions.zotero.backup.numBackups": 0,
+      "extensions.zotero.sync.autoSync": false,
+      "extensions.zoteroMacWordIntegration.installed": true,
+      "extensions.zoteroMacWordIntegration.skipInstallation": true,
+      "extensions.zoteroWinWordIntegration.skipInstallation": true,
+      "extensions.zoteroOpenOfficeIntegration.skipInstallation": true,
+    };
+
+    return Object.assign(defaultPref, this.ctx.test.prefs || {});
+  }
+}
