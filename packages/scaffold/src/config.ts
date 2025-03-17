@@ -168,7 +168,6 @@ const defaultConfig = {
       timeout: 10000,
     },
     abortOnFail: false,
-    exitOnFinish: false,
     headless: false,
     startupDelay: 1000,
     waitForPlugin: "() => true",

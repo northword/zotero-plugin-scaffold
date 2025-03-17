@@ -27,7 +27,6 @@ export default class Test extends Base {
     this.builder = new Build(ctx);
 
     if (isCI) {
-      this.ctx.test.exitOnFinish = true;
       this.ctx.test.headless = true;
       this.ctx.test.watch = false;
     }

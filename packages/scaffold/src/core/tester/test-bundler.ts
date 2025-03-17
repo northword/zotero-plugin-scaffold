@@ -133,7 +133,7 @@ export class TestBundler {
       timeout: this.ctx.test.mocha.timeout,
       port: this.port,
       abortOnFail: this.ctx.test.abortOnFail,
-      exitOnFinish: this.ctx.test.exitOnFinish,
+      exitOnFinish: !this.ctx.test.watch,
     });
 
     // html

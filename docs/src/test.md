@@ -72,12 +72,11 @@ export default defineConfig({
     mocha: {
       timeout: 10000
     },
+    watch: true,
     abortOnFail: false,
-    exitOnFinish: true,
     headless: false,
     startupDelay: 10000,
     waitForPlugin: `() => Zotero.MyPlugin.initialized`,
-    watch: false,
     hooks: {}
   }
 });
