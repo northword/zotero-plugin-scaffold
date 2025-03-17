@@ -53,7 +53,7 @@ async function main() {
     .description("Run tests")
     .option("--abort-on-fail", "Abort the test suite on first failure")
     .option("--exit-on-finish", "Exit the test suite after all tests have run")
-    .option("--no-watch", "watch changes and re-run test")
+    .option("--no-watch", "Exit the test suite after all tests have run")
     .action((options) => {
       process.env.NODE_ENV = "test";
 

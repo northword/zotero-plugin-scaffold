@@ -50,7 +50,6 @@ export default class Test extends Base {
     // Start a HTTP server to receive test results
     // This is useful for CI/CD environments
     await this.reporter.start();
-    await this.ctx.hooks.callHook("test:listen", this.ctx);
 
     // Create proxy plugin to run tests
     this.testBundler = new TestBundler(
@@ -58,7 +57,7 @@ export default class Test extends Base {
       this.reporter.port,
     );
     await this.testBundler.generate();
-    await this.ctx.hooks.callHook("test:copyAssets", this.ctx);
+    await this.ctx.hooks.callHook("test:bundleTests", this.ctx);
 
     // Start Zotero
     await this.startZotero();
@@ -131,6 +130,9 @@ export default class Test extends Base {
   }
 
   private onZoteroExit = () => {
+    this.reporter.stop();
+    this.ctx.hooks.callHook("test:exit", this.ctx);
+
     if (this.reporter.failed)
       process.exit(1);
     else
