@@ -1,5 +1,6 @@
 import { execSync } from "node:child_process";
 import process from "node:process";
+import { CACHE_DIR } from "src/constant.js";
 import { isDebug, isLinux } from "std-env";
 import { Xvfb } from "xvfb-ts";
 import { LOG_LEVEL, logger } from "../../utils/logger.js";
@@ -84,9 +85,11 @@ export async function installZoteroLinux() {
   }
 
   logger.debug("Installing Zotero...");
-  execSync("wget -O ./scaffold/cache/zotero.tar.bz2 'https://www.zotero.org/download/client/dl?platform=linux-x86_64&channel=beta'", { stdio: "pipe" });
-  execSync("tar -xvf ./scaffold/cache/zotero.tar.bz2", { stdio: "pipe" });
+  execSync(`cd ${CACHE_DIR}`);
+  execSync("wget -O zotero.tar.bz2 'https://www.zotero.org/download/client/dl?platform=linux-x86_64&channel=beta'", { stdio: "pipe" });
+  execSync("tar -xvf zotero.tar.bz2", { stdio: "pipe" });
 
   // Set Environment Variable for Zotero Bin Path
-  process.env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH = `${process.cwd()}/./scaffold/cache/Zotero_linux-x86_64/zotero`;
+  process.env.ZOTERO_PLUGIN_ZOTERO_BIN_PATH = `${process.cwd()}/Zotero_linux-x86_64/zotero`;
+  execSync("cd -");
 }
