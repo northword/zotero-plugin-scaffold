@@ -1,8 +1,8 @@
 import { execSync } from "node:child_process";
 import process from "node:process";
-import { CACHE_DIR } from "src/constant.js";
 import { isDebug, isLinux } from "std-env";
 import { Xvfb } from "xvfb-ts";
+import { CACHE_DIR } from "../../constant.js";
 import { LOG_LEVEL, logger } from "../../utils/logger.js";
 
 export async function prepareHeadless() {
