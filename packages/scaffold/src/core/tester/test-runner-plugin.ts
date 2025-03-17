@@ -2,6 +2,7 @@ import type { BuildContext, BuildResult } from "esbuild";
 import type { Context } from "../..//types/index.js";
 import { context } from "esbuild";
 import { copy, outputFile, outputJSON, pathExists } from "fs-extra/esm";
+import { resolve } from "pathe";
 import { glob } from "tinyglobby";
 import { CACHE_DIR, TESTER_PLUGIN_DIR } from "../../constant.js";
 import { saveResource } from "../../utils/file.js";
@@ -38,7 +39,7 @@ export class TestRunnerPlugin {
     const esbuildResult = await this.esbuildContext?.rebuild();
 
     // get affected tests
-    const tests = this.getAffectedTests(changedFile, esbuildResult?.metafile);
+    const tests = findImpactedTests(changedFile, esbuildResult?.metafile);
 
     // this.generateTestPage
     //   mocha setup
@@ -144,24 +145,33 @@ export class TestRunnerPlugin {
     const html = generateHtml(setupCode, testFiles);
     await outputFile(`${TESTER_PLUGIN_DIR}/content/index.xhtml`, html);
   }
+}
 
-  /**
-   * 给定源码路径，查找导入了该文件的所有 output file
-   */
-  private getAffectedTests(changedFile: string, metafile: BuildResult["metafile"]): string[] {
-    if (!metafile)
-      return [];
+/**
+ * Determines which test files are impacted by a given changed file based on the esbuild metafile.
+ *
+ * This function analyzes the build metadata to find test files that depend on the changed file
+ * either directly as an entry point or indirectly as an input. It is useful in a watch mode setup
+ * to selectively rerun only the affected tests.
+ *
+ * @param {string} changedFilePath - The file path of the changed source file.
+ * @param {BuildResult["metafile"]} buildMetadata - The esbuild metafile containing dependency information.
+ * @returns {string[]} An array of impacted test file paths that need to be re-executed.
+ */
+export function findImpactedTests(changedFilePath: string, buildMetadata: BuildResult["metafile"]): string[] {
+  if (!buildMetadata)
+    return [];
 
-    const affectedEntries = new Set<string>();
+  const resolvedChangedFile = resolve(changedFilePath);
+  const impactedTestFiles = new Set<string>();
 
-    for (const [path, info] of Object.entries(metafile.outputs)) {
-      for (const imp of info.imports) {
-        if (imp.path === changedFile) {
-          affectedEntries.add(path);
-        }
-      }
+  for (const [outputFilePath, outputInfo] of Object.entries(buildMetadata.outputs)) {
+    const testFilePath = outputFilePath.replace(`${TESTER_PLUGIN_DIR}/content/`, "");
+    // const resolvedEntryPoint = outputInfo.entryPoint ? resolve(outputInfo.entryPoint) : null;
+
+    if (Object.keys(outputInfo.inputs).some(inputPath => resolve(inputPath) === resolvedChangedFile)) {
+      impactedTestFiles.add(testFilePath);
     }
-
-    return [...affectedEntries];
   }
+  return Array.from(impactedTestFiles);
 }
