@@ -46,11 +46,10 @@ type Result = ResultS | ResultSuite | ResultTestPass | ResultTestFail;
 export class TestHttpReporter {
   private _server?: http.Server;
   private _port?: number;
+  public passed: number = 0;
+  public failed: number = 0;
 
-  constructor(
-    private onFailed?: () => void,
-    private onEnd?: () => void,
-  ) {}
+  constructor() { }
 
   async getPort() {
     this._port = await findFreeTcpPort();
@@ -124,9 +123,11 @@ export class TestHttpReporter {
           logger.tip(data.title, logger_option);
         break;
       case "pass":
+        this.passed++;
         logger.success(`${data.title} ${styleText.gray(`${data.duration}ms`)}`, logger_option);
         break;
       case "fail":
+        this.failed++;
         logger.fail(styleText.red(`${data.title}, ${body.data?.error?.message}`), logger_option);
         // if (this.onFailed)
         //   this.onFailed();
@@ -138,7 +139,11 @@ export class TestHttpReporter {
         break;
       case "end":
         logger.newLine();
-        logger.success("Test run completed");
+        if (this.failed === 0)
+          logger.success(`Test run completed - ${this.passed} passed`);
+        else
+          logger.fail(`Test run completed - ${this.passed} passed, ${this.failed} failed`);
+
         //   if (this.onEnd)
         //     this.onEnd();
         break;

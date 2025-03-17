@@ -127,26 +127,26 @@ export default class Test extends Base {
     });
 
     await this.zotero.run();
+
+    this.zotero.zotero?.on("close", () => this.onZoteroExit());
   }
 
+  private onZoteroExit = () => {
+    if (this.reporter.failed)
+      process.exit(1);
+    else
+      process.exit(0);
+  };
+
   private exit = (code?: string | number) => {
+    if (code === "SIGINT") {
+      this.logger.info("Tester shutdown by user request");
+    }
+
     this.reporter.stop();
     this.zotero?.exit();
-
     this.ctx.hooks.callHook("test:exit", this.ctx);
-
-    if (code === 1) {
-      this.logger.error("Test run failed");
-      process.exit(1);
-    }
-    else if (code === "SIGINT") {
-      this.logger.info("Tester shutdown by user request");
-      process.exit();
-    }
-    else {
-      this.logger.success("Test run completed successfully");
-      process.exit();
-    }
+    process.exit();
   };
 
   private get zoteroBinPath() {
