@@ -43,7 +43,7 @@ interface ResultTestFail {
 
 type Result = ResultS | ResultSuite | ResultTestPass | ResultTestFail;
 
-export class HttpReporter {
+export class TestHttpReporter {
   private _server?: http.Server;
   private _port?: number;
 

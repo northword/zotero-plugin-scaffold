@@ -11,14 +11,14 @@ import { ZoteroRunner } from "../../utils/zotero-runner.js";
 import { Base } from "../base.js";
 import Build from "../builder.js";
 import { prepareHeadless } from "./headless.js";
-import { HttpReporter } from "./reporter.js";
-import { TestRunnerPlugin } from "./test-runner-plugin.js";
+import { TestHttpReporter } from "./http-reporter.js";
+import { TestBundler } from "./test-bundler.js";
 
 export default class Test extends Base {
   private builder: Build;
   private zotero?: ZoteroRunner;
-  private reporter: HttpReporter = new HttpReporter();
-  private testPluginBuilder?: TestRunnerPlugin;
+  private reporter: TestHttpReporter = new TestHttpReporter();
+  private testBundler?: TestBundler;
 
   constructor(ctx: Context) {
     super(ctx);
@@ -54,11 +54,11 @@ export default class Test extends Base {
     await this.ctx.hooks.callHook("test:listen", this.ctx);
 
     // Create proxy plugin to run tests
-    this.testPluginBuilder = new TestRunnerPlugin(
+    this.testBundler = new TestBundler(
       this.ctx,
       this.reporter.port,
     );
-    await this.testPluginBuilder.generate();
+    await this.testBundler.generate();
     await this.ctx.hooks.callHook("test:copyAssets", this.ctx);
 
     // Start Zotero
@@ -87,11 +87,11 @@ export default class Test extends Base {
         onChange: async (path) => {
           if (isSource(path)) {
             await this.builder.run();
-            await this.testPluginBuilder?.regenerate(path);
+            await this.testBundler?.regenerate(path);
             await this.zotero?.reloadAllPlugins();
           }
           else {
-            await this.testPluginBuilder?.regenerate(path);
+            await this.testBundler?.regenerate(path);
             await this.zotero?.reloadTemporaryPluginBySourceDir(TESTER_PLUGIN_DIR);
           }
         },

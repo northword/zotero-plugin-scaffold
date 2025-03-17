@@ -1,12 +1,6 @@
 import type { Metafile } from "esbuild";
-import { describe, expect, it, vi } from "vitest";
-import { findImpactedTests } from "../../src/core/tester/test-runner-plugin.js";
-
-// Mock resolve function
-vi.mock("path", async () => {
-  const actual = await vi.importActual<typeof import("path")>("path");
-  return { ...actual, resolve: (p: string) => p };
-});
+import { describe, expect, it } from "vitest";
+import { findImpactedTests } from "../../src/core/tester/test-bundler.js";
 
 describe("findImpactedTests", () => {
   const mockMetafileOutputs = {

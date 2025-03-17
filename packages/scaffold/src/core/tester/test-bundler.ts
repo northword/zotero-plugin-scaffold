@@ -1,5 +1,5 @@
 import type { BuildContext, BuildResult } from "esbuild";
-import type { Context } from "../..//types/index.js";
+import type { Context } from "../../types/index.js";
 import { context } from "esbuild";
 import { copy, outputFile, outputJSON, pathExists } from "fs-extra/esm";
 import { resolve } from "pathe";
@@ -8,10 +8,9 @@ import { CACHE_DIR, TESTER_PLUGIN_DIR } from "../../constant.js";
 import { saveResource } from "../../utils/file.js";
 import { logger } from "../../utils/logger.js";
 import { toArray } from "../../utils/string.js";
-import { generateBootstrap, generateManifest } from "./create-proxy-plugin/bootsrtap.js";
-import { generateHtml, generateMochaSetup } from "./create-proxy-plugin/mocha-setup.js";
+import { generateBootstrap, generateHtml, generateManifest, generateMochaSetup } from "./test-bundler-template/index.js";
 
-export class TestRunnerPlugin {
+export class TestBundler {
   private esbuildContext?: BuildContext;
   constructor(
     private ctx: Context,
@@ -26,12 +25,12 @@ export class TestRunnerPlugin {
     //   manifest
     //   copy lib
     //   bundle tests
-    await this.generatePluginRes();
+    await this.generateTestResources();
 
     // this.generateTestPage
     //   mocha setup
     //   html
-    await this.generateTestPage();
+    await this.createTestHtml();
   }
 
   async regenerate(changedFile: string) {
@@ -44,10 +43,10 @@ export class TestRunnerPlugin {
     // this.generateTestPage
     //   mocha setup
     //   html
-    await this.generateTestPage(tests);
+    await this.createTestHtml(tests);
   }
 
-  private async generatePluginRes() {
+  private async generateTestResources() {
     // bootstrape
     const manifest = generateManifest();
     await outputJSON(`${TESTER_PLUGIN_DIR}/manifest.json`, manifest, { spaces: 2 });
@@ -128,7 +127,7 @@ export class TestRunnerPlugin {
     await this.esbuildContext.rebuild();
   }
 
-  private async generateTestPage(tests: string[] = []) {
+  private async createTestHtml(tests: string[] = []) {
     // mocha setup
     const setupCode = generateMochaSetup({
       timeout: this.ctx.test.mocha.timeout,
