@@ -15,26 +15,21 @@ export function watch(
     persistent: true,
   });
 
-  const onChangeDebounced = debounce(event.onChange, 500);
+  const onChangeDebounced = safeDebounce(event.onChange);
 
   watcher
     .on("ready", async () => {
+      if (event.onReady)
+        await event.onReady();
       logger.clear();
       logger.ready("Server Ready!");
-      if (event.onReady)
-        await debounce(event.onReady, 500)();
     })
     .on("change", async (path) => {
       logger.clear();
       logger.info(`${path} changed`);
-      try {
-        await onChangeDebounced(path);
-      }
-      catch (err) {
-        // Do not abort the watcher when errors occur
-        // in builds triggered by the watcher.
-        logger.error(err);
-      }
+      // Do not abort the watcher when errors occur
+      // in builds triggered by the watcher.
+      await onChangeDebounced(path);
     })
     .on("error", async (err) => {
       if (event.onError)
@@ -44,4 +39,18 @@ export function watch(
     });
 
   // return watcher;
+}
+
+function safeDebounce(fn?: (...args: any[]) => void) {
+  if (!fn)
+    return () => {};
+
+  return debounce(async (...args) => {
+    try {
+      await fn(...args);
+    }
+    catch (error) {
+      logger.error(error);
+    }
+  }, 500);
 }

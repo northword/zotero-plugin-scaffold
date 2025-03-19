@@ -73,8 +73,6 @@ export default class Serve extends Base {
       {
         onReady: async () => {
           await this.ctx.hooks.callHook("serve:ready", this.ctx);
-          this.logger.clear();
-          this.logger.ready("Server Ready!");
         },
         onChange: async (path) => {
           await this.ctx.hooks.callHook("serve:onChanged", this.ctx, path);
@@ -87,10 +85,6 @@ export default class Serve extends Base {
           }
 
           await this.reload();
-        },
-        onError: (err) => {
-          this.logger.fail("Server start failed!");
-          this.logger.error(err);
         },
       },
     );
