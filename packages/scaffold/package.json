@@ -80,7 +80,6 @@
     "fs-extra": "^11.3.0",
     "hookable": "^5.5.3",
     "octokit": "^4.1.2",
-    "pathe": "^2.0.3",
     "std-env": "^3.8.1",
     "tiny-update-notifier": "^2.0.0",
     "tinyglobby": "^0.2.12",

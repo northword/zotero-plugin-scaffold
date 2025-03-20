@@ -123,7 +123,7 @@ export class PrefsManager {
   }
 
   /**
-   * Parse Method 2 - Using swc
+   * Render Method 2 - Using swc
    */
   render() {
     const span = { start: 0, end: 0, ctxt: 0 };
@@ -195,7 +195,7 @@ export class PrefsManager {
   }
 
   /**
-   * Parse Method 1 - Using string
+   * Render Method 1 - Using string
    * @deprecated
    */
   private renderByString() {

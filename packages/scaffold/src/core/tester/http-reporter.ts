@@ -129,8 +129,6 @@ export class TestHttpReporter {
       case "fail":
         this.failed++;
         logger.fail(styleText.red(`${data.title}, ${body.data?.error?.message}`), logger_option);
-        // if (this.onFailed)
-        //   this.onFailed();
         break;
       case "pending":
         logger.info(`${data.title} pending`, logger_option);
@@ -143,9 +141,6 @@ export class TestHttpReporter {
           logger.success(`Test run completed - ${this.passed} passed`);
         else
           logger.fail(`Test run completed - ${this.passed} passed, ${this.failed} failed`);
-
-        //   if (this.onEnd)
-        //     this.onEnd();
         break;
       default:
         logger.log(data);

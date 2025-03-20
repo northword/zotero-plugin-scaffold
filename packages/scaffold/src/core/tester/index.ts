@@ -1,8 +1,7 @@
 import type { Context } from "../../types/index.js";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import process from "node:process";
 import { emptyDir } from "fs-extra/esm";
-import { resolve } from "pathe";
 import { isCI } from "std-env";
 import { TESTER_DATA_DIR, TESTER_PLUGIN_DIR, TESTER_PLUGIN_ID, TESTER_PROFILE_DIR } from "../../constant.js";
 import { toArray } from "../../utils/string.js";
