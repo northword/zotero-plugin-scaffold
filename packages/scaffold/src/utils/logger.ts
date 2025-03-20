@@ -153,7 +153,7 @@ export class Logger {
     const { space = DEFAULT_OPTIONS.SPACE, newLine = DEFAULT_OPTIONS.NEW_LINE } = options;
     const formattedContent = this.formatContent(content);
     const output = [
-      " ".repeat(space),
+      "  ".repeat(space),
       config.symbol,
       formattedContent,
     ].join(" ");

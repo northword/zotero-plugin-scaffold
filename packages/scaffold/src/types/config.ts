@@ -643,13 +643,19 @@ export interface TestConfig {
   abortOnFail: boolean;
 
   /**
-   * Exit Zotero when the test is finished.
+   * Watch source and test file changes,
+   * and re-run tests when files change.
    *
-   * 测试完成后退出 Zotero。
+   * If this set to false, Zotero will exit
+   * when test complated.
    *
-   * @default false
+   * 当源码或测试代码变更时自动重新运行测试。
+   *
+   * 若此选项设置为 false，Zotero 将在测试结束后立即退出。
+   *
+   * @default true (false in ci)
    */
-  exitOnFinish: boolean;
+  watch: boolean;
 
   /**
    * Run Zotero in deadless mode.
@@ -662,7 +668,7 @@ export interface TestConfig {
    * - 仅支持 Linux
    * - 在 CI 模式下，默认为 true
    *
-   * @default false
+   * @default false (true in ci)
    */
   headless: boolean;
 
@@ -693,19 +699,12 @@ export interface TestConfig {
    */
   waitForPlugin: string;
 
-  /**
-   * @todo not
-   */
-  watch: boolean;
-
   hooks: Partial<TestHooks>;
 }
 
 interface TestHooks {
   "test:init": (ctx: Context) => void | Promise<void>;
   "test:prebuild": (ctx: Context) => void | Promise<void>;
-  "test:listen": (ctx: Context) => void | Promise<void>;
-  "test:copyAssets": (ctx: Context) => void | Promise<void>;
   "test:bundleTests": (ctx: Context) => void | Promise<void>;
   "test:run": (ctx: Context) => void | Promise<void>;
   "test:exit": (ctx: Context) => void;

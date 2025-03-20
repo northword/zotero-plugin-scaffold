@@ -72,12 +72,11 @@ export default defineConfig({
     mocha: {
       timeout: 10000
     },
+    watch: true,
     abortOnFail: false,
-    exitOnFinish: true,
     headless: false,
     startupDelay: 10000,
     waitForPlugin: `() => Zotero.MyPlugin.initialized`,
-    watch: false,
     hooks: {}
   }
 });
@@ -99,8 +98,6 @@ To handle such cases, use the `test.waitForPlugin` configuration option. This op
 
 ## Watch Mode
 
-This feature is still under development.
-
 In watch mode, Scaffold automatically:
 
 - Recompiles source code, reloads plugins, and reruns tests when the source changes.
@@ -119,6 +116,7 @@ Run tests
 Options:
   --abort-on-fail   Abort the test suite on first failure
   --exit-on-finish  Exit the test suite after all tests have run
+  --no-watch        Same with `exit-on-finish`
   -h, --help        display help for command
 ```
 

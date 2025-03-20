@@ -53,16 +53,16 @@ async function main() {
     .description("Run tests")
     .option("--abort-on-fail", "Abort the test suite on first failure")
     .option("--exit-on-finish", "Exit the test suite after all tests have run")
+    .option("--no-watch", "Exit the test suite after all tests have run")
     .action((options) => {
       process.env.NODE_ENV = "test";
 
-      Config.loadConfig({}).then((ctx) => {
-        if (options.abortOnFail) {
-          ctx.test.abortOnFail = true;
-        }
-        if (options.exitOnFinish) {
-          ctx.test.exitOnFinish = true;
-        }
+      Config.loadConfig({
+        test: {
+          abortOnFail: options.abortOnFail,
+          watch: !options.exitOnFinish && options.watch,
+        },
+      }).then((ctx) => {
         new Test(ctx).run();
       });
     });
