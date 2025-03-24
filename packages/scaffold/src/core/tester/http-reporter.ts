@@ -9,8 +9,17 @@ interface ResultDataBase {
 }
 
 interface ResultS {
-  type: "start" | "pending" | "end" | "debug";
+  type: "start" | "pending" | "debug";
   data?: ResultDataBase | any;
+}
+
+interface ResultEnd {
+  type: "end";
+  data: ResultDataBase & {
+    passed: number;
+    failed: number;
+    aborted: number;
+  };
 }
 
 interface ResultSuite {
@@ -34,14 +43,14 @@ interface ResultTestFail {
     error: {
       message: string;
       actual: unknown;
-      exprct: unknown;
+      expected: unknown;
       operator: string;
       stack: string;
     };
   };
 }
 
-type Result = ResultS | ResultSuite | ResultTestPass | ResultTestFail;
+type Result = ResultS | ResultSuite | ResultTestPass | ResultTestFail | ResultEnd;
 
 export class TestHttpReporter {
   private _server?: http.Server;
@@ -123,19 +132,41 @@ export class TestHttpReporter {
           logger.tip(data.title, logger_option);
         break;
       case "pass":
-        this.passed++;
         logger.success(`${data.title} ${styleText.gray(`${data.duration}ms`)}`, logger_option);
         break;
-      case "fail":
-        this.failed++;
-        logger.fail(styleText.red(`${data.title}, ${body.data?.error?.message}`), logger_option);
+      case "fail":{
+        logger.fail(styleText.red(`${data.title}, ${data?.error?.message}`), logger_option);
+        let expected = data.error.expected;
+        let received = data.error.actual;
+
+        function formatOutput(obj: object, indent: number) {
+          const jsonStr = JSON.stringify(obj, null, 2);
+          const lines = jsonStr.split("\n");
+          const firstLine = lines[0];
+          const restLines = lines.slice(1)
+            .map(line => "  ".repeat(indent) + line)
+            .join("\n");
+          return `${firstLine}\n${restLines}`;
+        }
+
+        if (expected && typeof expected === "object")
+          expected = formatOutput(expected, data.indents + 1);
+        if (received && typeof received === "object")
+          received = formatOutput(received, data.indents + 1);
+
+        logger.log(`Expected: ${styleText.green(String(expected))}`, { space: data.indents + 0.5 });
+        logger.log(`Received: ${styleText.red(String(received))}`, { space: data.indents + 0.5 });
         break;
+      }
       case "pending":
         logger.info(`${data.title} pending`, logger_option);
         break;
       case "suite end":
         break;
       case "end":
+        this.passed = data.passed;
+        this.failed = data.failed;
+
         logger.newLine();
         if (this.failed === 0)
           logger.success(`Test run completed - ${this.passed} passed`);

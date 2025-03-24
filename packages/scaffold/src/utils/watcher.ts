@@ -1,3 +1,4 @@
+import type { Stats } from "node:fs";
 import chokidar from "chokidar";
 import { debounce } from "es-toolkit";
 import { logger } from "./logger.js";
@@ -7,6 +8,7 @@ export function watch(
   event: {
     onReady?: () => any;
     onChange: (path: string) => any | Promise<any>;
+    onAdd?: (path: string, stats: Stats) => any | Promise<any>;
     onError?: (err: unknown) => any;
   },
 ) {
@@ -16,6 +18,7 @@ export function watch(
   });
 
   const onChangeDebounced = safeDebounce(event.onChange);
+  const onAddDebounced = safeDebounce(event.onAdd);
 
   watcher
     .on("ready", async () => {
@@ -30,6 +33,10 @@ export function watch(
       // Do not abort the watcher when errors occur
       // in builds triggered by the watcher.
       await onChangeDebounced(path);
+    })
+    .on("add", async (path, stats) => {
+      if (event.onAdd)
+        await onAddDebounced(path, stats);
     })
     .on("error", async (err) => {
       if (event.onError)

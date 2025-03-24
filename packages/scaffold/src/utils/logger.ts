@@ -87,6 +87,10 @@ const LOG_METHODS_CONFIG: Record<string, LogMethodConfig> = {
     level: LOG_LEVEL.ERROR,
     symbol: SYMBOLS.FAIL,
   },
+  log: {
+    level: LOG_LEVEL.INFO,
+    symbol: SYMBOLS.NONE,
+  },
 };
 
 export class Logger {
@@ -199,6 +203,10 @@ export class Logger {
     this.logInternal(styleText.green(content), LOG_METHODS_CONFIG.success);
   }
 
+  public log(content: unknown, options?: LoggerOptions): void {
+    this.logInternal(content, LOG_METHODS_CONFIG.log, options);
+  }
+
   public clear(): void {
     // Modified from https://github.com/vitejs/vite/blob/561b940f6f963fbb78058a6e23b4adad53a2edb9/packages/vite/src/node/logger.ts#L40-L46
     const blank = process.stdout.rows > 2
@@ -213,14 +221,6 @@ export class Logger {
   public newLine(): void {
     // eslint-disable-next-line no-console
     console.log();
-  }
-
-  /**
-   * Direct passthrough to console.log
-   */
-  public log(content: unknown): void {
-    // eslint-disable-next-line no-console
-    console.log(content);
   }
 }
 

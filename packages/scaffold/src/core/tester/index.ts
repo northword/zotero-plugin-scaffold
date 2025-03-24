@@ -92,6 +92,17 @@ export default class Test extends Base {
             await this.zotero?.reloadTemporaryPluginBySourceDir(TESTER_PLUGIN_DIR);
           }
         },
+        onAdd: async (path) => {
+          if (isSource(path)) {
+            await this.builder.run();
+            await this.testBundler?.regenerate(path);
+            await this.zotero?.reloadAllPlugins();
+          }
+          else {
+            await this.testBundler?.generate();
+            await this.zotero?.reloadTemporaryPluginBySourceDir(TESTER_PLUGIN_DIR);
+          }
+        },
       },
     );
   }
