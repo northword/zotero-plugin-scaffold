@@ -7,3 +7,6 @@ pref(
   "123",
 );
 pref("fake-number", "123");
+pref("templateLiteral", `{
+  "key": "value"  
+}`);

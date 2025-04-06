@@ -14,6 +14,11 @@ describe("prefs-manager", () => {
       expect(result).toEqual({ "test.string": "hello" });
     });
 
+    it("should correctly parse a template literal value", () => {
+      const result = prefsManager.parse(`pref("test.string", \`111\`);`);
+      expect(result).toEqual({ "test.string": "111" });
+    });
+
     it("should correctly parse a number value", () => {
       const result = prefsManager.parse(`pref("test.number", 42);`);
       expect(result).toEqual({ "test.number": 42 });

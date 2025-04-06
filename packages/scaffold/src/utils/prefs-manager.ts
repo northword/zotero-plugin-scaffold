@@ -67,6 +67,10 @@ export class PrefsManager {
             throw new Error("Invalid prefs.js file - unsupported value type.");
           break;
 
+        case "TemplateLiteral":
+          value = arg2.expression.quasis[0]?.cooked ?? "";
+          break;
+
         default:
           throw new Error("Invalid prefs.js file - unsupported value type.");
       }
