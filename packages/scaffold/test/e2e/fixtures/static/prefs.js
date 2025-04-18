@@ -10,3 +10,4 @@ pref("fake-number", "123");
 pref("templateLiteral", `{
   "key": "value"  
 }`);
+pref("long-number", 2222222222222222);
