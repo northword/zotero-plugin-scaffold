@@ -13,6 +13,7 @@ declare namespace _ZoteroTypes {
       "break-line": string;
       "fake-number": string;
       "templateLiteral": string;
+      "long-number": number;
     };
   }
 }

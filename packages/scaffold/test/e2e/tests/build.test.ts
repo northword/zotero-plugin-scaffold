@@ -26,7 +26,11 @@ describe("#build", () => {
     }
   });
 
-  it("should output correct warnings", () => {
+  it("should output correct warnings - ftl", () => {
     expect(stdout.toString()).toEqual(expect.stringContaining("meaasge-3"));
+  });
+
+  it("should output correct warnings - pref long int number", () => {
+    expect(stdout.toString()).toEqual(expect.stringContaining("is a number, but is more than 4 bytes, which can be problematic on some OS."));
   });
 });
