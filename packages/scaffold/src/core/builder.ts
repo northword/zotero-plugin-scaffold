@@ -12,6 +12,7 @@ import { copy, emptyDir, move, outputFile, outputJSON, readJSON, writeJson } fro
 import styleText from "node-style-text";
 import { glob } from "tinyglobby";
 import { generateHash } from "../utils/crypto.js";
+import { is32BitNumber } from "../utils/number.js";
 import { PrefsManager, renderPluginPrefsDts } from "../utils/prefs-manager.js";
 import { dateFormat, replaceInFile, toArray } from "../utils/string.js";
 import { Base } from "./base.js";
@@ -267,6 +268,22 @@ export default class Build extends Base {
     await prefsManager.read(prefsFilePath);
     const prefsWithPrefix = prefsManager.getPrefsWithPrefix(prefix);
     const prefsWithoutPrefix = prefsManager.getPrefsWithoutPrefix(prefix);
+
+    // Checks if the preference value for the number type is less than 32 bits.
+    // Since the underlying Preference is implemented in C++,
+    // although firefox specifies the preference value for the number type as long int,
+    // the length of long int is different on each operating system.
+    // e.g. on Windows x64:
+    // Zotero Prefs.set("extensions.test.number" 22222222222222222)
+    // zotero.Prefs.get("extensions.test.number") // return 1383176888 but expected 22222222222222222
+    const prefs = prefsManager.getPrefs();
+    Object.entries(prefs).forEach(([key, value]) => {
+      if (typeof value === "number") {
+        if (!is32BitNumber(value)) {
+          this.logger.warn(`Pref key '${styleText.blue(key)}' is a number, but is more than 4 bytes, which can be problematic on some OS.`);
+        }
+      }
+    });
 
     // Generate prefs.d.ts
     if (dts) {
