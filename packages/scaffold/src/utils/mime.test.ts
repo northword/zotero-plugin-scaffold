@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getMimeTypeByFileName } from "../../src/utils/mime.js";
+import { getMimeTypeByFileName } from "./mime.js";
 
 describe("mime", () => {
   describe("getMimeTypeByFileName", () => {

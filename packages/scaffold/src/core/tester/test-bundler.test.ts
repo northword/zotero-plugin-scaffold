@@ -1,6 +1,6 @@
 import type { Metafile } from "esbuild";
 import { describe, expect, it } from "vitest";
-import { findImpactedTests } from "../../src/core/tester/test-bundler.js";
+import { findImpactedTests } from "./test-bundler.js";
 
 describe("findImpactedTests", () => {
   const mockMetafileOutputs = {

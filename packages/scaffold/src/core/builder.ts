@@ -1,22 +1,19 @@
 import type { Context } from "../types/index.js";
 import type { Manifest } from "../types/manifest.js";
 import type { UpdateJSON } from "../types/update-json.js";
-import { existsSync } from "node:fs";
-import { readFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { resolve } from "node:path";
 import process from "node:process";
 import AdmZip from "adm-zip";
 import { toMerged } from "es-toolkit";
 import { build as buildAsync } from "esbuild";
-import { copy, emptyDir, outputFile, outputJSON, readJSON, writeJson } from "fs-extra/esm";
+import { copy, emptyDir, outputJSON, readJSON, writeJson } from "fs-extra/esm";
 import styleText from "node-style-text";
 import { glob } from "tinyglobby";
 import { generateHash } from "../utils/crypto.js";
-import { is32BitNumber } from "../utils/number.js";
-import { PrefsManager, renderPluginPrefsDts } from "../utils/prefs-manager.js";
 import { dateFormat, replaceInFile, toArray } from "../utils/string.js";
 import { Base } from "./base.js";
 import buildLocale from "./builder/fluent.js";
+import buildPrefs from "./builder/prefs.js";
 
 export default class Build extends Base {
   private buildTime: string;
@@ -150,83 +147,8 @@ export default class Build extends Base {
   }
 
   async preparePrefs() {
-    const { dts, prefixPrefKeys, prefix } = this.ctx.build.prefs;
     const { dist } = this.ctx;
-
-    // Skip if not enable this builder
-    if (!prefixPrefKeys && !dts)
-      return;
-
-    // Skip if no prefs.js
-    const prefsFilePath = join(dist, "addon", "prefs.js");
-    if (!existsSync(prefsFilePath))
-      return;
-
-    // Parse prefs.js
-    const prefsManager = new PrefsManager("pref");
-    await prefsManager.read(prefsFilePath);
-    const prefsWithPrefix = prefsManager.getPrefsWithPrefix(prefix);
-    const prefsWithoutPrefix = prefsManager.getPrefsWithoutPrefix(prefix);
-
-    // Checks if the preference value for the number type is less than 32 bits.
-    // Since the underlying Preference is implemented in C++,
-    // although firefox specifies the preference value for the number type as long int,
-    // the length of long int is different on each operating system.
-    // e.g. on Windows x64:
-    // Zotero Prefs.set("extensions.test.number" 22222222222222222)
-    // zotero.Prefs.get("extensions.test.number") // return 1383176888 but expected 22222222222222222
-    const prefs = prefsManager.getPrefs();
-    Object.entries(prefs).forEach(([key, value]) => {
-      if (typeof value === "number") {
-        if (!is32BitNumber(value)) {
-          this.logger.warn(`Pref key '${styleText.blue(key)}' is a number, but is more than 4 bytes, which can be problematic on some OS.`);
-        }
-      }
-    });
-
-    // Generate prefs.d.ts
-    if (dts) {
-      const dtsContent = renderPluginPrefsDts(prefsWithoutPrefix);
-      await outputFile(dts, dtsContent, "utf-8");
-    }
-
-    // Generate prefixed prefs.js
-    if (prefixPrefKeys) {
-      prefsManager.clearPrefs();
-      prefsManager.setPrefs(prefsWithPrefix);
-      await prefsManager.write(prefsFilePath);
-    }
-
-    // Prefix pref keys in xhtml
-    if (prefixPrefKeys) {
-      const HTML_PREFERENCE_PATTERN = /preference="(\S*)"/g;
-      const xhtmlPaths = await glob(`${dist}/addon/**/*.xhtml`);
-      await Promise.all(xhtmlPaths.map(async (path) => {
-        let content = await readFile(path, "utf-8");
-        const matchs = [...content.matchAll(HTML_PREFERENCE_PATTERN)];
-        for (const match of matchs) {
-          const [matched, key] = match;
-          if (key.startsWith(prefix)) {
-            this.logger.debug(`Pref key '${styleText.blue(key)}' is already starts with '${prefix}', skip prefixing it.`);
-            continue;
-          }
-          else if (key.startsWith("extensions.")) {
-            this.logger.warn(`Pref key '${styleText.blue(key)}' in ${styleText.gray(path)} starts with 'extensions.' but not '${styleText.blue(prefix)}', skip prefixing it.`);
-            continue;
-          }
-          else if (!(key in prefsWithPrefix) && !(key in prefsWithoutPrefix)) {
-            this.logger.warn(`Pref key '${styleText.blue(key)}' in ${styleText.gray(path)} is not found in prefs.js, skip prefixing it.`);
-            continue;
-          }
-          else {
-            const prefixed = `${prefix}.${key}`;
-            this.logger.debug(`Pref key '${styleText.blue(key)}' in ${styleText.gray(path)} is prefixed to ${styleText.blue(prefixed)}.`);
-            content = content.replace(matched, `preference="${prefixed}"`);
-          }
-        }
-        await outputFile(path, content, "utf-8");
-      }));
-    }
+    await buildPrefs(dist, this.ctx.build.prefs);
   }
 
   esbuild() {

@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { logger } from "../../utils/logger.js";
 import {
   FluentManager,
   MessageManager,
   processHTMLFile,
-} from "../../src/core/builder/fluent.js";
-import { logger } from "../../src/utils/logger.js";
+} from "./fluent.js";
 
-vi.mock("../../src/utils/logger.js");
+vi.mock("../../utils/logger.js");
 
 describe("fluent-manager", () => {
   let manager: FluentManager;
