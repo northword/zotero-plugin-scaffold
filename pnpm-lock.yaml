@@ -92,6 +92,9 @@ importers:
 
   packages/scaffold:
     dependencies:
+      '@fluent/syntax':
+        specifier: ^0.19.0
+        version: 0.19.0
       '@swc/core':
         specifier: ^1.11.16
         version: 1.11.16
@@ -746,6 +749,10 @@ packages:
 
   '@floating-ui/utils@0.2.9':
     resolution: {integrity: sha512-MDWhGtE+eHw5JW7lq4qhc5yRLS11ERl1c7Z6Xd0a58DozHES6EnNNwUWbMiG4J9Cgj053Bhk8zvlhFYKVhULwg==}
+
+  '@fluent/syntax@0.19.0':
+    resolution: {integrity: sha512-5D2qVpZrgpjtqU4eNOcWGp1gnUCgjfM+vKGE2y03kKN6z5EBhtx0qdRFbg8QuNNj8wXNoX93KJoYb+NqoxswmQ==}
+    engines: {node: '>=14.0.0', npm: '>=7.0.0'}
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -4449,6 +4456,8 @@ snapshots:
       '@floating-ui/core': 1.6.9
 
   '@floating-ui/utils@0.2.9': {}
+
+  '@fluent/syntax@0.19.0': {}
 
   '@humanfs/core@0.19.1': {}
 

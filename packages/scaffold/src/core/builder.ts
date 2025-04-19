@@ -2,13 +2,13 @@ import type { Context } from "../types/index.js";
 import type { Manifest } from "../types/manifest.js";
 import type { UpdateJSON } from "../types/update-json.js";
 import { existsSync } from "node:fs";
-import { readFile, writeFile } from "node:fs/promises";
-import { basename, dirname, join, resolve } from "node:path";
+import { readFile } from "node:fs/promises";
+import { join, resolve } from "node:path";
 import process from "node:process";
 import AdmZip from "adm-zip";
-import { escapeRegExp, toMerged } from "es-toolkit";
+import { toMerged } from "es-toolkit";
 import { build as buildAsync } from "esbuild";
-import { copy, emptyDir, move, outputFile, outputJSON, readJSON, writeJson } from "fs-extra/esm";
+import { copy, emptyDir, outputFile, outputJSON, readJSON, writeJson } from "fs-extra/esm";
 import styleText from "node-style-text";
 import { glob } from "tinyglobby";
 import { generateHash } from "../utils/crypto.js";
@@ -16,6 +16,7 @@ import { is32BitNumber } from "../utils/number.js";
 import { PrefsManager, renderPluginPrefsDts } from "../utils/prefs-manager.js";
 import { dateFormat, replaceInFile, toArray } from "../utils/string.js";
 import { Base } from "./base.js";
+import buildLocale from "./builder/fluent.js";
 
 export default class Build extends Base {
   private buildTime: string;
@@ -145,109 +146,7 @@ export default class Build extends Base {
 
   async prepareLocaleFiles() {
     const { dist, namespace, build } = this.ctx;
-
-    const ignores = toArray(build.fluent.ignore);
-
-    // https://regex101.com/r/lQ9x5p/1
-    // eslint-disable-next-line regexp/no-super-linear-backtracking
-    const FTL_MESSAGE_PATTERN = /^(?<message>[a-z]\S*)( *= *)(?<pattern>.*)$/gim;
-    const HTML_DATAI10NID_PATTERN = new RegExp(`(data-l10n-id)="((?!${namespace})\\S*)"`, "g");
-
-    // Get locale names
-    const localePaths = await glob(`${dist}/addon/locale/*`, { onlyDirectories: true });
-    const localeNames = localePaths.map(locale => basename(locale));
-    this.logger.debug(`Locale names:", ${localeNames}`);
-
-    const allMessages = new Set<string>();
-    const messagesByLocale = new Map<string, Set<string>>();
-
-    for (const localeName of localeNames) {
-      // Prefix Fluent messages in each ftl, add message to set.
-      const localeMessages = new Set<string>();
-      const ftlPaths = await glob(`${dist}/addon/locale/${localeName}/**/*.ftl`);
-
-      await Promise.all(ftlPaths.map(async (ftlPath: string) => {
-        let ftlContent = await readFile(ftlPath, "utf-8");
-        const matches = [...ftlContent.matchAll(FTL_MESSAGE_PATTERN)];
-
-        for (const match of matches) {
-          const [matched, message, _pattern] = match;
-          if (message) {
-            localeMessages.add(message);
-            allMessages.add(message);
-            ftlContent = ftlContent.replace(new RegExp(`^${escapeRegExp(matched)}`, "gm"), `${namespace}-${matched}`);
-          }
-        }
-
-        // If prefixFluentMessages===true, we save the changed ftl file,
-        // otherwise discard the changes
-        if (build.fluent.prefixFluentMessages)
-          await writeFile(ftlPath, ftlContent);
-
-        // rename *.ftl to addonRef-*.ftl
-        if (build.fluent.prefixLocaleFiles === true) {
-          await move(ftlPath, `${dirname(ftlPath)}/${namespace}-${basename(ftlPath)}`);
-          this.logger.debug(`FTL file '${ftlPath}' is renamed to '${namespace}-${basename(ftlPath)}'.`);
-        }
-      }));
-
-      messagesByLocale.set(localeName, localeMessages);
-    }
-
-    // Prefix Fluent messages in xhtml
-    const messagesInHTML = new Set<string>();
-    const htmlPaths = await glob([
-      `${dist}/addon/**/*.xhtml`,
-      `${dist}/addon/**/*.html`,
-    ]);
-    await Promise.all(htmlPaths.map(async (htmlPath) => {
-      let htmlContent = await readFile(htmlPath, "utf-8");
-      const matches = [...htmlContent.matchAll(HTML_DATAI10NID_PATTERN)];
-
-      for (const match of matches) {
-        const [matched, attrKey, attrVal] = match;
-
-        if (ignores.includes(attrVal)) {
-          this.logger.debug(`HTML data-i10n-id ${attrVal} is in ignore list, skip to namespace`);
-          continue;
-        }
-
-        if (!allMessages.has(attrVal)) {
-          this.logger.warn(`HTML data-i10n-id '${styleText.blue(attrVal)}' in ${styleText.gray(htmlPath)} do not exist in any FTL message, skip to namespace it.`);
-          continue;
-        }
-
-        messagesInHTML.add(attrVal);
-        const namespacedAttr = `${namespace}-${attrVal}`;
-        htmlContent = htmlContent.replace(matched, `${attrKey}="${namespacedAttr}"`);
-        this.logger.debug(`HTML data-i10n-id '${styleText.blue(attrVal)}' in ${styleText.gray(htmlPath)} is namespaced to ${styleText.blue(namespacedAttr)}.`);
-      }
-
-      if (build.fluent.prefixFluentMessages)
-        await writeFile(htmlPath, htmlContent);
-    }));
-
-    // Check miss 1: Cross check in diff locale - seems no need
-    // messagesByLocale.forEach((messageInThisLang, lang) => {
-    //   // Needs Nodejs 22
-    //   const diff = allMessages.difference(messageInThisLang);
-    //   if (diff.size)
-    //     this.logger.warn(`FTL messages '${Array.from(diff).join(", ")}' don't exist the locale '${lang}'`);
-    // });
-
-    // Check miss 2: Check ids in HTML but not in ftl
-    messagesInHTML.forEach((messageInHTML) => {
-      if (ignores.includes(messageInHTML))
-        return;
-
-      const missingLocales = [...messagesByLocale.entries()]
-        .filter(([_, messages]) => !messages.has(messageInHTML))
-        .map(([locale]) => locale);
-
-      if (missingLocales.length > 0) {
-        this.logger.warn(`HTML data-l10n-id '${styleText.blue(messageInHTML)}' is missing in locales: ${missingLocales.join(", ")}.`);
-      }
-    });
+    await buildLocale(dist, namespace, build.fluent);
   }
 
   async preparePrefs() {

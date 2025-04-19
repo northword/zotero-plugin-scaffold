@@ -69,6 +69,7 @@
     }
   },
   "dependencies": {
+    "@fluent/syntax": "^0.19.0",
     "@swc/core": "^1.11.16",
     "adm-zip": "^0.5.16",
     "bumpp": "^10.1.0",
