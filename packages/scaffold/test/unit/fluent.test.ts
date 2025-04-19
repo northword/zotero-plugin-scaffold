@@ -80,7 +80,7 @@ describe("processHTMLFile", () => {
 
     expect(processedContent).toBe("<div data-l10n-id=\"missingMessage\"></div>");
     expect(foundMessages.includes("missingMessage")).toBe(true);
-    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("Missing FTL:"));
+    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("does not exist in any locale, skip renaming it"));
   });
 
   it("should not modify the content if no matching messages are found", () => {
@@ -135,7 +135,7 @@ describe("message-manager", () => {
     messageManager.validateMessages();
 
     expect(logger.warn).toHaveBeenCalledWith(
-      expect.stringMatching(/Missing message: .*goodbye.* in locale: fr/),
+      expect.stringMatching(/I10N id .*goodbye.* missing in locale: fr/),
     );
   });
 

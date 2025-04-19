@@ -172,17 +172,25 @@ export class MessageManager {
     }
   }
 
-  // Validate that all HTML messages exist in all FTL locales
   validateMessages() {
+    // Check miss 1: Cross check in diff locale - seems no need
+    // messagesByLocale.forEach((messageInThisLang, lang) => {
+    //   // Needs Nodejs 22
+    //   const diff = allMessages.difference(messageInThisLang);
+    //   if (diff.size)
+    //     this.logger.warn(`FTL messages '${Array.from(diff).join(", ")}' don't exist the locale '${lang}'`);
+    // });
+
+    // Check miss 2: Check ids in HTML but not in ftl
     this.htmlMessages.forEach((msg) => {
       if (this.ignores.includes(msg))
         return;
 
-      this.ftlMessages.forEach((messages, locale) => {
-        if (!messages.has(msg)) {
-          logger.warn(`Missing message: ${styleText.blue(msg)} in locale: ${locale}`);
-        }
-      });
+      const missingLocales = [...this.ftlMessages.entries()]
+        .filter(([_, messages]) => !messages.has(msg))
+        .map(([locale]) => locale);
+      if (missingLocales.length > 0)
+        logger.warn(`I10N id ${styleText.blue(msg)} missing in locale: ${missingLocales.join(", ")}`);
     });
   }
 
@@ -223,7 +231,7 @@ export function processHTMLFile(
     }
 
     if (!allMessages.has(id)) {
-      logger.warn(`Missing FTL: ${styleText.blue(id)} in ${styleText.gray(filePath)}`);
+      logger.warn(`I10N id ${styleText.blue(id)} in path ${styleText.gray(filePath)} does not exist in any locale, skip renaming it.`);
       return match;
     }
 
