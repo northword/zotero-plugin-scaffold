@@ -10,14 +10,9 @@ vi.mock("../../src/utils/logger.js");
 
 describe("fluent-manager", () => {
   let manager: FluentManager;
-  const input = `
-welcome = Welcome
-about = About { welcome }
-`;
 
   beforeEach(() => {
     manager = new FluentManager();
-    manager.parse(input);
   });
 
   afterEach(() => {
@@ -26,6 +21,10 @@ about = About { welcome }
 
   describe("getMessages()", () => {
     it("should return all message IDs", () => {
+      manager.parse(`
+welcome = Welcome
+about = About { welcome }
+`);
       const messages = manager.getMessages();
       expect(messages).toEqual(["welcome", "about"]);
     });
@@ -33,10 +32,16 @@ about = About { welcome }
 
   describe("prefix()", () => {
     it("should prefix message IDs correctly", () => {
+      manager.parse(`
+welcome = Welcome
+about = About { welcome }
+test-prefixed = Test { welcome }
+`);
       manager.prefixMessages("test");
       expect(manager.serialize()).toBe([
         "test-welcome = Welcome",
         "test-about = About { test-welcome }",
+        "test-prefixed = Test { test-welcome }",
         "",
       ]
         .join("\n"));
