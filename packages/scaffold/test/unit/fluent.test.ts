@@ -1,41 +1,46 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  FluentManager,
   MessageManager,
-  processFTLFile,
   processHTMLFile,
-  transformFluent,
 } from "../../src/core/builder/fluent.js";
 import { logger } from "../../src/utils/logger.js";
 
 vi.mock("../../src/utils/logger.js");
 
-describe("transformFluent()", () => {
+describe("fluent-manager", () => {
+  let manager: FluentManager;
   const input = `
 welcome = Welcome
 about = About { welcome }
 `;
 
-  it("should correctly transform message IDs", () => {
-    const result = transformFluent(input, "test");
-    expect(result).toMatch(/test-welcome = Welcome/);
-    expect(result).toMatch(/test-about = About \{ test-welcome \}/);
-  });
-});
-
-describe("processFTLFile()", () => {
-  it("should keep content unchanged when prefixing is disabled", () => {
-    const input = "message = Hello";
-    const { messages, processedContent } = processFTLFile(input, "test", false);
-
-    expect(messages).toEqual(["message"]);
-    expect(processedContent).toBe(input);
+  beforeEach(() => {
+    manager = new FluentManager();
+    manager.parse(input);
   });
 
-  it("should handle empty content correctly", () => {
-    const { messages, processedContent } = processFTLFile("", "test", true);
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
 
-    expect(messages).toEqual([]);
-    expect(processedContent).toBe("");
+  describe("getMessages()", () => {
+    it("should return all message IDs", () => {
+      const messages = manager.getMessages();
+      expect(messages).toEqual(["welcome", "about"]);
+    });
+  });
+
+  describe("prefix()", () => {
+    it("should prefix message IDs correctly", () => {
+      manager.prefixMessages("test");
+      expect(manager.serialize()).toBe([
+        "test-welcome = Welcome",
+        "test-about = About { test-welcome }",
+        "",
+      ]
+        .join("\n"));
+    });
   });
 });
 

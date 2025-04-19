@@ -20,22 +20,21 @@ export default async function buildLocale(
 
   // Process FTL files and add messages to the manager
   await Promise.all(localeNames.map(async (locale) => {
-    const ftlPaths = await glob(`${dist}/addon/locale/${locale}/**/*.ftl`);
-    await Promise.all(ftlPaths.map(async (ftlPath) => {
-      const originalContent = await readFile(ftlPath, "utf-8");
-      const { messages, processedContent } = processFTLFile(originalContent, namespace, options.prefixFluentMessages);
-
-      // Add FTL messages for the current locale
-      messageManager.addMessages(locale, messages);
+    const paths = await glob(`${dist}/addon/locale/${locale}/**/*.ftl`);
+    await Promise.all(paths.map(async (path) => {
+      const fm = new FluentManager();
+      await fm.read(path);
+      messageManager.addMessages(locale, fm.getMessages());
 
       if (options.prefixFluentMessages) {
-        await writeFile(ftlPath, processedContent);
+        fm.prefixMessages(namespace);
+        await fm.write(path);
       }
 
       if (options.prefixLocaleFiles) {
-        const newPath = `${dirname(ftlPath)}/${namespace}-${basename(ftlPath)}`;
-        await move(ftlPath, newPath);
-        logger.debug(`Renamed FTL: ${ftlPath} → ${newPath}`);
+        const newPath = `${dirname(path)}/${namespace}-${basename(path)}`;
+        await move(path, newPath);
+        logger.debug(`Renamed FTL: ${path} → ${newPath}`);
       }
     }));
   }));
@@ -62,6 +61,91 @@ export default async function buildLocale(
 
   // Validate that all HTML messages exist in all locales
   messageManager.validateMessages();
+}
+
+async function getLocales(dist: string): Promise<string[]> {
+  const localePaths = await glob(`${dist}/addon/locale/*`, { onlyDirectories: true });
+  return localePaths.map(p => basename(p));
+}
+
+export class FluentManager {
+  private source?: string;
+  private resource?: Resource;
+  public readonly messages: string[] = [];
+
+  constructor() {}
+
+  // Parse Fluent source into an AST and extract messages
+  public parse(source: string) {
+    this.source = source;
+    this.resource = parse(source, {});
+  }
+
+  // Read a file, parse its content, and extract messages
+  public async read(path: string) {
+    const content = await readFile(path, "utf-8");
+    this.parse(content);
+  }
+
+  // Extract message IDs from the parsed resource
+  public getMessages(): string[] {
+    if (!this.resource) {
+      throw new Error("Resource must be parsed first.");
+    }
+    this.messages.length = 0; // Clear the previous messages
+    this.messages.push(
+      ...this.resource.body.filter(entry => entry.type === "Message")
+        .map(message => message.id.name),
+    );
+    return this.messages;
+  }
+
+  // Apply namespace prefix to message IDs in the resource
+  public prefixMessages(namespace: string) {
+    if (!this.resource) {
+      throw new Error("Resource must be parsed before applying prefix.");
+    }
+    new FluentTransformer(namespace).genericVisit(this.resource);
+  }
+
+  // Serialize the resource back into a string
+  public serialize(): string {
+    if (!this.resource) {
+      throw new Error("Resource not parsed. Cannot serialize.");
+    }
+    return serialize(this.resource, {});
+  }
+
+  // Write the serialized resource to a file
+  public async write(path: string) {
+    const result = this.serialize();
+    if (result !== this.source)
+      await writeFile(path, this.serialize());
+  }
+}
+// Custom Fluent AST transformer to apply message ID prefix
+class FluentTransformer extends Transformer {
+  constructor(private readonly prefix: string | false) {
+    super();
+  }
+
+  private needsPrefix(name: string): boolean {
+    return !!this.prefix && !name.startsWith(this.prefix);
+  }
+
+  visitMessage(node: Message): BaseNode {
+    if (this.needsPrefix(node.id.name)) {
+      node.id.name = `${this.prefix}-${node.id.name}`;
+    }
+    return this.genericVisit(node);
+  }
+
+  visitMessageReference(node: MessageReference): BaseNode {
+    if (this.needsPrefix(node.id.name)) {
+      node.id.name = `${this.prefix}-${node.id.name}`;
+    }
+    return this.genericVisit(node);
+  }
 }
 
 export class MessageManager {
@@ -119,23 +203,6 @@ export class MessageManager {
   }
 }
 
-// Step 1: Extract all locale folder names
-async function getLocales(dist: string): Promise<string[]> {
-  const localePaths = await glob(`${dist}/addon/locale/*`, { onlyDirectories: true });
-  return localePaths.map(p => basename(p));
-}
-
-// Parse and optionally prefix messages in an FTL file
-export function processFTLFile(
-  content: string,
-  namespace: string,
-  shouldPrefix: boolean,
-) {
-  const messages = extractMessages(content);
-  const processed = shouldPrefix ? transformFluent(content, namespace) : content;
-  return { messages, processedContent: processed };
-}
-
 // Scan HTML content for l10n references and apply namespace prefix
 export function processHTMLFile(
   content: string,
@@ -164,52 +231,4 @@ export function processHTMLFile(
   });
 
   return { processedContent: processed, foundMessages: [...foundMessages] };
-}
-
-// Fluent parsing and serialization helpers
-export function parseFluent(source: string): Resource {
-  return parse(source, {});
-}
-
-export function extractMessages(source: string): string[] {
-  return parseFluent(source)
-    .body
-    .filter(entry => entry.type === "Message")
-    .map(message => message.id.name);
-}
-
-export function serializeFluent(resource: Resource): string {
-  return serialize(resource, {});
-}
-
-// Prefix Fluent message IDs using a transformer
-export function transformFluent(source: string, prefix: string | false): string {
-  const resource = parseFluent(source);
-  new FluentTransformer(prefix).genericVisit(resource);
-  return serializeFluent(resource);
-}
-
-// Custom Fluent AST transformer to apply message ID prefix
-class FluentTransformer extends Transformer {
-  constructor(private readonly prefix: string | false) {
-    super();
-  }
-
-  private needsPrefix(name: string): boolean {
-    return !!this.prefix && !name.startsWith(this.prefix);
-  }
-
-  visitMessage(node: Message): BaseNode {
-    if (this.needsPrefix(node.id.name)) {
-      node.id.name = `${this.prefix}-${node.id.name}`;
-    }
-    return this.genericVisit(node);
-  }
-
-  visitMessageReference(node: MessageReference): BaseNode {
-    if (this.needsPrefix(node.id.name)) {
-      node.id.name = `${this.prefix}-${node.id.name}`;
-    }
-    return this.genericVisit(node);
-  }
 }
