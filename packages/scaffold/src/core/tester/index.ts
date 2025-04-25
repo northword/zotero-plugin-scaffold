@@ -31,7 +31,7 @@ export default class Test extends Base {
     }
   }
 
-  async run() {
+  async run(): Promise<void> {
     // Handle interrupt signal (Ctrl+C) to gracefully terminate Zotero process
     // Must be placed at the top to prioritize registration of events to prevent web-ext interference
     process.on("SIGINT", this.exit);
@@ -68,7 +68,7 @@ export default class Test extends Base {
     }
   }
 
-  async watch() {
+  async watch(): Promise<void> {
     const source = toArray(this.ctx.source).map(p => resolve(p));
     const tests = toArray(this.ctx.test.entries).map(p => resolve(p));
     function isSource(_path: string) {
@@ -107,7 +107,7 @@ export default class Test extends Base {
     );
   }
 
-  async startZotero() {
+  async startZotero(): Promise<void> {
     if (this.ctx.test.headless) {
       await prepareHeadless();
     }

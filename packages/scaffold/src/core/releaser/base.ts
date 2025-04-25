@@ -12,7 +12,7 @@ export abstract class ReleaseBase extends Base {
 
   abstract run(): Context | Promise<Context> | void | Promise<void>;
 
-  checkFiles() {
+  checkFiles(): void {
     const { dist } = this.ctx;
 
     if (globSync(`${dist}/*.xpi`).length === 0) {

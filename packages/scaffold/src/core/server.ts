@@ -19,7 +19,7 @@ export default class Serve extends Base {
     this.builder = new Build(ctx);
   }
 
-  async run() {
+  async run(): Promise<void> {
     // Handle interrupt signal (Ctrl+C) to gracefully terminate Zotero process
     // Must be placed at the top to prioritize registration of events to prevent web-ext interference
     process.on("SIGINT", this.exit);
@@ -65,7 +65,7 @@ export default class Serve extends Base {
   /**
    * watch source dir and build when file changed
    */
-  async watch() {
+  async watch(): Promise<void> {
     const { source } = this.ctx;
 
     watch(
@@ -90,14 +90,14 @@ export default class Serve extends Base {
     );
   }
 
-  async reload() {
+  async reload(): Promise<void> {
     this.logger.tip("Reloading...");
     await this.runner?.reloadAllPlugins();
     await this.ctx.hooks.callHook("serve:onReloaded", this.ctx);
   }
 
   // Use arrow functions to keep `this`
-  exit = () => {
+  exit = (): never => {
     this.logger.info("Server shutdown by user request.");
     this.runner?.exit();
     this.ctx.hooks.callHook("serve:exit", this.ctx);
@@ -109,7 +109,7 @@ export default class Serve extends Base {
     process.exit();
   };
 
-  get zoteroBinPath() {
+  get zoteroBinPath(): string {
     if (this._zoteroBinPath)
       return this._zoteroBinPath;
 
@@ -120,11 +120,11 @@ export default class Serve extends Base {
     return this._zoteroBinPath;
   }
 
-  get profilePath() {
+  get profilePath(): string | undefined {
     return process.env.ZOTERO_PLUGIN_PROFILE_PATH;
   }
 
-  get dataDir() {
+  get dataDir(): string | undefined {
     return process.env.ZOTERO_PLUGIN_DATA_DIR;
   }
 }

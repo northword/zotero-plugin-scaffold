@@ -18,7 +18,7 @@ export default class Release extends Base {
    * if is CI, do not bump version, do not run git, create release (tag is `v${version}`) and upload xpi,
    *    then, create or update release (tag is "release"), update `update.json`.
    */
-  async run() {
+  async run(): Promise<void> {
     const t = new Date();
 
     const { release, version } = this.ctx;
@@ -93,7 +93,7 @@ export default class Release extends Base {
     });
   }
 
-  getGitLog() {
+  getGitLog(): string {
     const currentTag = this.ctx.release.bumpp.tag;
 
     /**
@@ -151,7 +151,7 @@ export default class Release extends Base {
       return execSync(`git log --pretty=format:"* %s (%h)" ${currentTag}`).toString().trim();
   }
 
-  getFilteredChangelog(rawLog: string) {
+  getFilteredChangelog(rawLog: string): string {
     const commitMessage = this.ctx.release.bumpp.commit;
     const filterRegex = new RegExp(escapeRegExp(commitMessage));
 
@@ -166,7 +166,7 @@ export default class Release extends Base {
     return filteredLog;
   }
 
-  async getChangelog() {
+  async getChangelog(): Promise<string> {
     let changelog: string;
     const changelogConfig = this.ctx.release.changelog;
     if (typeof changelogConfig == "function") {
@@ -197,7 +197,7 @@ export default class Release extends Base {
     return false;
   }
 
-  get resolvedCommitMessage() {
+  get resolvedCommitMessage(): string {
     return this.ctx.release.bumpp.commit.replace("%s", this.ctx.version);
   }
 }

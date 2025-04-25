@@ -50,7 +50,9 @@
   },
   "scripts": {
     "dev": "unbuild --stub",
-    "build": "tsc --noEmit && unbuild",
+    "build": "unbuild",
+    "build:unbuild": "unbuild",
+    "build:tsdown": "tsdown",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "publishConfig": {

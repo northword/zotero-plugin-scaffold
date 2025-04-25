@@ -11,7 +11,7 @@ export function watch(
     onAdd?: (path: string, stats: Stats) => any | Promise<any>;
     onError?: (err: unknown) => any;
   },
-) {
+): void {
   const watcher = chokidar.watch(source, {
     ignored: /(^|[/\\])\../, // ignore dotfiles
     persistent: true,

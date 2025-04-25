@@ -1,3 +1,4 @@
+import type { BuildOptions, BuildResult } from "esbuild";
 import type { Context } from "../types/index.js";
 import type { Manifest } from "../types/manifest.js";
 import type { UpdateJSON } from "../types/update-json.js";
@@ -28,7 +29,7 @@ export default class Build extends Base {
   /**
    * Default build runner
    */
-  async run() {
+  async run(): Promise<void> {
     const { dist, version } = this.ctx;
 
     const t = new Date();
@@ -79,7 +80,7 @@ export default class Build extends Base {
   /**
    * Copys files in `Config.build.assets` to `Config.dist`
    */
-  async makeAssets() {
+  async makeAssets(): Promise<void> {
     const { source, dist, build } = this.ctx;
     const { assets, define } = build;
 
@@ -113,7 +114,7 @@ export default class Build extends Base {
    * Override user's manifest
    *
    */
-  async makeManifest() {
+  async makeManifest(): Promise<void> {
     if (!this.ctx.build.makeManifest.enable)
       return;
 
@@ -141,17 +142,17 @@ export default class Build extends Base {
     outputJSON(`${dist}/addon/manifest.json`, data, { spaces: 2 });
   }
 
-  async prepareLocaleFiles() {
+  async prepareLocaleFiles(): Promise<void> {
     const { dist, namespace, build } = this.ctx;
     await buildLocale(dist, namespace, build.fluent);
   }
 
-  async preparePrefs() {
+  async preparePrefs(): Promise<void> {
     const { dist } = this.ctx;
     await buildPrefs(dist, this.ctx.build.prefs);
   }
 
-  esbuild() {
+  esbuild(): Promise<BuildResult<BuildOptions>[]> | undefined {
     const { dist, build: { esbuildOptions } } = this.ctx;
     const distAbsolute = resolve(dist);
 
@@ -178,7 +179,7 @@ export default class Build extends Base {
     );
   }
 
-  async makeUpdateJson() {
+  async makeUpdateJson(): Promise<void> {
     const { dist, xpiName, id, version, xpiDownloadLink, build } = this.ctx;
 
     const manifest = await readJSON(
@@ -225,7 +226,7 @@ export default class Build extends Base {
     );
   }
 
-  async pack() {
+  async pack(): Promise<void> {
     const { dist, xpiName } = this.ctx;
     const zip = new AdmZip();
     zip.addLocalFolder(`${dist}/addon`);

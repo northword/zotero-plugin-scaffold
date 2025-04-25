@@ -103,7 +103,7 @@ async function main() {
   // globalOpts = cli.optsWithGlobals();
 }
 
-export default async function mainWithErrorHandler() {
+export default async function mainWithErrorHandler(): Promise<void> {
   main()
     .then(() => {
       checkGitIgnore();
