@@ -3,14 +3,14 @@
   "type": "module",
   "version": "0.5.0",
   "private": "true",
-  "packageManager": "pnpm@10.7.1",
+  "packageManager": "pnpm@10.10.0",
   "scripts": {
     "dev": "vitepress dev src",
     "build": "vitepress build src",
     "preview": "vitepress preview src"
   },
   "devDependencies": {
-    "@shikijs/vitepress-twoslash": "^3.2.1",
+    "@shikijs/vitepress-twoslash": "^3.3.0",
     "vitepress": "^1.6.3",
     "zotero-plugin-scaffold": "workspace:^"
   }
