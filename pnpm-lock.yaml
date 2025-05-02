@@ -80,9 +80,6 @@ importers:
       '@eslint/config-inspector':
         specifier: ^1.0.2
         version: 1.0.2(eslint@9.25.1(jiti@2.4.2))
-      '@types/eslint-plugin-mocha':
-        specifier: ^10.4.0
-        version: 10.4.0(jiti@2.4.2)
       eslint-typegen:
         specifier: ^2.1.0
         version: 2.1.0(eslint@9.25.1(jiti@2.4.2))
@@ -1412,9 +1409,6 @@ packages:
 
   '@types/debug@4.1.12':
     resolution: {integrity: sha512-vIChWdVG3LG1SMxEvI/AK+FWJthlrqlTu7fbrlywTkkaONwk/UAGaULXRlf8vkzFBLVm0zkMdCquhL5aOjhXPQ==}
-
-  '@types/eslint-plugin-mocha@10.4.0':
-    resolution: {integrity: sha512-knOH7Y13tuK0gqQqiiSucMxF4R/LrbRJwCiDQEhfbktUGvf9xFBQ8TdpCUO1xK0EwafOssu7+KuxqFV1xOXOtQ==}
 
   '@types/estree@1.0.7':
     resolution: {integrity: sha512-w28IoSUCJpidD/TGviZwwMJckNESJZXFu7NBZ5YJ4mEUnNraUn9Pm8HSZm/jDF1pDWYKspWE7oVphigUPRakIQ==}
@@ -5288,13 +5282,6 @@ snapshots:
   '@types/debug@4.1.12':
     dependencies:
       '@types/ms': 2.1.0
-
-  '@types/eslint-plugin-mocha@10.4.0(jiti@2.4.2)':
-    dependencies:
-      '@types/eslint': eslint@9.25.1(jiti@2.4.2)
-    transitivePeerDependencies:
-      - jiti
-      - supports-color
 
   '@types/estree@1.0.7': {}
 
