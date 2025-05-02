@@ -227,6 +227,20 @@ export interface BuildConfig {
      * @default []
      */
     ignore: string[];
+    /**
+     * Generate i10n.d.ts form fluent messages.
+     *
+     * - false: disable
+     * - string: path of dts file
+     *
+     * 为 Fluent messages 生成类型声明文件。
+     *
+     * - false: 禁用
+     * - string：dts 文件路径
+     *
+     * @default 'typings/i10n.d.ts'
+     */
+    dts: string | false;
   };
   prefs: {
     /**
