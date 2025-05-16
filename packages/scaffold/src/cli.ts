@@ -1,3 +1,5 @@
+import type { Base } from "./core/base.js";
+import type { Context, OverrideConfig } from "./types/index.js";
 import process from "node:process";
 import { Command } from "commander";
 import pkg from "../package.json" with { type: "json" };
@@ -26,11 +28,11 @@ async function main() {
     .description("Build the plugin")
     .option("--dev", "Builds the plugin in dev mode")
     .option("--dist <dir>", "The relative path for the new output directory (default: build)")
-    .action((options) => {
+    .action(async (options) => {
       process.env.NODE_ENV = options.dev ? "development" : "production";
-      Config.loadConfig({
+      await runCommand(Build, {
         dist: options.dist,
-      }).then(ctx => new Build(ctx).run());
+      });
     });
 
   cli
@@ -45,8 +47,8 @@ async function main() {
     //   "--only-start",
     //   "skip building website before deploy it (default: false)",
     // )
-    .action((_options) => {
-      Config.loadConfig({}).then(ctx => new Serve(ctx).run());
+    .action(async (_options) => {
+      await runCommand(Serve, {});
     });
 
   cli.command("test")
@@ -54,23 +56,20 @@ async function main() {
     .option("--abort-on-fail", "Abort the test suite on first failure")
     .option("--exit-on-finish", "Exit the test suite after all tests have run")
     .option("--no-watch", "Exit the test suite after all tests have run")
-    .action((options) => {
+    .action(async (options) => {
       process.env.NODE_ENV = "test";
-
-      Config.loadConfig({
+      await runCommand(Test, {
         test: {
           abortOnFail: options.abortOnFail,
           watch: !options.exitOnFinish && options.watch,
         },
-      }).then((ctx) => {
-        new Test(ctx).run();
       });
     });
 
   cli
     .command("create")
     .description("Create the plugin template")
-    .action((_options: any) => {
+    .action(async (_options: any) => {
       logger.error("The create not yet implemented");
       // new Create().run();
     });
@@ -83,7 +82,7 @@ async function main() {
     .option("-y, --yes", "Skip confirmation")
     .action(async (version, options) => {
       process.env.NODE_ENV = "production";
-      Config.loadConfig({
+      await runCommand(Release, {
         release: {
           bumpp: {
             release: version,
@@ -91,7 +90,7 @@ async function main() {
             confirm: !options.yes,
           },
         },
-      }).then(ctx => new Release(ctx).run());
+      });
     });
 
   cli.arguments("<command>").action((cmd) => {
@@ -100,7 +99,18 @@ async function main() {
   });
 
   cli.parse();
-  // globalOpts = cli.optsWithGlobals();
+}
+
+type Constructor<T> = new (ctx: Context) => T;
+
+export async function runCommand<T extends Base>(
+  CommandClass: Constructor<T>,
+  config: OverrideConfig,
+) {
+  const ctx = await Config.loadConfig(config);
+  const instance = new CommandClass(ctx);
+  process.on("SIGINT", instance.exit.bind(instance));
+  await instance.run();
 }
 
 export default async function mainWithErrorHandler() {

@@ -231,4 +231,6 @@ export default class Build extends Base {
     zip.addLocalFolder(`${dist}/addon`);
     zip.writeZip(`${dist}/${xpiName}.xpi`);
   }
+
+  exit() {}
 }

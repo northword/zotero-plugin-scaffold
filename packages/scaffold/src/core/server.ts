@@ -20,10 +20,6 @@ export default class Serve extends Base {
   }
 
   async run() {
-    // Handle interrupt signal (Ctrl+C) to gracefully terminate Zotero process
-    // Must be placed at the top to prioritize registration of events to prevent web-ext interference
-    process.on("SIGINT", this.exit);
-
     this.runner = new ZoteroRunner({
       binary: {
         path: this.zoteroBinPath,

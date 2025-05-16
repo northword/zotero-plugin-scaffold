@@ -32,10 +32,6 @@ export default class Test extends Base {
   }
 
   async run() {
-    // Handle interrupt signal (Ctrl+C) to gracefully terminate Zotero process
-    // Must be placed at the top to prioritize registration of events to prevent web-ext interference
-    process.on("SIGINT", this.exit);
-
     // Empty dirs
     await emptyDir(TESTER_PROFILE_DIR);
     await emptyDir(TESTER_DATA_DIR);
@@ -149,7 +145,7 @@ export default class Test extends Base {
       process.exit(0);
   };
 
-  private exit = (code?: string | number) => {
+  exit = (code?: string | number) => {
     if (code === "SIGINT") {
       this.logger.info("Tester shutdown by user request");
     }

@@ -197,6 +197,8 @@ export default class Release extends Base {
     return false;
   }
 
+  exit() {}
+
   get resolvedCommitMessage() {
     return this.ctx.release.bumpp.commit.replace("%s", this.ctx.version);
   }

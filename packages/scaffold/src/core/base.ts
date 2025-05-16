@@ -6,7 +6,9 @@ export abstract class Base {
     this.ctx = ctx;
   }
 
-  abstract run(): any;
+  abstract run(): void | Promise<void>;
+
+  abstract exit(): void;
 
   get logger() {
     return this.ctx.logger;
