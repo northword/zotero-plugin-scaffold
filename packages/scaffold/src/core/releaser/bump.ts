@@ -1,9 +1,9 @@
 import type { VersionBumpOptions, VersionBumpProgress } from "bumpp";
 import type { Context } from "../../types/index.js";
 import { ProgressEvent, versionBump } from "bumpp";
-import { Base } from "../base.js";
+import { ReleaseBase } from "./base.js";
 
-export default class Bump extends Base {
+export default class Bump extends ReleaseBase {
   constructor(ctx: Context) {
     super(ctx);
   }

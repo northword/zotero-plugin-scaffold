@@ -1,12 +1,12 @@
 import type { Context } from "../../types/index.js";
 import { isCI } from "std-env";
 import { globSync } from "tinyglobby";
-import { Base } from "../base.js";
 
-export abstract class ReleaseBase extends Base {
+export abstract class ReleaseBase {
   isCI: boolean;
+  ctx: Context;
   constructor(ctx: Context) {
-    super(ctx);
+    this.ctx = ctx;
     this.isCI = isCI;
   }
 
@@ -20,5 +20,7 @@ export abstract class ReleaseBase extends Base {
     }
   }
 
-  abstract get remote(): { owner: string; repo: string };
+  get logger() {
+    return this.ctx.logger;
+  }
 }

@@ -10,4 +10,6 @@ export default class Lint extends Base {
   run() {
     // webext.cmd.lint({});
   }
+
+  exit() {}
 }
