@@ -75,7 +75,7 @@
     "bumpp": "^10.1.1",
     "c12": "^3.0.4",
     "chokidar": "^4.0.3",
-    "commander": "^13.1.0",
+    "commander": "^14.0.0",
     "es-toolkit": "^1.38.0",
     "esbuild": "^0.25.5",
     "fs-extra": "^11.3.0",
