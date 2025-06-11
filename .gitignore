@@ -12,12 +12,8 @@ build
 **/.vitepress/cache
 
 # e2e
-packages/scaffold/test/e2e/fixtures/dist
-packages/scaffold/test/e2e/fixtures/.scaffold
-packages/scaffold/test/e2e/fixtures/typings
-packages/scaffold/test/e2e/fixtures/.gitignore
-!packages/scaffold/test/e2e/snap/dist
-
-# eslint-config
-.eslint-config-inspector
-packages/eslint-config/src/typegen.ts
+test/e2e/fixtures/dist
+test/e2e/fixtures/.scaffold
+test/e2e/fixtures/typings
+test/e2e/fixtures/.gitignore
+!test/e2e/snap/dist
