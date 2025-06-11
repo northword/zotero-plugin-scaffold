@@ -5,7 +5,7 @@ import process from "node:process";
 import { watch } from "../utils/watcher.js";
 import { ZoteroRunner } from "../utils/zotero-runner.js";
 import { Base } from "./base.js";
-import Build from "./builder.js";
+import Build from "./builder/index.js";
 
 export default class Serve extends Base {
   private builder: Build;
@@ -74,7 +74,7 @@ export default class Serve extends Base {
           await this.ctx.hooks.callHook("serve:onChanged", this.ctx, path);
 
           if (path.endsWith(".ts") || path.endsWith(".tsx")) {
-            await this.builder.esbuild();
+            await this.builder.bundle();
           }
           else {
             await this.builder.run();

@@ -8,7 +8,7 @@ import { toArray } from "../../utils/string.js";
 import { watch } from "../../utils/watcher.js";
 import { ZoteroRunner } from "../../utils/zotero-runner.js";
 import { Base } from "../base.js";
-import Build from "../builder.js";
+import Build from "../builder/index.js";
 import { prepareHeadless } from "./headless.js";
 import { TestHttpReporter } from "./http-reporter.js";
 import { TestBundler } from "./test-bundler.js";
