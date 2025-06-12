@@ -1,22 +1,4 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:recommended",
-    "schedule:monthly",
-    "group:allNonMajor",
-    ":dependencyDashboard",
-    ":prHourlyLimitNone",
-    ":prConcurrentLimitNone",
-    ":enableVulnerabilityAlerts"
-  ],
-  "labels": ["dependencies"],
-  "rangeStrategy": "bump",
-  "packageRules": [
-    {
-      "description": "Don't bump engines field in package.json",
-      "matchPackageNames": ["node"],
-      "matchDepTypes": ["engines"],
-      "rangeStrategy": "auto"
-    }
-  ]
+  "extends": ["github>zotero-plugin-dev/renovate-config"]
 }
