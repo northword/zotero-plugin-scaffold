@@ -113,7 +113,7 @@ export class TestBundler {
     // Because esbuild only support `*` and `**`，
     // so we need glob ourselves.
     // https://esbuild.github.io/api/#glob-style-entry-points
-    const entryPoints = (await Promise.all(testDirs.map(dir => glob(`${dir}/**/*.spec.{js,ts}`))))
+    const entryPoints = (await Promise.all(testDirs.map(dir => glob(`${dir}/**/*.{spec,test}.[jt]s`))))
       .flat();
 
     // Bundle all test files, including both JavaScript and TypeScript
@@ -139,7 +139,7 @@ export class TestBundler {
     // html
     let testFiles = tests;
     if (testFiles.length === 0) {
-      testFiles = (await glob(`**/*.spec.js`, { cwd: `${TESTER_PLUGIN_DIR}/content` })).sort();
+      testFiles = (await glob(`**/*.{spec,test}.js`, { cwd: `${TESTER_PLUGIN_DIR}/content` })).sort();
     }
     const html = generateHtml(setupCode, testFiles);
     await outputFile(`${TESTER_PLUGIN_DIR}/content/index.xhtml`, html);

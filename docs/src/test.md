@@ -34,7 +34,7 @@ If Scaffold detects a local Mocha installation, it uses it; otherwise, it fetche
 
 ### Writing Test Cases
 
-Write test cases using [Mocha](https://mochajs.org/) and [Chai](https://www.chaijs.com/) syntax in `test/*.spec.{js,ts}`:
+Write test cases using [Mocha](https://mochajs.org/) and [Chai](https://www.chaijs.com/) syntax in `test/*.{spec,test}.{js,ts}`:
 
 ```js
 describe("Example Test", () => {
