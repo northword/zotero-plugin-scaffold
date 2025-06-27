@@ -1,3 +1,4 @@
+import type { GitCommit } from "changelogen";
 import type { BuildOptions } from "esbuild";
 import type { LogLevelType } from "../utils/logger.js";
 import type { Context } from "./index.js";
@@ -538,19 +539,22 @@ export interface ReleaseConfig {
   /**
    * Changelog.
    *
-   * - "conventional-changelog": use conventional-changelog with angular preset,
-   *    you must install "conventional-changelog" as an peer dependency.
+   * - '':  Use convention-based changelogs to generate changelogs grouped
+   *        by type when the first commit is a convention-based commit.
+   *        Otherwise, a list of commit messages.
    * - string: a command line with changelog output to stdout.
+   * - function: a function that returns the changelog.
    *
    * 变更日志。
    *
-   * - "conventional-changelog": 使用约定式变更日志，使用 angular 预设，
-   *   你需要手动安装 conventional-changelog 作为依赖项。
+   * - "": 使用约定式变更日志，当第一次提交是约定式提交时，将按类型分组生成变更日志。
+   *       否则，则为提交消息的列表。
    * - string: 命令行，变更日志输出到 stdout
+   * - function: 一个函数，返回变更日志。
    *
-   * @default "git log {{previousTag}}..{{currentTag}}"
+   * @default ""
    */
-  changelog: "conventional-changelog" | string | ((ctx: Context) => string);
+  changelog: string | ((ctx: Context, commits: GitCommit[]) => string);
 
   /**
    * Release to GitHub.

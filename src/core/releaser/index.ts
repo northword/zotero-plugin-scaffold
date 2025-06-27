@@ -1,5 +1,8 @@
+import type { GitCommit } from "changelogen";
 import type { Context } from "../../types/index.js";
 import { execSync } from "node:child_process";
+import process from "node:process";
+import { generateMarkDown, getGitDiff, loadChangelogConfig, parseCommits } from "changelogen";
 import { escapeRegExp } from "es-toolkit";
 import { isCI } from "std-env";
 import { Base } from "../base.js";
@@ -68,32 +71,32 @@ export default class Release extends Base {
     );
   }
 
-  async getConventionalChangelog(): Promise<string> {
-    const { version } = this.ctx;
-    // @ts-expect-error no types
-    const { default: conventionalChangelog } = await import("conventional-changelog");
+  async getConventionalChangelog(commits: GitCommit[]) {
+    // If user do not use Conventional Commit,
+    // return commit messages directly.
+    if (!commits[0].type) {
+      return commits.map(c => c.message).join("\n");
+    }
 
-    return new Promise((resolve, reject) => {
-      let changelog = "";
-      conventionalChangelog({ releaseCount: 2, preset: "angular" }, { version })
-        .on("data", (chunk: any) => {
-          changelog += chunk.toString();
-        })
-        .on("end", () => {
-          changelog = changelog
-            .split("\n")
-            .filter(line => !line.match(/^## .*/) && !line.match(/^# .*/))
-            .join("\n")
-            .trim();
-          resolve(changelog);
-        })
-        .on("error", (err: any) => {
-          reject(err);
-        });
+    const resolvedCommits = commits.map((c) => {
+      if (c.type === "remove") {
+        c.isBreaking = true;
+      }
+      return c;
     });
+
+    const _config = await loadChangelogConfig(process.cwd(), {
+      types: {
+        add: { title: "🚀 Enhancements", semver: "minor" },
+        change: { title: "🩹 Fixes", semver: "patch" },
+        remove: { title: "🩹 Fixes", semver: "minor" },
+      },
+    });
+    const md = await generateMarkDown(resolvedCommits, _config);
+    return md.split("\n").slice(3).join("\n");
   }
 
-  getGitLog() {
+  async getGitDiff(): Promise<GitCommit[]> {
     const currentTag = this.ctx.release.bumpp.tag;
 
     /**
@@ -121,11 +124,11 @@ export default class Release extends Base {
       throw new Error(`Tag "${currentTag}" not found.`);
 
     let previousTagIndex = currentTagIndex - 1;
-    let previousTag: string | false;
+    let previousTag: string | undefined;
 
     if (currentTagIndex === 0) {
       // If the current tag is the first tag, get all logs before this one
-      previousTag = false;
+      previousTag = undefined;
     }
     // Otherwise, get log between this tag and previous one
     else if (currentTag.includes("-")) {
@@ -140,48 +143,39 @@ export default class Release extends Base {
       }
       if (previousTagIndex < 0)
         // If no previous official release is found, get all logs up to the currentTag
-        previousTag = false;
+        previousTag = undefined;
       else
         previousTag = tags[previousTagIndex];
     }
 
-    if (previousTag)
-      return execSync(`git log --pretty=format:"* %s (%h)" ${previousTag}..${currentTag}`).toString().trim();
-    else
-      return execSync(`git log --pretty=format:"* %s (%h)" ${currentTag}`).toString().trim();
-  }
-
-  getFilteredChangelog(rawLog: string) {
     const commitMessage = this.ctx.release.bumpp.commit;
     const filterRegex = new RegExp(escapeRegExp(commitMessage));
+    const rawCommits = (await getGitDiff(previousTag, currentTag)).filter(c => !filterRegex.test(c.message));
+    // @ts-expect-error we know options only needs scopeMap
+    return parseCommits(rawCommits, { scopeMap: {} });
 
-    const filteredLog = rawLog
-      .split("\n")
-      .filter(line => !filterRegex.test(line))
-      .join("\n");
-
-    if (filteredLog.replaceAll(" ", "") === "")
-      return "_No significant changes._";
-
-    return filteredLog;
+    // if (previousTag)
+    //   return execSync(`git log --pretty=format:"* %s (%h)" ${previousTag}..${currentTag}`).toString().trim();
+    // else
+    //   return execSync(`git log --pretty=format:"* %s (%h)" ${currentTag}`).toString().trim();
   }
 
   async getChangelog() {
     let changelog: string;
+    const rawCommit = await this.getGitDiff();
+    if (rawCommit.length === 0) {
+      return "_No significant changes._";
+    }
+
     const changelogConfig = this.ctx.release.changelog;
     if (typeof changelogConfig == "function") {
-      changelog = changelogConfig(this.ctx);
-    }
-    else if (!!changelogConfig && changelogConfig === "conventional-changelog") {
-      const rawLog = await this.getConventionalChangelog();
-      changelog = this.getFilteredChangelog(rawLog);
+      changelog = changelogConfig(this.ctx, rawCommit);
     }
     else if (!!changelogConfig && typeof changelogConfig == "string") {
       changelog = execSync(changelogConfig).toString().trim();
     }
     else {
-      const rawLog = this.getGitLog();
-      changelog = this.getFilteredChangelog(rawLog);
+      changelog = await this.getConventionalChangelog(rawCommit);
     }
     this.logger.debug(`Got changelog:\n${changelog}\n`);
     return changelog;
