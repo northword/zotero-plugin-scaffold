@@ -60,11 +60,11 @@ interface Deferred {
 function parseMessage(
   data: Buffer,
 ): {
-    remainingData: Buffer;
-    parsedMessage?: Message;
-    error?: Error;
-    fatal?: boolean;
-  } {
+  remainingData: Buffer;
+  parsedMessage?: Message;
+  error?: Error;
+  fatal?: boolean;
+} {
   const dataString = data.toString();
   const separatorIndex = dataString.indexOf(":");
 
