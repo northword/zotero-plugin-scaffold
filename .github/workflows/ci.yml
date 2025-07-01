@@ -14,6 +14,7 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
     env:
       GITHUB_TOKEN: ${{ secrets.GitHub_TOKEN }}
     steps:
@@ -30,13 +31,10 @@ jobs:
           cache: pnpm
 
       - name: Install deps
-        run: |
-          echo "public-hoist-pattern[]=@types*" >> .npmrc
-          pnpm install
+        run: pnpm install
 
       - name: Lint
-        run: |
-          pnpm lint:check
+        run: pnpm lint:check
 
   test:
     runs-on: ubuntu-latest
@@ -56,9 +54,7 @@ jobs:
           cache: pnpm
 
       - name: Install deps
-        run: |
-          echo "public-hoist-pattern[]=@types*" >> .npmrc
-          pnpm install
+        run: pnpm install
 
       - name: Test
         run: |
@@ -82,8 +78,7 @@ jobs:
           cache: pnpm
 
       - name: Install deps
-        run: |
-          pnpm install
+        run: pnpm install
 
       - name: Build Packages
         run: |
@@ -131,8 +126,7 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Install deps
-        run: |
-          pnpm install
+        run: pnpm install
 
       - name: Build Documentation
         run: pnpm docs:build
